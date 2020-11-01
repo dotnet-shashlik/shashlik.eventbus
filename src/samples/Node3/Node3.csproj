@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.RabbitMQ\Shashlik.EventBus.RabbitMQ.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
+    </ItemGroup>
+</Project>

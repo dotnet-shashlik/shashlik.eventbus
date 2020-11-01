@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <PackageProjectUrl>https://github.com/dotnet-shashlik/shashlik</PackageProjectUrl>
+    <PackageLicense>https://github.com/dotnet-shashlik/shashlik/blob/master/LICENSE</PackageLicense>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet-shashlik/shashlik</RepositoryUrl>
+    <PackageTags>shashlik</PackageTags>
+    <Authors>dotnet-shashlik</Authors>
+    <Version>0.1.0-preview-00025</Version>
+  </PropertyGroup>
+</Project>

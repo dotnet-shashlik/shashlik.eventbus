@@ -1,0 +1,29 @@
+name: shashlik-nuget
+
+on:
+  push:
+    branches: [ release ]
+  pull_request:
+    branches: [ release ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        #with:
+        #  dotnet-version: 3.1.301
+      - name: Install dependencies
+        run: dotnet restore ./src/Shashlik.Package.sln
+      - name: Build
+        run: dotnet build ./src/Shashlik.Package.sln --configuration Release --no-restore
+      #- name: Test
+      #  run: dotnet test src/Shashlik.sln --no-restore --verbosity normal
+      - name: Pack      
+        run: dotnet pack ./src/Shashlik.Package.sln  -p:SymbolPackageFormat=snupkg --include-symbols  --include-source --configuration Release --no-restore --output ./nugetPackages
+      - name: Publish
+        run: dotnet nuget push "./nugetPackages/*.nupkg" -k ${{ secrets.NUGET }} -s https://api.nuget.org/v3/index.json
