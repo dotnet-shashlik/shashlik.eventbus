@@ -379,7 +379,7 @@ LIMIT {count};
                 await using var cmd = connection.CreateCommand();
                 if (!parameter.IsNullOrEmpty())
                     foreach (var mySqlParameter in parameter)
-                        cmd.Parameters.Add(parameter);
+                        cmd.Parameters.Add(mySqlParameter);
                 cmd.CommandText = sql;
 
                 if (transactionContext.TransactionInstance is DbTransaction dbTransaction)
