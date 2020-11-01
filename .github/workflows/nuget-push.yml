@@ -15,15 +15,11 @@ jobs:
       - uses: actions/checkout@v2
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
-        #with:
-        #  dotnet-version: 3.1.301
       - name: Install dependencies
-        run: dotnet restore ./src/Shashlik.Package.sln
+        run: dotnet restore ./src/Shashlik.EventBus.Paackage.sln
       - name: Build
-        run: dotnet build ./src/Shashlik.Package.sln --configuration Release --no-restore
-      #- name: Test
-      #  run: dotnet test src/Shashlik.sln --no-restore --verbosity normal
+        run: dotnet build ./src/Shashlik.EventBus.Paackage.sln --configuration Release --no-restore
       - name: Pack      
-        run: dotnet pack ./src/Shashlik.Package.sln  -p:SymbolPackageFormat=snupkg --include-symbols  --include-source --configuration Release --no-restore --output ./nugetPackages
+        run: dotnet pack ./src/Shashlik.EventBus.Paackage.sln  -p:SymbolPackageFormat=snupkg --include-symbols  --include-source --configuration Release --no-restore --output ./nugetPackages
       - name: Publish
         run: dotnet nuget push "./nugetPackages/*.nupkg" -k ${{ secrets.NUGET }} -s https://api.nuget.org/v3/index.json
