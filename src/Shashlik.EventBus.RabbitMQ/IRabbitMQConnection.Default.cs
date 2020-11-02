@@ -38,7 +38,8 @@ namespace Shashlik.EventBus.RabbitMQ
                     Password = Options.CurrentValue.Password,
                     HostName = Options.CurrentValue.Host,
                     UserName = Options.CurrentValue.UserName,
-                    Port = Options.CurrentValue.Port
+                    Port = Options.CurrentValue.Port,
+                    VirtualHost = Options.CurrentValue.VirtualHost
                 };
             return factory.CreateConnection();
         }

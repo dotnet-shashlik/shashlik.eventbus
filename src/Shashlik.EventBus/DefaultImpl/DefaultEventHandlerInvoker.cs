@@ -7,7 +7,9 @@ namespace Shashlik.EventBus.DefaultImpl
 {
     public class DefaultEventHandlerInvoker : IEventHandlerInvoker
     {
-        public DefaultEventHandlerInvoker(IMessageSerializer messageSerializer, IServiceScopeFactory serviceScopeFactory)
+        public DefaultEventHandlerInvoker(
+            IMessageSerializer messageSerializer,
+            IServiceScopeFactory serviceScopeFactory)
         {
             MessageSerializer = messageSerializer;
             ServiceScopeFactory = serviceScopeFactory;

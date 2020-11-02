@@ -3,6 +3,7 @@ using System.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.Utils.Extensions;
 
@@ -57,9 +58,8 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IEventNameRuler, DefaultEventNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultEventHandlerNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
-
-            serviceCollection.AddHostedService<DefaultEventBusBuilder>();
-
+            
+            serviceCollection.AddSingleton<IHostedService, DefaultEventBusStartup>();
             return serviceCollection;
         }
     }

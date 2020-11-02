@@ -32,6 +32,8 @@ namespace Shashlik.EventBus.RabbitMQ
         /// </summary>
         public string Password { get; set; }
 
+        public string VirtualHost { get; set; } = "/";
+
         /// <summary>
         /// 端口号
         /// </summary>

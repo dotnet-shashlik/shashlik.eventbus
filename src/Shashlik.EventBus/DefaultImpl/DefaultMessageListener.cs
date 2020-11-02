@@ -45,6 +45,10 @@ namespace Shashlik.EventBus.DefaultImpl
                 DelayAt = message.DelayAt
             };
 
+            // 消息id已经存在不再处理
+            if (MessageStorage.ExistsReceiveMessage(message.MsgId).GetAwaiter().GetResult())
+                return;
+
             // 保存接收到的消息
             MessageStorage.SaveReceived(receiveMessageStorageModel);
             // 进入接收消息处理队列

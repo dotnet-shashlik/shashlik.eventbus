@@ -1,11 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
-    public class DefaultEventBusBuilder : IEventBusBuilder
+    public class DefaultEventBusStartup : IHostedService
     {
         private IMessageStorageInitializer MessageStorageInitializer { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
@@ -15,7 +15,10 @@ namespace Shashlik.EventBus.DefaultImpl
         private EventBusOptions EventBusOptions { get; }
         private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
 
-        public DefaultEventBusBuilder(IMessageStorageInitializer messageStorageInitializer, IEventHandlerFindProvider eventHandlerFindProvider, IMessageCunsumerRegistry messageCunsumerRegistry, IMessageSerializer messageSerializer, IMessageStorage messageStorage, IMessageReceiveQueueProvider messageReceiveQueueProvider, IOptions<EventBusOptions> eventBusOptions)
+        public DefaultEventBusStartup(IMessageStorageInitializer messageStorageInitializer,
+            IEventHandlerFindProvider eventHandlerFindProvider, IMessageCunsumerRegistry messageCunsumerRegistry,
+            IMessageSerializer messageSerializer, IMessageStorage messageStorage,
+            IMessageReceiveQueueProvider messageReceiveQueueProvider, IOptions<EventBusOptions> eventBusOptions)
         {
             MessageStorageInitializer = messageStorageInitializer;
             EventHandlerFindProvider = eventHandlerFindProvider;

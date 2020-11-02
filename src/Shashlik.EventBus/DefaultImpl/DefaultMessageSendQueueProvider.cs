@@ -45,7 +45,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         if (!await MessageStorage.ExistsPublishMessage(messageStorageModel.MsgId))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交
-                            Thread.Sleep(3000);
+                            Thread.Sleep(1000);
                             continue;
                         }
 
