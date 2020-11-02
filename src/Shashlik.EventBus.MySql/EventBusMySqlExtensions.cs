@@ -6,13 +6,13 @@ namespace Shashlik.EventBus.MySql
 {
     public static class EventBusMySqlExtensions
     {
-        public static IEventBusBuilder AddMySql(
-            this IEventBusBuilder builder,
+        public static IServiceCollection AddMySql(
+            this IServiceCollection service,
             string connectionString,
             string publishTableName = null,
             string receiveTableName = null)
         {
-            builder.ServiceCollection.Configure<EventBusMySqlOptions>(options =>
+            service.Configure<EventBusMySqlOptions>(options =>
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
@@ -21,21 +21,21 @@ namespace Shashlik.EventBus.MySql
                     options.ReceiveTableName = receiveTableName;
             });
 
-            return builder.AddMySql();
+            return service.AddMySql();
         }
 
-        public static IEventBusBuilder AddMySql<TDbContext>(
-            this IEventBusBuilder builder,
+        public static IServiceCollection AddMySql<TDbContext>(
+            this IServiceCollection service,
             string publishTableName = null,
             string receiveTableName = null)
             where TDbContext : DbContext
         {
-            using var serviceProvider = builder.ServiceCollection.BuildServiceProvider();
+            using var serviceProvider = service.BuildServiceProvider();
             using var scope = serviceProvider.CreateScope();
             using var dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
             var connectionString = dbContext.Database.GetDbConnection().ConnectionString;
 
-            builder.ServiceCollection.Configure<EventBusMySqlOptions>(options =>
+            service.Configure<EventBusMySqlOptions>(options =>
             {
                 options.ConnectionString = connectionString;
                 options.DbContextType = typeof(TDbContext);
@@ -45,16 +45,16 @@ namespace Shashlik.EventBus.MySql
                     options.ReceiveTableName = receiveTableName;
             });
 
-            return builder.AddMySql();
+            return service.AddMySql();
         }
 
-        public static IEventBusBuilder AddMySql(this IEventBusBuilder builder)
+        public static IServiceCollection AddMySql(this IServiceCollection service)
         {
-            builder.ServiceCollection.AddOptions<EventBusMySqlOptions>();
-            builder.ServiceCollection.AddSingleton<IMessageStorage, MySqlMessageStorage>();
-            builder.ServiceCollection.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
+            service.AddOptions<EventBusMySqlOptions>();
+            service.AddSingleton<IMessageStorage, MySqlMessageStorage>();
+            service.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
 
-            return builder;
+            return service;
         }
     }
 }

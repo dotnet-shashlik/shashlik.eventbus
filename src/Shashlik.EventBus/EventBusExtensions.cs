@@ -28,21 +28,21 @@ namespace Shashlik.EventBus
             return v.ParseTo<T>();
         }
 
-        public static IEventBusBuilder AddEventBus(this IServiceCollection serviceCollection,
+        public static IServiceCollection AddEventBus(this IServiceCollection serviceCollection,
             Action<EventBusOptions> configure)
         {
             serviceCollection.Configure(configure);
             return serviceCollection.AddEventBus();
         }
 
-        public static IEventBusBuilder AddEventBus(this IServiceCollection serviceCollection,
+        public static IServiceCollection AddEventBus(this IServiceCollection serviceCollection,
             IConfigurationSection configuration)
         {
             serviceCollection.Configure<EventBusOptions>(configuration);
             return serviceCollection.AddEventBus();
         }
 
-        public static IEventBusBuilder AddEventBus(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddEventBus(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddOptions<EventBusOptions>();
 
@@ -58,7 +58,9 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultEventHandlerNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
 
-            return new DefaultEventBusBuilder(serviceCollection);
+            serviceCollection.AddHostedService<DefaultEventBusBuilder>();
+
+            return serviceCollection;
         }
     }
 }

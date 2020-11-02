@@ -1,43 +1,57 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
     public class DefaultEventBusBuilder : IEventBusBuilder
     {
-        public DefaultEventBusBuilder(IServiceCollection serviceCollection)
+        private IMessageStorageInitializer MessageStorageInitializer { get; }
+        private IEventHandlerFindProvider EventHandlerFindProvider { get; }
+        private IMessageCunsumerRegistry MessageCunsumerRegistry { get; }
+        private IMessageSerializer MessageSerializer { get; }
+        private IMessageStorage MessageStorage { get; }
+        private EventBusOptions EventBusOptions { get; }
+        private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
+
+        public DefaultEventBusBuilder(IMessageStorageInitializer messageStorageInitializer, IEventHandlerFindProvider eventHandlerFindProvider, IMessageCunsumerRegistry messageCunsumerRegistry, IMessageSerializer messageSerializer, IMessageStorage messageStorage, IMessageReceiveQueueProvider messageReceiveQueueProvider, IOptions<EventBusOptions> eventBusOptions)
         {
-            ServiceCollection = serviceCollection;
+            MessageStorageInitializer = messageStorageInitializer;
+            EventHandlerFindProvider = eventHandlerFindProvider;
+            MessageCunsumerRegistry = messageCunsumerRegistry;
+            MessageSerializer = messageSerializer;
+            MessageStorage = messageStorage;
+            MessageReceiveQueueProvider = messageReceiveQueueProvider;
+            EventBusOptions = eventBusOptions.Value;
         }
 
-        public IServiceCollection ServiceCollection { get; }
-
-        public IServiceCollection Build()
+        public void Build()
         {
-            GlobalServiceCollection.ServiceCollection = ServiceCollection;
-
-            using var serviceProvider = ServiceCollection.BuildServiceProvider();
-
             // 先执行存储设施初始化
-            var messageStorageInitializer = serviceProvider.GetRequiredService<IMessageStorageInitializer>();
-            messageStorageInitializer.Initialize();
+            MessageStorageInitializer.Initialize();
 
             // 注册监听器
-            var descriptors = serviceProvider.GetRequiredService<IEventHandlerFindProvider>().LoadAll();
-            var messageCunsumerRegistry = serviceProvider.GetRequiredService<IMessageCunsumerRegistry>();
-            var messageSerializer = serviceProvider.GetRequiredService<IMessageSerializer>();
-            var messageStorage = serviceProvider.GetRequiredService<IMessageStorage>();
-
-            var messageReceiveQueueProvider = serviceProvider.GetRequiredService<IMessageReceiveQueueProvider>();
-            var environment = serviceProvider.GetRequiredService<IOptions<EventBusOptions>>().Value.Environment;
+            var descriptors = EventHandlerFindProvider.LoadAll();
+            var environment = EventBusOptions.Environment;
 
             foreach (var eventHandlerDescriptor in descriptors)
             {
-                messageCunsumerRegistry.Subscribe(new DefaultMessageListener(eventHandlerDescriptor, environment,
-                    messageSerializer, messageStorage, messageReceiveQueueProvider));
+                MessageCunsumerRegistry.Subscribe(new DefaultMessageListener(eventHandlerDescriptor, environment,
+                    MessageSerializer, MessageStorage, MessageReceiveQueueProvider));
             }
+        }
 
-            return ServiceCollection;
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            Build();
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            //throw new System.NotImplementedException();
+            return Task.CompletedTask;
         }
     }
 }

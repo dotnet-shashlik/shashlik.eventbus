@@ -13,7 +13,7 @@ namespace NodeCommon
         public IServiceProvider Start(Action<IServiceCollection> action = null)
         {
             const string conn =
-                "...";
+                "server=frp1.jizhen.cool;database=sbt;user=root;password=jizhen.cool.0416;Pooling=True;Min Pool Size=3;Max Pool Size=5;";
 
             var serviceCollection = new ServiceCollection();
 
@@ -24,15 +24,14 @@ namespace NodeCommon
                 r.UseMySql(conn, db => { db.MigrationsAssembly(this.GetType().Assembly.GetName().FullName); });
             });
 
-            serviceCollection.AddEventBus(r => { r.Environment = "demo"; })
+            serviceCollection.AddEventBus(r => { r.Environment = "Demo"; })
                 .AddMySql<DemoDbContext>()
                 .AddRabbitMQ(r =>
                 {
-                    r.Host = "...";
-                    r.UserName = "..";
-                    r.Password = "...";
-                })
-                .Build();
+                    r.Host = "frp1.jizhen.cool";
+                    r.UserName = "rabbit";
+                    r.Password = "8NnT2nUNoOwpBAue";
+                });
 
             action?.Invoke(serviceCollection);
 

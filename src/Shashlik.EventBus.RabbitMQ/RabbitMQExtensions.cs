@@ -6,30 +6,30 @@ namespace Shashlik.EventBus.RabbitMQ
 {
     public static class RabbitMQExtensions
     {
-        public static IEventBusBuilder AddRabbitMQ(this IEventBusBuilder builder,
+        public static IServiceCollection AddRabbitMQ(this IServiceCollection serviceCollection,
             IConfigurationSection configurationSection)
         {
-            builder.ServiceCollection.Configure<EventBusRabbitMQOptions>(configurationSection);
+            serviceCollection.Configure<EventBusRabbitMQOptions>(configurationSection);
 
-            return builder.AddRabbitMQ();
+            return serviceCollection.AddRabbitMQ();
         }
 
-        public static IEventBusBuilder AddRabbitMQ(this IEventBusBuilder builder,
+        public static IServiceCollection AddRabbitMQ(this IServiceCollection serviceCollection,
             Action<EventBusRabbitMQOptions> action)
         {
-            builder.ServiceCollection.Configure(action);
+            serviceCollection.Configure(action);
 
-            return builder.AddRabbitMQ();
+            return serviceCollection.AddRabbitMQ();
         }
 
-        public static IEventBusBuilder AddRabbitMQ(this IEventBusBuilder builder)
+        public static IServiceCollection AddRabbitMQ(this IServiceCollection serviceCollection)
         {
-            builder.ServiceCollection.AddOptions<EventBusRabbitMQOptions>();
-            builder.ServiceCollection.AddSingleton<IMessageSender, RabbitMQMessageSender>();
-            builder.ServiceCollection.AddTransient<IMessageCunsumerRegistry, RabbitMQMessageCunsumerRegistry>();
-            builder.ServiceCollection.AddSingleton<IRabbitMQConnection, DefaultRabbitMQConnection>();
+            serviceCollection.AddOptions<EventBusRabbitMQOptions>();
+            serviceCollection.AddSingleton<IMessageSender, RabbitMQMessageSender>();
+            serviceCollection.AddTransient<IMessageCunsumerRegistry, RabbitMQMessageCunsumerRegistry>();
+            serviceCollection.AddSingleton<IRabbitMQConnection, DefaultRabbitMQConnection>();
 
-            return builder;
+            return serviceCollection;
         }
     }
 }

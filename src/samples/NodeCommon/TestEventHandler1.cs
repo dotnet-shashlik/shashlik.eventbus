@@ -1,12 +1,10 @@
-﻿using NodeCommon;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Shashlik.EventBus;
 using Shashlik.Utils.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Node1
+namespace NodeCommon
 {
     public class TestEventHandler1 : IEventHandler<Event1>
     {

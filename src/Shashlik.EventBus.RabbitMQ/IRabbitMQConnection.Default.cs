@@ -6,7 +6,7 @@ using RabbitMQ.Client;
 
 namespace Shashlik.EventBus.RabbitMQ
 {
-    public class DefaultRabbitMQConnection : IRabbitMQConnection
+    public class DefaultRabbitMQConnection : IRabbitMQConnection, IDisposable
     {
         private static readonly ConcurrentDictionary<int, IModel> Channels = new ConcurrentDictionary<int, IModel>();
 
@@ -45,13 +45,13 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public void Dispose()
         {
-            //foreach (var item in Channels.Values)
-            //{
-            //    item.Dispose();
-            //}
+            foreach (var item in Channels.Values)
+            {
+                item.Dispose();
+            }
 
-            //Connection.Dispose();
-            //Channels.Clear();
+            Connection.Dispose();
+            Channels.Clear();
         }
     }
 }

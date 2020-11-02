@@ -7,18 +7,19 @@ namespace Shashlik.EventBus.DefaultImpl
 {
     public class DefaultEventHandlerInvoker : IEventHandlerInvoker
     {
-        public DefaultEventHandlerInvoker(IMessageSerializer messageSerializer)
+        public DefaultEventHandlerInvoker(IMessageSerializer messageSerializer, IServiceScopeFactory serviceScopeFactory)
         {
             MessageSerializer = messageSerializer;
+            ServiceScopeFactory = serviceScopeFactory;
         }
 
+        private IServiceScopeFactory ServiceScopeFactory { get; }
         private IMessageSerializer MessageSerializer { get; }
 
         public void Invoke(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor eventHandlerDescriptor)
         {
-            using var serviceProvider = GlobalServiceCollection.ServiceCollection.BuildServiceProvider();
-            using var scope = serviceProvider.CreateScope();
+            using var scope = ServiceScopeFactory.CreateScope();
             var eventHandlerInstance = scope.ServiceProvider.GetService(eventHandlerDescriptor.EventHandlerType);
             if (eventHandlerInstance == null)
                 throw new InvalidCastException(
