@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Shashlik.EventBus
+﻿namespace Shashlik.EventBus
 {
     /// <summary>
     /// 消息监听执行器

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.Utils.Extensions;
 
@@ -55,6 +56,10 @@ namespace Shashlik.EventBus.MySql
             service.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
 
             return service;
+        }
+
+        public static void ad<TDbContext>(this IEventPublisher eventPublisher, TDbContext dbContext,IDictionary<string,string> items = null)
+        {
         }
     }
 }

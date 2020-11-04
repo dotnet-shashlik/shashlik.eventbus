@@ -1,5 +1,6 @@
 ﻿// ReSharper disable ClassNeverInstantiated.Global
 
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 namespace Shashlik.EventBus
 {
     public class EventBusOptions
