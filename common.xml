@@ -1,11 +1,11 @@
 <Project>
   <PropertyGroup>
-    <PackageProjectUrl>https://github.com/dotnet-shashlik/shashlik</PackageProjectUrl>
-    <PackageLicense>https://github.com/dotnet-shashlik/shashlik/blob/master/LICENSE</PackageLicense>
+    <PackageProjectUrl>https://github.com/dotnet-shashlik/shashlik.eventbus</PackageProjectUrl>
+    <PackageLicense>https://github.com/dotnet-shashlik/shashlik.eventbus/blob/master/LICENSE</PackageLicense>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/dotnet-shashlik/shashlik</RepositoryUrl>
+    <RepositoryUrl>https://github.com/dotnet-shashlik/shashlik.eventbus</RepositoryUrl>
     <PackageTags>shashlik</PackageTags>
     <Authors>dotnet-shashlik</Authors>
-    <Version>0.1.0-preview-00025</Version>
+    <Version>0.1.0-preview-00030</Version>
   </PropertyGroup>
 </Project>
