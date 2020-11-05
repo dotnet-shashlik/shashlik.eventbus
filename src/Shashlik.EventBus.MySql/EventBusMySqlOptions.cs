@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 
 namespace Shashlik.EventBus.MySql
 {
@@ -15,13 +16,13 @@ namespace Shashlik.EventBus.MySql
         public string ReceiveTableName { get; set; } = "eventbus_receive";
 
         /// <summary>
-        /// ef数据库上下文类型
+        /// ef数据库上下文类型, 和<see cref="ConnectionString"/>配其中一个，优先使用<see cref="DbContextType"/>
         /// </summary>
-        public Type DbContextType { get; set; }
+        public Type? DbContextType { get; set; }
 
         /// <summary>
-        /// mysql数据库连接字符串
+        /// mysql数据库连接字符串，和<see cref="DbContextType"/>配其中一个，优先使用<see cref="DbContextType"/>
         /// </summary>
-        public string ConnectionString { get; set; }
+        public string? ConnectionString { get; set; }
     }
 }

@@ -26,6 +26,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{D22B2A9A-73F7-46DF-8395-5874FD1447B6}"
 ProjectSection(SolutionItems) = preProject
 	..\.github\workflows\nuget-push.yml = ..\.github\workflows\nuget-push.yml
+	..\common.xml = ..\common.xml
 EndProjectSection
 EndProject
 Global

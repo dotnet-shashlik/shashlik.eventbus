@@ -7,12 +7,15 @@ namespace Shashlik.EventBus.MySql
 {
     public class MySqlMessageStorageInitializer : IMessageStorageInitializer
     {
-        public MySqlMessageStorageInitializer(IOptionsMonitor<EventBusMySqlOptions> options)
+        public MySqlMessageStorageInitializer(IOptionsMonitor<EventBusMySqlOptions> options,
+            IConnectionString connectionString)
         {
             Options = options;
+            ConnectionString = connectionString;
         }
 
         private IOptionsMonitor<EventBusMySqlOptions> Options { get; }
+        private IConnectionString ConnectionString { get; }
 
         public async Task Initialize(CancellationToken cancellationToken = default)
         {
@@ -51,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ";
 
-            await using var connection = new MySqlConnection(Options.CurrentValue.ConnectionString);
+            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
             await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
