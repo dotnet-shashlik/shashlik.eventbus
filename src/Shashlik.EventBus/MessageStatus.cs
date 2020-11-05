@@ -3,7 +3,7 @@
     /// <summary>
     /// 消息状态
     /// </summary>
-    public class MessageStatus
+    public static class MessageStatus
     {
         public const string Failed = "FAILED";
         public const string Scheduled = "SCHEDULED";

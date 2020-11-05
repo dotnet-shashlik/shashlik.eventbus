@@ -1,5 +1,6 @@
 ﻿// ReSharper disable ClassNeverInstantiated.Global
 
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 namespace Shashlik.EventBus
 {
     public class EventBusOptions
@@ -10,7 +11,7 @@ namespace Shashlik.EventBus
         public string Environment { get; set; } = "Production";
 
         /// <summary>
-        /// 确认是否已提交的时间,单位秒,默认3分钟
+        /// 确认事务是否已提交的时间,单位秒,默认3分钟,必须小于<see cref="RetryAfterSeconds"/>
         /// </summary>
         public int ConfirmTransactionSeconds { get; set; } = 60 * 3;
 

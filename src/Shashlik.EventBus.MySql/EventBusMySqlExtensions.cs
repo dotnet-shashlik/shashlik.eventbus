@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.Utils.Extensions;
 
+// ReSharper disable AssignNullToNotNullAttribute
+
 namespace Shashlik.EventBus.MySql
 {
     public static class EventBusMySqlExtensions
@@ -30,14 +32,8 @@ namespace Shashlik.EventBus.MySql
             string receiveTableName = null)
             where TDbContext : DbContext
         {
-            using var serviceProvider = service.BuildServiceProvider();
-            using var scope = serviceProvider.CreateScope();
-            using var dbContext = scope.ServiceProvider.GetRequiredService<TDbContext>();
-            var connectionString = dbContext.Database.GetDbConnection().ConnectionString;
-
             service.Configure<EventBusMySqlOptions>(options =>
             {
-                options.ConnectionString = connectionString;
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
                     options.PublishTableName = publishTableName;
@@ -53,6 +49,7 @@ namespace Shashlik.EventBus.MySql
             service.AddOptions<EventBusMySqlOptions>();
             service.AddSingleton<IMessageStorage, MySqlMessageStorage>();
             service.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
+            service.AddSingleton<IConnectionString, DefaultConnectionString>();
 
             return service;
         }

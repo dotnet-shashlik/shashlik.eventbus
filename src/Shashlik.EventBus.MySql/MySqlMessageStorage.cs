@@ -21,12 +21,14 @@ namespace Shashlik.EventBus.MySql
 {
     public class MySqlMessageStorage : IMessageStorage
     {
-        public MySqlMessageStorage(IOptionsMonitor<EventBusMySqlOptions> options)
+        public MySqlMessageStorage(IOptionsMonitor<EventBusMySqlOptions> options, IConnectionString connectionString)
         {
             Options = options;
+            ConnectionString = connectionString;
         }
 
         private IOptionsMonitor<EventBusMySqlOptions> Options { get; }
+        private IConnectionString ConnectionString { get; }
 
         public async ValueTask<bool> ExistsPublishMessage(string msgId, CancellationToken cancellationToken = default)
         {
@@ -310,7 +312,7 @@ LIMIT {count};
 
         private async Task<DataTable> SqlQuery(string sql, CancellationToken cancellationToken = default)
         {
-            await using var connection = new MySqlConnection(Options.CurrentValue.ConnectionString);
+            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
             await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
@@ -322,7 +324,7 @@ LIMIT {count};
 
         private async Task<object> SqlScalar(string sql, CancellationToken cancellationToken = default)
         {
-            await using var connection = new MySqlConnection(Options.CurrentValue.ConnectionString);
+            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
             await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
@@ -332,7 +334,7 @@ LIMIT {count};
         private async Task<int> NonQuery(string sql, MySqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            await using var connection = new MySqlConnection(Options.CurrentValue.ConnectionString);
+            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();

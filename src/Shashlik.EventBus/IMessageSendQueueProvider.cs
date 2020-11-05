@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace Shashlik.EventBus
+﻿namespace Shashlik.EventBus
 {
     /// <summary>
     /// 消息发送处理队列

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.Utils.Extensions;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace Shashlik.EventBus
 {
@@ -59,7 +60,7 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultEventHandlerNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
             
-            serviceCollection.AddSingleton<IHostedService, DefaultEventBusStartup>();
+            serviceCollection.AddSingleton<IHostedService, EventBusStartup>();
             return serviceCollection;
         }
     }
