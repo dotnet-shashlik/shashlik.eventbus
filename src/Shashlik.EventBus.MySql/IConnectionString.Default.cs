@@ -7,10 +7,10 @@ namespace Shashlik.EventBus.MySql
 {
     public class DefaultConnectionString : IConnectionString
     {
-        public DefaultConnectionString(IServiceScopeFactory serviceScopeFactory, EventBusMySqlOptions options)
+        public DefaultConnectionString(IServiceScopeFactory serviceScopeFactory, IOptions<EventBusMySqlOptions> options)
         {
             ServiceScopeFactory = serviceScopeFactory;
-            Options = options;
+            Options = options.Value;
             _connectionString = new Lazy<string>(GetConnectionString);
         }
 
