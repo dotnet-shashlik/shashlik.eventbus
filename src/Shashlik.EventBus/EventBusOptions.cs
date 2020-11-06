@@ -1,6 +1,7 @@
 ﻿// ReSharper disable ClassNeverInstantiated.Global
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
+
 namespace Shashlik.EventBus
 {
     public class EventBusOptions
@@ -44,5 +45,10 @@ namespace Shashlik.EventBus
         /// 成功的消息多久后删除,单位小时,默认3天
         /// </summary>
         public int SucceedExpireHour { get; set; } = 3 * 24;
+
+        /// <summary>
+        /// 延迟事件最小延迟时间差，默认5秒
+        /// </summary>
+        public int DelayAtMinSeconds { get; set; } = 5;
     }
 }
