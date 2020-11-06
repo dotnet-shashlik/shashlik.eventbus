@@ -23,8 +23,14 @@ namespace Shashlik.EventBus.RabbitMQ
         public IModel GetChannel()
         {
             var id = Thread.CurrentThread.ManagedThreadId;
-            Console.WriteLine($"Thread id: {id}");
-            return Channels.GetOrAdd(id, r => Connection.CreateModel());
+            var channel = Channels.GetOrAdd(id, r => Connection.CreateModel());
+            if (channel.IsClosed)
+            {
+                channel.Dispose();
+                channel = Channels[id] = Connection.CreateModel();
+            }
+
+            return channel;
         }
 
         private IConnection Get()
@@ -46,13 +52,20 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public void Dispose()
         {
-            foreach (var item in Channels.Values)
+            try
             {
-                item.Dispose();
-            }
+                foreach (var item in Channels.Values)
+                {
+                    item.Dispose();
+                }
 
-            Connection.Dispose();
-            Channels.Clear();
+                Connection.Dispose();
+                Channels.Clear();
+            }
+            catch
+            {
+                // ignore
+            }
         }
     }
 }

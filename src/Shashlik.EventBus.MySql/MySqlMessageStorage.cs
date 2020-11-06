@@ -173,7 +173,7 @@ WHERE `msgId` = '{msgId}'
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-UPDATE `{Options.CurrentValue.PublishTableName}`
+UPDATE `{Options.CurrentValue.ReceiveTableName}`
 SET `status` = '{status}', `retryCount` = {retryCount}, `expireTime` = {expireTime?.GetLongDate() ?? 0}
 WHERE `msgId` = '{msgId}'
 ";
