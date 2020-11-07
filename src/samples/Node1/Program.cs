@@ -19,36 +19,35 @@ namespace Node1
         static async Task Main(string[] args)
         {
             var host = new HostBuilder().ConfigureHostConfiguration(configHost => { configHost.AddCommandLine(args); })
-                    .ConfigureServices((hostContext, services) =>
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddTransient<TestEventHandler1>();
+                    services.AddTransient<TestEventHandler2>();
+
+                    const string conn =
+                        "...";
+
+                    services.AddLogging(logging => { logging.AddConsole(); });
+
+                    services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        services.AddTransient<TestEventHandler1>();
-                        const string conn =
-                            "...";
+                        r.UseMySql(conn,
+                            db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
+                    });
 
-                        services.AddLogging(logging => { logging.AddConsole(); });
-
-                        services.AddDbContextPool<DemoDbContext>(r =>
+                    services.AddEventBus(r => { r.Environment = "Demo"; })
+                        .AddMySql<DemoDbContext>()
+                        .AddRabbitMQ(r =>
                         {
-                            r.UseMySql(conn,
-                                db =>
-                                {
-                                    db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName);
-                                });
+                            r.Host = "...";
+                            r.UserName = "...";
+                            r.Password = "...";
                         });
 
-                        services.AddEventBus(r => { r.Environment = "Demo"; })
-                            .AddMySql<DemoDbContext>()
-                            .AddRabbitMQ(r =>
-                            {
-                                r.Host = "...";
-                                r.UserName = "...";
-                                r.Password = "...";
-                            });
-
-                        services.AddHostedService<TestService>();
-                    })
-                    .UseConsoleLifetime()
-                    .Build();
+                    services.AddHostedService<TestService>();
+                })
+                .UseConsoleLifetime()
+                .Build();
 
             await host.RunAsync();
         }
@@ -63,13 +62,17 @@ namespace Node1
 
             private IEventPublisher EventPublisher { get; }
             private DemoDbContext DbContext { get; }
+
             public async Task StartAsync(CancellationToken cancellationToken)
             {
                 for (int i = 0; i < 10; i++)
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
-                
-                    await EventPublisher.PublishAsync(new Event1 { Name = $"张三: {i}" }, new TransactionContext(DbContext, transaction));
+
+                    await EventPublisher.PublishAsync(new Event1 {Name = $"张三: {i}"},
+                        new TransactionContext(DbContext, transaction));
+                    await EventPublisher.PublishAsync(new DelayEvent {Name = $"李四: {i}"},
+                        new TransactionContext(DbContext, transaction), DateTimeOffset.Now.AddSeconds(10));
 
                     if (i == 2 || i == 4)
                     {
@@ -81,7 +84,6 @@ namespace Node1
                     await transaction.CommitAsync(cancellationToken);
                     await Task.Delay(1000, cancellationToken);
                 }
-                
             }
 
             public Task StopAsync(CancellationToken cancellationToken)

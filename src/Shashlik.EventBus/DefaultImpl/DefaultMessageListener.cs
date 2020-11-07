@@ -50,7 +50,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 return;
 
             // 保存接收到的消息
-            MessageStorage.SaveReceived(receiveMessageStorageModel);
+            MessageStorage.SaveReceived(receiveMessageStorageModel).GetAwaiter().GetResult();
             // 进入接收消息处理队列
             MessageReceiveQueueProvider.Enqueue(receiveMessageStorageModel, message.Items, Descriptor);
         }

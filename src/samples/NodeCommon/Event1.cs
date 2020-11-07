@@ -6,4 +6,9 @@ namespace NodeCommon
     {
         public string Name { get; set; }
     }
+    
+    public class DelayEvent : IDelayEvent
+    {
+        public string Name { get; set; }
+    }
 }

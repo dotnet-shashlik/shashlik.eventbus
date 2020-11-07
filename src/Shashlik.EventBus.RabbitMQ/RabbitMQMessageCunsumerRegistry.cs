@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -12,14 +13,19 @@ namespace Shashlik.EventBus.RabbitMQ
     public class RabbitMQMessageCunsumerRegistry : IMessageCunsumerRegistry
     {
         public RabbitMQMessageCunsumerRegistry(IOptionsMonitor<EventBusRabbitMQOptions> options,
-            IRabbitMQConnection connection)
+            IRabbitMQConnection connection, ILogger<RabbitMQMessageCunsumerRegistry> logger,
+            IMessageSerializer messageSerializer)
         {
             Options = options;
+            Logger = logger;
+            MessageSerializer = messageSerializer;
             Channel = connection.GetChannel();
         }
 
         private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
         private IModel Channel { get; }
+        private ILogger<RabbitMQMessageCunsumerRegistry> Logger { get; }
+        private IMessageSerializer MessageSerializer { get; }
 
         public void Subscribe(IMessageListener listener)
         {
@@ -58,22 +64,13 @@ namespace Shashlik.EventBus.RabbitMQ
             var consumer = new EventingBasicConsumer(Channel);
             consumer.Received += (sender, e) =>
             {
-                var message = new MessageTransferModel
-                {
-                    EventName = listener.Descriptor.EventName,
-                    MsgId = e.BasicProperties.MessageId,
-                    MsgBody = Encoding.UTF8.GetString(e.Body),
-                    Items = e.BasicProperties.Headers
-                        .ToDictionary(r => r.Key, r => Encoding.UTF8.GetString((byte[]) r.Value)),
-                    //SendAt = e.BasicProperties.Headers.GetOrDefault(EventBusConsts.SendAtHeaderKey)
-                    //    .ParseTo<DateTimeOffset>(),
-                    //DelayAt = e.BasicProperties.Headers.GetOrDefault(EventBusConsts.DelayAtHeaderKey)
-                    //    .ParseTo<DateTimeOffset?>()
-                };
+                var body = Encoding.UTF8.GetString(e.Body);
+                var message =
+                    MessageSerializer.Deserialize(body, typeof(MessageTransferModel)) as
+                        MessageTransferModel;
 
-                message.SendAt = message.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset>();
-                message.DelayAt = message.Items.GetOrDefault(EventBusConsts.DelayAtHeaderKey)
-                    .ParseTo<DateTimeOffset?>();
+                Logger.LogDebug(
+                    $"{DateTime.Now}: [EventBus-RabbitMQ] received msg: {body}.");
 
                 listener.Receive(message);
                 // 一定要在消息接收ok后才确认ack

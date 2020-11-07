@@ -59,7 +59,7 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IEventNameRuler, DefaultEventNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultEventHandlerNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
-            
+
             serviceCollection.AddSingleton<IHostedService, EventBusStartup>();
             return serviceCollection;
         }

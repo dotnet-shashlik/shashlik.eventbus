@@ -126,7 +126,9 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0},
             };
 
-            await NonQuery(transactionContext, sql, parameters, cancellationToken);
+            var row = await NonQuery(transactionContext, sql, parameters, cancellationToken);
+            if (row == 0)
+                throw new DbUpdateException();
         }
 
         public async Task SaveReceived(MessageStorageModel message, CancellationToken cancellationToken = default)
@@ -154,7 +156,9 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0},
             };
 
-            await NonQuery(sql, parameters, cancellationToken);
+            var row = await NonQuery(sql, parameters, cancellationToken);
+            if (row == 0)
+                throw new DbUpdateException();
         }
 
         public async Task UpdatePublished(string msgId, string status, int retryCount, DateTimeOffset? expireTime,
@@ -342,6 +346,7 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
         private async Task<int> NonQuery(string sql, MySqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);

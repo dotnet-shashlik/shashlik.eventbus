@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using Shashlik.Utils.Extensions;
@@ -14,14 +15,18 @@ namespace Shashlik.EventBus.RabbitMQ
     public class RabbitMQMessageSender : IMessageSender
     {
         public RabbitMQMessageSender(IOptionsMonitor<EventBusRabbitMQOptions> options,
-            IRabbitMQConnection connection)
+            IRabbitMQConnection connection, ILogger<RabbitMQMessageSender> logger, IMessageSerializer messageSerializer)
         {
             Options = options;
+            Logger = logger;
+            MessageSerializer = messageSerializer;
             Channel = connection.GetChannel();
         }
 
         private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
         private IModel Channel { get; }
+        private ILogger<RabbitMQMessageSender> Logger { get; }
+        private IMessageSerializer MessageSerializer { get; }
 
         public async Task Send(MessageTransferModel message)
         {
@@ -31,22 +36,18 @@ namespace Shashlik.EventBus.RabbitMQ
             basicProperties.MessageId = message.MsgId;
             basicProperties.Headers = new Dictionary<string, object>();
 
-            // 附加数据放到header中传输
-            if (!message.Items.IsNullOrEmpty())
-                foreach (var keyValuePair in message.Items)
-                    basicProperties.Headers.TryAdd(keyValuePair.Key, keyValuePair.Value);
-
             if (message.DelayAt.HasValue)
             {
                 basicProperties = Channel.CreateBasicProperties();
                 var ex = (long) (message.DelayAt.Value - DateTimeOffset.Now).TotalMilliseconds;
-                //TODO: 延迟时间偏差计算
                 basicProperties.Expiration = ex.ToString();
             }
 
             Channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
-                Encoding.UTF8.GetBytes(message.MsgBody)
+                Encoding.UTF8.GetBytes(MessageSerializer.Serialize(message))
             );
+
+            Logger.LogDebug($"{DateTime.Now}: [EventBus-RabbitMQ] send msg: {message.ToJson()}");
 
             await Task.CompletedTask;
         }
