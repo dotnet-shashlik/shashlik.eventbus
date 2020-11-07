@@ -44,7 +44,21 @@ namespace Shashlik.EventBus.DefaultImpl
                         return;
                     if (failCount > 4)
                         // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
+                    {
+                        // 消息处理没问题就更新数据库状态
+                        try
+                        {
+                            await MessageStorage.UpdateReceived(messageStorageModel.MsgId, MessageStatus.Failed,
+                                failCount, null);
+                        }
+                        catch
+                        {
+                            // ignored
+                        }
+
                         return;
+                    }
+
                     try
                     {
                         // 执行事件消费

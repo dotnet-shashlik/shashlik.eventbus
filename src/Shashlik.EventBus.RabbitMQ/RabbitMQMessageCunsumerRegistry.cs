@@ -64,10 +64,7 @@ namespace Shashlik.EventBus.RabbitMQ
                     MsgId = e.BasicProperties.MessageId,
                     MsgBody = Encoding.UTF8.GetString(e.Body),
                     Items = e.BasicProperties.Headers
-                        .ToDictionary(r => r.Key, r =>
-                        {
-                            return Encoding.UTF8.GetString((byte[])r.Value);
-                        }),
+                        .ToDictionary(r => r.Key, r => Encoding.UTF8.GetString((byte[]) r.Value)),
                     //SendAt = e.BasicProperties.Headers.GetOrDefault(EventBusConsts.SendAtHeaderKey)
                     //    .ParseTo<DateTimeOffset>(),
                     //DelayAt = e.BasicProperties.Headers.GetOrDefault(EventBusConsts.DelayAtHeaderKey)
@@ -75,7 +72,8 @@ namespace Shashlik.EventBus.RabbitMQ
                 };
 
                 message.SendAt = message.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset>();
-                message.DelayAt = message.Items.GetOrDefault(EventBusConsts.DelayAtHeaderKey).ParseTo<DateTimeOffset?>();
+                message.DelayAt = message.Items.GetOrDefault(EventBusConsts.DelayAtHeaderKey)
+                    .ParseTo<DateTimeOffset?>();
 
                 listener.Receive(message);
                 // 一定要在消息接收ok后才确认ack

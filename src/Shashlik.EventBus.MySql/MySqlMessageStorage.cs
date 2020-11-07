@@ -67,7 +67,7 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
                 EventName = table.Rows[0].GetValue<string>("eventName"),
                 EventBody = table.Rows[0].GetValue<string>("eventBody"),
                 EventItems = table.Rows[0].GetValue<string>("eventItems"),
-                RetryCount = table.Rows[0].GetValue<int>("retriedCount"),
+                RetryCount = table.Rows[0].GetValue<int>("retryCount"),
                 Status = table.Rows[0].GetValue<string>("status"),
                 IsLocking = table.Rows[0].GetValue<bool>("isLocking"),
                 LockEnd = table.Rows[0].GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
@@ -94,7 +94,7 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
                 EventHandlerName = table.Rows[0].GetValue<string>("eventHandlerName"),
                 EventBody = table.Rows[0].GetValue<string>("eventBody"),
                 EventItems = table.Rows[0].GetValue<string>("eventItems"),
-                RetryCount = table.Rows[0].GetValue<int>("retriedCount"),
+                RetryCount = table.Rows[0].GetValue<int>("retryCount"),
                 Status = table.Rows[0].GetValue<string>("status"),
                 IsLocking = table.Rows[0].GetValue<bool>("isLocking"),
                 LockEnd = table.Rows[0].GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
@@ -199,7 +199,8 @@ DELETE FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `expireTime` != 0 AN
             CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now.GetLongDate();
+            var now = DateTime.Now;
+            var nowLong = now.GetLongDate();
 
             var sql = $@"
 SELECT * FROM `{Options.CurrentValue.PublishTableName}`
@@ -207,7 +208,7 @@ WHERE
     `environment` = '{environment}'
     AND `createTime` < {createTimeLimit}
     AND `retryCount` < {maxFailedRetryCount}
-    AND (`isLocking` = 0 OR `lockEnd` < {now})
+    AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
     AND (`status` = '{MessageStatus.Scheduled}' OR `status` = '{MessageStatus.Failed}')
 LIMIT {count};
 ";
@@ -235,7 +236,7 @@ LIMIT {count};
                         EventName = row.GetValue<string>("eventName"),
                         EventBody = row.GetValue<string>("eventBody"),
                         EventItems = row.GetValue<string>("eventItems"),
-                        RetryCount = row.GetValue<int>("retriedCount"),
+                        RetryCount = row.GetValue<int>("retryCount"),
                         Status = row.GetValue<string>("status"),
                         IsLocking = row.GetValue<bool>("isLocking"),
                         LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
@@ -244,9 +245,12 @@ LIMIT {count};
             var ids = idsBuilder.ToString();
             ids = ids.AsSpan()[0..(ids.Length - 1)].ToString();
 
-            var lockEnd = DateTime.Now.AddSeconds(lockSecond);
-            var updateSql =
-                $"UPDATE `{Options.CurrentValue.PublishTableName}` SET `isLocking` = 1, `lockEnd` = {lockEnd} WHERE = ({ids}) AND `isLocking` = 0;";
+            var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
+            var updateSql = $@"
+UPDATE `{Options.CurrentValue.PublishTableName}`
+SET `isLocking` = 1, `lockEnd` = {lockEnd}
+WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
+";
             var rows = await NonQuery(updateSql, null, cancellationToken);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
@@ -257,7 +261,8 @@ LIMIT {count};
             int lockSecond, CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now.GetLongDate();
+            var now = DateTime.Now;
+            var nowLong = now.GetLongDate();
 
             var sql = $@"
 SELECT * FROM `{Options.CurrentValue.ReceiveTableName}`
@@ -265,7 +270,7 @@ WHERE
     `environment` = '{environment}'
     AND `createTime` < {createTimeLimit}
     AND `retryCount` < {maxFailedRetryCount}
-    AND (`isLocking` = 0 OR `lockEnd` < {now})
+    AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
     AND (`status` = '{MessageStatus.Scheduled}' OR `status` = '{MessageStatus.Failed}')
 LIMIT {count};
 ";
@@ -294,7 +299,7 @@ LIMIT {count};
                         EventHandlerName = row.GetValue<string>("eventHandlerName"),
                         EventBody = row.GetValue<string>("eventBody"),
                         EventItems = row.GetValue<string>("eventItems"),
-                        RetryCount = row.GetValue<int>("retriedCount"),
+                        RetryCount = row.GetValue<int>("retryCount"),
                         Status = row.GetValue<string>("status"),
                         IsLocking = row.GetValue<bool>("isLocking"),
                         LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
@@ -303,9 +308,12 @@ LIMIT {count};
             var ids = idsBuilder.ToString();
             ids = ids.AsSpan()[0..(ids.Length - 1)].ToString();
 
-            var lockEnd = DateTime.Now.AddSeconds(lockSecond);
-            var updateSql =
-                $"UPDATE `{Options.CurrentValue.ReceiveTableName}` SET `isLocking` = 1, `lockEnd` = {lockEnd} WHERE = ({ids}) AND `isLocking` = 0;";
+            var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
+            var updateSql = $@"
+UPDATE `{Options.CurrentValue.ReceiveTableName}`
+SET `isLocking` = 1, `lockEnd` = {lockEnd}
+WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
+";
             var rows = await NonQuery(updateSql, null, cancellationToken);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }

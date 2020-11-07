@@ -15,11 +15,15 @@ namespace Shashlik.EventBus
         private IMessageStorage MessageStorage { get; }
         private EventBusOptions EventBusOptions { get; }
         private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
+        private IPublishedMessageRetryProvider PublishedMessageRetryProvider { get; }
+        private IReceivedMessageRetryProvider ReceivedMessageRetryProvider { get; }
 
         public EventBusStartup(IMessageStorageInitializer messageStorageInitializer,
             IEventHandlerFindProvider eventHandlerFindProvider, IMessageCunsumerRegistry messageCunsumerRegistry,
             IMessageSerializer messageSerializer, IMessageStorage messageStorage,
-            IMessageReceiveQueueProvider messageReceiveQueueProvider, IOptions<EventBusOptions> eventBusOptions)
+            IMessageReceiveQueueProvider messageReceiveQueueProvider, IOptions<EventBusOptions> eventBusOptions,
+            IPublishedMessageRetryProvider publishedMessageRetryProvider,
+            IReceivedMessageRetryProvider receivedMessageRetryProvider)
         {
             MessageStorageInitializer = messageStorageInitializer;
             EventHandlerFindProvider = eventHandlerFindProvider;
@@ -27,13 +31,15 @@ namespace Shashlik.EventBus
             MessageSerializer = messageSerializer;
             MessageStorage = messageStorage;
             MessageReceiveQueueProvider = messageReceiveQueueProvider;
+            PublishedMessageRetryProvider = publishedMessageRetryProvider;
+            ReceivedMessageRetryProvider = receivedMessageRetryProvider;
             EventBusOptions = eventBusOptions.Value;
         }
 
-        public void Build()
+        public async Task Build(CancellationToken cancellationToken)
         {
             // 先执行存储设施初始化
-            MessageStorageInitializer.Initialize();
+            await MessageStorageInitializer.Initialize(cancellationToken);
 
             // 注册监听器
             var descriptors = EventHandlerFindProvider.LoadAll();
@@ -44,17 +50,21 @@ namespace Shashlik.EventBus
                 MessageCunsumerRegistry.Subscribe(new DefaultMessageListener(eventHandlerDescriptor, environment,
                     MessageSerializer, MessageStorage, MessageReceiveQueueProvider));
             }
+
+            // 启动重试器
+            await PublishedMessageRetryProvider.DoRetry(cancellationToken);
+            // 启动重试器
+            await ReceivedMessageRetryProvider.DoRetry(cancellationToken);
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            Build();
-            return Task.CompletedTask;
+            await Build(cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            //throw new System.NotImplementedException();
+            //TODO: stop token
             return Task.CompletedTask;
         }
     }

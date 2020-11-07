@@ -23,7 +23,7 @@ namespace Node1
                     {
                         services.AddTransient<TestEventHandler1>();
                         const string conn =
-                            "";
+                            "...";
 
                         services.AddLogging(logging => { logging.AddConsole(); });
 
@@ -40,9 +40,9 @@ namespace Node1
                             .AddMySql<DemoDbContext>()
                             .AddRabbitMQ(r =>
                             {
-                                r.Host = "";
-                                r.UserName = "";
-                                r.Password = "";
+                                r.Host = "...";
+                                r.UserName = "...";
+                                r.Password = "...";
                             });
 
                         services.AddHostedService<TestService>();

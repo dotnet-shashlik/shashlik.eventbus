@@ -1,6 +1,7 @@
 ﻿// ReSharper disable CheckNamespace
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -31,27 +32,30 @@ namespace Shashlik.EventBus
         private ILogger<DefaultPublishedMessageRetryProvider> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public void DoRetry()
+        public async Task DoRetry(CancellationToken cancellationToken)
         {
-            TimerHelper.SetInterval(Retry, TimeSpan.FromMinutes(Options.CurrentValue.RetryIntervalSeconds));
+            await Retry(cancellationToken);
+
+            TimerHelper.SetInterval(async () => await Retry(cancellationToken),
+                TimeSpan.FromSeconds(Options.CurrentValue.RetryIntervalSeconds),
+                cancellationToken);
         }
 
-        void Retry()
+        private async Task Retry(CancellationToken cancellationToken)
         {
             // 一次最多读取200条数据
-            var messages = MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(
-                    Options.CurrentValue.RetryLimitCount,
-                    Options.CurrentValue.RetryAfterSeconds,
-                    Options.CurrentValue.RetryFailedMax, Options.CurrentValue.Environment,
-                    Options.CurrentValue.RetryIntervalSeconds)
-                .GetAwaiter().GetResult();
+            var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(
+                Options.CurrentValue.RetryLimitCount,
+                Options.CurrentValue.RetryAfterSeconds,
+                Options.CurrentValue.RetryFailedMax, Options.CurrentValue.Environment,
+                Options.CurrentValue.RetryIntervalSeconds, cancellationToken);
             if (messages.IsNullOrEmpty())
                 return;
 
             // 并行重试
             Parallel.ForEach(messages,
                 new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
-                (item) =>
+                async (item) =>
                 {
                     var messageTransferModel = new MessageTransferModel
                     {
@@ -63,9 +67,9 @@ namespace Shashlik.EventBus
                     };
                     try
                     {
-                        MessageSender.Send(messageTransferModel);
-                        MessageStorage.UpdatePublished(item.MsgId, MessageStatus.Succeeded, item.RetryCount + 1,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour));
+                        await MessageSender.Send(messageTransferModel);
+                        await MessageStorage.UpdatePublished(item.MsgId, MessageStatus.Succeeded, item.RetryCount + 1,
+                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour), cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -74,8 +78,8 @@ namespace Shashlik.EventBus
                         try
                         {
                             // 失败的数据不过期
-                            MessageStorage.UpdatePublished(item.MsgId, MessageStatus.Failed, item.RetryCount + 1,
-                                null);
+                            await MessageStorage.UpdatePublished(item.MsgId, MessageStatus.Failed, item.RetryCount + 1,
+                                null, cancellationToken);
                         }
                         catch
                         {
