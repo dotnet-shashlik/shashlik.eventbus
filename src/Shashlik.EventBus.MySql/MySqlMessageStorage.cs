@@ -77,7 +77,7 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
         public async Task<MessageStorageModel> FindReceivedById(string id,
             CancellationToken cancellationToken = default)
         {
-            var sql = $"SELECT * FROM `{Options.CurrentValue.PublishTableName}` WHERE `msgId`='{id}';";
+            var sql = $"SELECT * FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgId`='{id}';";
 
             var table = await SqlQuery(sql, cancellationToken);
             if (table.Rows.Count == 0)
