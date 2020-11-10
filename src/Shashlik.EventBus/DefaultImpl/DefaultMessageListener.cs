@@ -27,7 +27,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Receive(MessageTransferModel message)
         {
             var now = DateTime.Now;
-
+            if (message.Items == null) return;
             var receiveMessageStorageModel = new MessageStorageModel
             {
                 MsgId = message.MsgId,

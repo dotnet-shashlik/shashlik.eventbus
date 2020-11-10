@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{D22B
 		..\.github\workflows\nuget-push.yml = ..\.github\workflows\nuget-push.yml
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.PostgreSQL", "Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj", "{2F7F37BF-53F0-43B5-925F-77271A2E1EDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{A092F8BD-7250-4B87-BC54-FE13A3B9C94A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A092F8BD-7250-4B87-BC54-FE13A3B9C94A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A092F8BD-7250-4B87-BC54-FE13A3B9C94A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F7F37BF-53F0-43B5-925F-77271A2E1EDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F7F37BF-53F0-43B5-925F-77271A2E1EDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F7F37BF-53F0-43B5-925F-77271A2E1EDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F7F37BF-53F0-43B5-925F-77271A2E1EDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

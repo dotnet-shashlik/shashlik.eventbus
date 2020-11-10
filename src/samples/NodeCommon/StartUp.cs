@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Shashlik.EventBus;
-using Shashlik.EventBus.MySql;
+using Shashlik.EventBus.PostgreSQL;
 using Shashlik.EventBus.RabbitMQ;
 
 namespace NodeCommon
@@ -21,11 +21,11 @@ namespace NodeCommon
 
             serviceCollection.AddDbContextPool<DemoDbContext>(r =>
             {
-                r.UseMySql(conn, db => { db.MigrationsAssembly(this.GetType().Assembly.GetName().FullName); });
+                r.UseNpgsql(conn, db => { db.MigrationsAssembly(this.GetType().Assembly.GetName().FullName); });
             });
 
             serviceCollection.AddEventBus(r => { r.Environment = "Demo"; })
-                .AddMySql<DemoDbContext>()
+                .AddEventBusPostgreSQLStorage<DemoDbContext>()
                 .AddRabbitMQ(r =>
                 {
                     r.Host = "";

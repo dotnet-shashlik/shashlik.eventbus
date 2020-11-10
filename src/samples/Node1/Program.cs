@@ -2,13 +2,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NodeCommon;
 using Shashlik.EventBus;
-using Shashlik.EventBus.MySql;
+using Shashlik.EventBus.PostgreSQL;
 using Shashlik.EventBus.RabbitMQ;
 using Shashlik.Utils.Extensions;
 
@@ -16,6 +17,7 @@ namespace Node1
 {
     class Program
     {
+        public const string ConnectionString = "...";
         static async Task Main(string[] args)
         {
             var host = new HostBuilder().ConfigureHostConfiguration(configHost => { configHost.AddCommandLine(args); })
@@ -24,19 +26,16 @@ namespace Node1
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
-                    const string conn =
-                        "...";
-
                     services.AddLogging(logging => { logging.AddConsole(); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(conn,
+                        r.UseNpgsql(ConnectionString,
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     });
 
                     services.AddEventBus(r => { r.Environment = "Demo"; })
-                        .AddMySql<DemoDbContext>()
+                        .AddEventBusPostgreSQLStorage<DemoDbContext>()
                         .AddRabbitMQ(r =>
                         {
                             r.Host = "...";
@@ -90,6 +89,17 @@ namespace Node1
             {
                 return Task.CompletedTask;
             }
+        }
+    }
+
+    public class DbContextFactory : IDesignTimeDbContextFactory<DemoDbContext>
+    {
+        public DemoDbContext CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<DemoDbContext>();
+            optionsBuilder.UseNpgsql(Program.ConnectionString);
+
+            return new DemoDbContext(optionsBuilder.Options);
         }
     }
 }

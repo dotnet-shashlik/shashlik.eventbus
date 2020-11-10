@@ -24,10 +24,12 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NodeCommon", "samples\NodeCommon\NodeCommon.csproj", "{CB916B76-DA08-4B29-A97E-C7945EDC1AAC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{D22B2A9A-73F7-46DF-8395-5874FD1447B6}"
-ProjectSection(SolutionItems) = preProject
-	..\.github\workflows\nuget-push.yml = ..\.github\workflows\nuget-push.yml
-	..\common.xml = ..\common.xml
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		..\common.xml = ..\common.xml
+		..\.github\workflows\nuget-push.yml = ..\.github\workflows\nuget-push.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.PostgreSQL", "Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj", "{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +73,10 @@ Global
 		{CB916B76-DA08-4B29-A97E-C7945EDC1AAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CB916B76-DA08-4B29-A97E-C7945EDC1AAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CB916B76-DA08-4B29-A97E-C7945EDC1AAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

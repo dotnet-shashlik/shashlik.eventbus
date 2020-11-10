@@ -27,7 +27,7 @@ namespace Node3
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(conn,
+                        r.UseNpgsql(conn,
                             db =>
                             {
                                 db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName);
