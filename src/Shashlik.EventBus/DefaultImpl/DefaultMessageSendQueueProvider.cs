@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -23,16 +22,17 @@ namespace Shashlik.EventBus.DefaultImpl
         private IOptionsMonitor<EventBusOptions> Options { get; }
         private ILogger<DefaultMessageSendQueueProvider> Logger { get; }
 
-        public void Enqueue(MessageTransferModel messageTransferModel, MessageStorageModel messageStorageModel)
+        public void Enqueue(MessageTransferModel messageTransferModel, MessageStorageModel messageStorageModel,
+            CancellationToken cancellationToken)
         {
             // 延迟1秒再执行
-            Thread.Sleep(1000);
+            Thread.Sleep(100);
 
             Task.Run(async () =>
             {
                 // 执行失败的次数
                 var failCount = 0;
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     if (messageStorageModel.CreateTime <=
                         DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
@@ -56,7 +56,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             try
                             {
                                 await MessageStorage.UpdatePublished(messageStorageModel.MsgId, MessageStatus.Failed,
-                                    failCount, null);
+                                    failCount, null, cancellationToken);
                             }
                             catch
                             {
@@ -71,7 +71,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
                         // 消息发送没问题就更新数据库状态
                         await MessageStorage.UpdatePublished(messageStorageModel.MsgId, MessageStatus.Succeeded, 0,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour));
+                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour), cancellationToken);
 
                         return;
                     }
@@ -82,7 +82,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             $"[EventBus] message publish error, will try again later, event: {messageStorageModel.EventName},  msgId: {messageStorageModel.MsgId}");
                     }
                 }
-            });
+            }, cancellationToken);
         }
     }
 }

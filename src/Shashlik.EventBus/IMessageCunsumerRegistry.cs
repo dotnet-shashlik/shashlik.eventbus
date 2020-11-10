@@ -1,4 +1,6 @@
-﻿namespace Shashlik.EventBus
+﻿using System.Threading;
+
+namespace Shashlik.EventBus
 {
     /// <summary>
     /// 消费者注册
@@ -9,6 +11,7 @@
         /// 注册消费者
         /// </summary>
         /// <param name="listener">消息监听器</param>
-        void Subscribe(IMessageListener listener);
+        /// <param name="token">取消token</param>
+        void Subscribe(IMessageListener listener, CancellationToken token);
     }
 }

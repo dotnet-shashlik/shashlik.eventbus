@@ -27,7 +27,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageStorage MessageStorage { get; }
 
         public void Enqueue(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
-            EventHandlerDescriptor descriptor)
+            EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
             // 延迟1秒再执行
             Thread.Sleep(1000);
@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 // 执行失败的次数
                 var failCount = 0;
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     if (messageStorageModel.CreateTime <=
                         DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
@@ -49,7 +49,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         try
                         {
                             await MessageStorage.UpdateReceived(messageStorageModel.MsgId, MessageStatus.Failed,
-                                failCount, null);
+                                failCount, null, cancellationToken);
                         }
                         catch
                         {
@@ -65,7 +65,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         EventHandlerInvoker.Invoke(messageStorageModel, items, descriptor);
                         // 消息处理没问题就更新数据库状态
                         await MessageStorage.UpdateReceived(messageStorageModel.MsgId, MessageStatus.Succeeded, 0,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour));
+                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour), cancellationToken);
 
                         return;
                     }
@@ -76,7 +76,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             $"[EventBus] message receive error, will try again later, event: {descriptor.EventName}, handler: {descriptor.EventHandlerName}, msgId: {messageStorageModel.MsgId}");
                     }
                 }
-            });
+            }, cancellationToken);
         }
     }
 }

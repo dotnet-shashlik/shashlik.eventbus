@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.RabbitMQ
 {
@@ -27,7 +26,7 @@ namespace Shashlik.EventBus.RabbitMQ
         private ILogger<RabbitMQMessageCunsumerRegistry> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public void Subscribe(IMessageListener listener)
+        public void Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
             // 注册基础通信交换机
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
@@ -72,9 +71,30 @@ namespace Shashlik.EventBus.RabbitMQ
                 Logger.LogDebug(
                     $"{DateTime.Now}: [EventBus-RabbitMQ] received msg: {body}.");
 
-                listener.Receive(message);
-                // 一定要在消息接收ok后才确认ack
+                listener.Receive(message, cancellationToken);
+                // 一定要在消息接收处理完成后才确认ack
                 Channel.BasicAck(e.DeliveryTag, false);
+            };
+
+            consumer.Registered += (sender, e) =>
+            {
+                Logger.LogInformation(
+                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been registered.");
+            };
+            consumer.Shutdown += (sender, e) =>
+            {
+                Logger.LogWarning(
+                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been shutdown.");
+            };
+            consumer.Unregistered += (sender, e) =>
+            {
+                Logger.LogWarning(
+                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been unregistered.");
+            };
+            consumer.ConsumerCancelled += (sender, e) =>
+            {
+                Logger.LogWarning(
+                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been cancelled.");
             };
 
             Channel.BasicConsume(listener.Descriptor.EventHandlerName, false, consumer);

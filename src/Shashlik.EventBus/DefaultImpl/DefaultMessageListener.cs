@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -24,7 +25,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageStorage MessageStorage { get; }
         private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
 
-        public void Receive(MessageTransferModel message)
+        public void Receive(MessageTransferModel message, CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
 
@@ -46,13 +47,14 @@ namespace Shashlik.EventBus.DefaultImpl
             };
 
             // 消息id已经存在不再处理
-            if (MessageStorage.ExistsReceiveMessage(message.MsgId).GetAwaiter().GetResult())
+            if (MessageStorage.ExistsReceiveMessage(message.MsgId, cancellationToken).GetAwaiter().GetResult())
                 return;
 
             // 保存接收到的消息
-            MessageStorage.SaveReceived(receiveMessageStorageModel).GetAwaiter().GetResult();
+            MessageStorage.SaveReceived(receiveMessageStorageModel, cancellationToken).GetAwaiter().GetResult();
             // 进入接收消息处理队列
-            MessageReceiveQueueProvider.Enqueue(receiveMessageStorageModel, message.Items, Descriptor);
+            MessageReceiveQueueProvider.Enqueue(receiveMessageStorageModel, message.Items, Descriptor,
+                cancellationToken);
         }
     }
 }

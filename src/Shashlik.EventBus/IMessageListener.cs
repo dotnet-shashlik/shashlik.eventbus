@@ -1,4 +1,6 @@
-﻿namespace Shashlik.EventBus
+﻿using System.Threading;
+
+namespace Shashlik.EventBus
 {
     /// <summary>
     /// 消息监听执行器
@@ -14,6 +16,7 @@
         /// 消息接收处理
         /// </summary>
         /// <param name="messageTransferModel"></param>
-        void Receive(MessageTransferModel messageTransferModel);
+        /// <param name="cancellationToken"></param>
+        void Receive(MessageTransferModel messageTransferModel, CancellationToken cancellationToken);
     }
 }

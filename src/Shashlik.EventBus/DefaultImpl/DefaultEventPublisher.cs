@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 
@@ -31,7 +32,8 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task PublishAsync<TEvent>(
             TEvent @event,
             TransactionContext? transactionContext,
-            IDictionary<string, string>? items = null
+            IDictionary<string, string>? items = null,
+            CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
             await Publish(@event, transactionContext, null, items);
@@ -41,7 +43,9 @@ namespace Shashlik.EventBus.DefaultImpl
             TEvent @event,
             TransactionContext? transactionContext,
             DateTimeOffset delayAt,
-            IDictionary<string, string>? items = null) where TEvent : IDelayEvent
+            IDictionary<string, string>? items = null,
+            CancellationToken cancellationToken = default
+        ) where TEvent : IDelayEvent
         {
             await Publish(@event, transactionContext, delayAt, items);
         }
@@ -50,7 +54,9 @@ namespace Shashlik.EventBus.DefaultImpl
             TEvent @event,
             TransactionContext? transactionContext,
             DateTimeOffset? delayAt,
-            IDictionary<string, string>? items = null)
+            IDictionary<string, string>? items = null,
+            CancellationToken cancellationToken = default
+        )
         {
             if (@event == null) throw new ArgumentNullException(nameof(@event));
             var now = DateTimeOffset.Now;
@@ -100,9 +106,9 @@ namespace Shashlik.EventBus.DefaultImpl
             };
 
             // 消息持久化
-            await MessageStorage.SavePublished(messageStorageModel, transactionContext);
+            await MessageStorage.SavePublished(messageStorageModel, transactionContext, cancellationToken);
             // 进入消息发送队列
-            MessageSendQueueProvider.Enqueue(messageTransferModel, messageStorageModel);
+            MessageSendQueueProvider.Enqueue(messageTransferModel, messageStorageModel, cancellationToken);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 
 namespace Shashlik.EventBus
 {
@@ -13,6 +14,8 @@ namespace Shashlik.EventBus
         /// <param name="message"></param>
         /// <param name="items"></param>
         /// <param name="descriptor"></param>
-        void Enqueue(MessageStorageModel message, IDictionary<string, string> items, EventHandlerDescriptor descriptor);
+        /// <param name="cancellationToken"></param>
+        void Enqueue(MessageStorageModel message, IDictionary<string, string> items, EventHandlerDescriptor descriptor,
+            CancellationToken cancellationToken);
     }
 }
