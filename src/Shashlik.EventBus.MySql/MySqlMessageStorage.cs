@@ -375,8 +375,11 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 
                 cmd.CommandText = sql;
 
-                if (transactionContext.TransactionInstance == null && dbContext.Database.CurrentTransaction != null)
-                    cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
+                if (transactionContext.TransactionInstance == null)
+                {
+                    if(dbContext.Database.CurrentTransaction != null)
+                        cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
+                }
                 else if (transactionContext.TransactionInstance is IDbContextTransaction dbContextTransaction)
                     cmd.Transaction = dbContextTransaction.GetDbTransaction();
                 else if (transactionContext.TransactionInstance is IDbTransaction dbTransaction)
