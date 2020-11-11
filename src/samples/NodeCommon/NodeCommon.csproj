@@ -3,11 +3,17 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
     </PropertyGroup>
+
+    <ItemGroup>
+      <Compile Remove="Migrations\**" />
+      <EmbeddedResource Remove="Migrations\**" />
+      <None Remove="Migrations\**" />
+    </ItemGroup>
     
     <ItemGroup>
         <ProjectReference Include="..\..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
-        <ProjectReference Include="..\..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.RabbitMQ\Shashlik.EventBus.RabbitMQ.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.9">
@@ -21,8 +27,6 @@
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.9" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.9" />
         <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.9" />
-
-
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.3" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
     </ItemGroup>
 </Project>
