@@ -346,7 +346,6 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
         private async Task<int> NonQuery(string sql, MySqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
@@ -377,7 +376,7 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 
                 if (transactionContext.TransactionInstance == null)
                 {
-                    if(dbContext.Database.CurrentTransaction != null)
+                    if (dbContext.Database.CurrentTransaction != null)
                         cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
                 }
                 else if (transactionContext.TransactionInstance is IDbContextTransaction dbContextTransaction)

@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace Shashlik.EventBus.PostgreSQL
 {
-    class PostgreSQLMessageSotrageInitializer : IMessageStorageInitializer
+    internal class PostgreSqlMessageStorageInitializer : IMessageStorageInitializer
     {
-        public PostgreSQLMessageSotrageInitializer(IOptionsMonitor<EventBusPostgreSQLOptions> options,
+        public PostgreSqlMessageStorageInitializer(IOptionsMonitor<EventBusPostgreSQLOptions> options,
             IConnectionString connectionString)
         {
             Options = options;

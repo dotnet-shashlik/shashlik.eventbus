@@ -49,7 +49,7 @@ namespace Shashlik.EventBus.PostgreSQL
         {
             service.AddOptions<EventBusPostgreSQLOptions>();
             service.AddSingleton<IMessageStorage, PostgreSQLMessageStorage>();
-            service.AddTransient<IMessageStorageInitializer, PostgreSQLMessageSotrageInitializer>();
+            service.AddTransient<IMessageStorageInitializer, PostgreSqlMessageStorageInitializer>();
             service.AddSingleton<IConnectionString, DefaultConnectionString>();
 
             return service;

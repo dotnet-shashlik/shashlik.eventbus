@@ -17,7 +17,8 @@ namespace Shashlik.EventBus.PostgreSQL
 {
     public class PostgreSQLMessageStorage : IMessageStorage
     {
-        public PostgreSQLMessageStorage(IOptionsMonitor<EventBusPostgreSQLOptions> options, IConnectionString connectionString)
+        public PostgreSQLMessageStorage(IOptionsMonitor<EventBusPostgreSQLOptions> options,
+            IConnectionString connectionString)
         {
             Options = options;
             ConnectionString = connectionString;
@@ -28,7 +29,8 @@ namespace Shashlik.EventBus.PostgreSQL
 
         public async ValueTask<bool> ExistsPublishMessage(string msgId, CancellationToken cancellationToken = default)
         {
-            var sql = $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{msgId}';";
+            var sql =
+                $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{msgId}';";
 
             var count = (await SqlScalar(sql, cancellationToken))?.ParseTo<int>() ?? 0;
             return count > 0;
@@ -36,13 +38,15 @@ namespace Shashlik.EventBus.PostgreSQL
 
         public async ValueTask<bool> ExistsReceiveMessage(string msgId, CancellationToken cancellationToken = default)
         {
-            var sql = $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{msgId}';";
+            var sql =
+                $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{msgId}';";
 
             var count = (await SqlScalar(sql, cancellationToken))?.ParseTo<int>() ?? 0;
             return count > 0;
         }
 
-        public async Task<MessageStorageModel> FindPublishedById(string id, CancellationToken cancellationToken = default)
+        public async Task<MessageStorageModel> FindPublishedById(string id,
+            CancellationToken cancellationToken = default)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{id}';";
 
@@ -67,7 +71,8 @@ namespace Shashlik.EventBus.PostgreSQL
             };
         }
 
-        public async Task<MessageStorageModel> FindReceivedById(string id, CancellationToken cancellationToken = default)
+        public async Task<MessageStorageModel> FindReceivedById(string id,
+            CancellationToken cancellationToken = default)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{id}';";
 
@@ -108,7 +113,8 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new NpgsqlParameter("@environment", NpgsqlDbType.Varchar) {Value = message.Environment},
                 new NpgsqlParameter("@createTime", NpgsqlDbType.Bigint) {Value = message.CreateTime.GetLongDate()},
                 new NpgsqlParameter("@delayAt", NpgsqlDbType.Bigint) {Value = message.DelayAt?.GetLongDate() ?? 0},
-                new NpgsqlParameter("@expireTime", NpgsqlDbType.Bigint) {Value = message.ExpireTime?.GetLongDate() ?? 0},
+                new NpgsqlParameter("@expireTime", NpgsqlDbType.Bigint)
+                    {Value = message.ExpireTime?.GetLongDate() ?? 0},
                 new NpgsqlParameter("@eventName", NpgsqlDbType.Varchar) {Value = message.EventName},
                 new NpgsqlParameter("@eventBody", NpgsqlDbType.Text) {Value = message.EventBody},
                 new NpgsqlParameter("@eventItems", NpgsqlDbType.Text) {Value = message.EventItems},
@@ -137,7 +143,8 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new NpgsqlParameter("@environment", NpgsqlDbType.Varchar) {Value = message.Environment},
                 new NpgsqlParameter("@createTime", NpgsqlDbType.Bigint) {Value = message.CreateTime.GetLongDate()},
                 new NpgsqlParameter("@delayAt", NpgsqlDbType.Bigint) {Value = message.DelayAt?.GetLongDate() ?? 0},
-                new NpgsqlParameter("@expireTime", NpgsqlDbType.Bigint) {Value = message.ExpireTime?.GetLongDate() ?? 0},
+                new NpgsqlParameter("@expireTime", NpgsqlDbType.Bigint)
+                    {Value = message.ExpireTime?.GetLongDate() ?? 0},
                 new NpgsqlParameter("@eventName", NpgsqlDbType.Varchar) {Value = message.EventName},
                 new NpgsqlParameter("@eventHandlerName", NpgsqlDbType.Varchar) {Value = message.EventHandlerName},
                 new NpgsqlParameter("@eventBody", NpgsqlDbType.Text) {Value = message.EventBody},
@@ -186,7 +193,8 @@ DELETE FROM {Options.CurrentValue.FullReceiveTableName} WHERE ""expireTime"" != 
             await NonQuery(sql, null, cancellationToken);
         }
 
-        public async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
+        public async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAndLock(int count,
+            int delayRetrySecond, int maxFailedRetryCount,
             string environment, int lockSecond, CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
@@ -246,7 +254,8 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
 
-        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount, string environment,
+        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLock(int count,
+            int delayRetrySecond, int maxFailedRetryCount, string environment,
             int lockSecond, CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
@@ -307,7 +316,6 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
 
-        
         private async Task<DataTable> SqlQuery(string sql, CancellationToken cancellationToken = default)
         {
             await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);
@@ -332,7 +340,6 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
         private async Task<int> NonQuery(string sql, NpgsqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
             await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
@@ -363,7 +370,7 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
 
                 if (transactionContext.TransactionInstance == null)
                 {
-                    if(dbContext.Database.CurrentTransaction != null)
+                    if (dbContext.Database.CurrentTransaction != null)
                         cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
                 }
                 else if (transactionContext.TransactionInstance is IDbContextTransaction dbContextTransaction)
