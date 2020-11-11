@@ -6,28 +6,28 @@ namespace Shashlik.EventBus.RabbitMQ
 {
     public static class RabbitMQExtensions
     {
-        public static IServiceCollection AddRabbitMQ(this IServiceCollection serviceCollection,
+        public static IEventBusBuilder AddRabbitMQ(this IEventBusBuilder serviceCollection,
             IConfigurationSection configurationSection)
         {
-            serviceCollection.Configure<EventBusRabbitMQOptions>(configurationSection);
+            serviceCollection.Services.Configure<EventBusRabbitMQOptions>(configurationSection);
 
             return serviceCollection.AddRabbitMQ();
         }
 
-        public static IServiceCollection AddRabbitMQ(this IServiceCollection serviceCollection,
+        public static IEventBusBuilder AddRabbitMQ(this IEventBusBuilder serviceCollection,
             Action<EventBusRabbitMQOptions> action)
         {
-            serviceCollection.Configure(action);
+            serviceCollection.Services.Configure(action);
 
             return serviceCollection.AddRabbitMQ();
         }
 
-        public static IServiceCollection AddRabbitMQ(this IServiceCollection serviceCollection)
+        public static IEventBusBuilder AddRabbitMQ(this IEventBusBuilder serviceCollection)
         {
-            serviceCollection.AddOptions<EventBusRabbitMQOptions>();
-            serviceCollection.AddSingleton<IMessageSender, RabbitMQMessageSender>();
-            serviceCollection.AddTransient<IEventSubscriber, RabbitMQEventSubscriber>();
-            serviceCollection.AddSingleton<IRabbitMQConnection, DefaultRabbitMQConnection>();
+            serviceCollection.Services.AddOptions<EventBusRabbitMQOptions>();
+            serviceCollection.Services.AddSingleton<IMessageSender, RabbitMQMessageSender>();
+            serviceCollection.Services.AddTransient<IEventSubscriber, RabbitMQEventSubscriber>();
+            serviceCollection.Services.AddSingleton<IRabbitMQConnection, DefaultRabbitMQConnection>();
 
             return serviceCollection;
         }

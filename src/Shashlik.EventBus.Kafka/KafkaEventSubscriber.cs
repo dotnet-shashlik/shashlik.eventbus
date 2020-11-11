@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shashlik.Utils.Extensions;
 
@@ -22,55 +23,59 @@ namespace Shashlik.EventBus.Kafka
 
         public void Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
-            var cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
-            cunsumer.Subscribe(listener.Descriptor.EventName);
-            while (!cancellationToken.IsCancellationRequested)
+            Task.Run(() =>
             {
-                var consumerResult = cunsumer.Consume(cancellationToken);
-                if (consumerResult.IsPartitionEOF || consumerResult.Message.Value == null) continue;
-                if (!consumerResult.Message.Headers.IsNullOrEmpty())
+                var cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
+                cunsumer.Subscribe(listener.Descriptor.EventName);
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (consumerResult.Message.Headers.TryGetLastBytes(EventBusConsts.DelayAtHeaderKey, out var bytes))
+                    var consumerResult = cunsumer.Consume(cancellationToken);
+                    if (consumerResult.IsPartitionEOF || consumerResult.Message.Value == null) continue;
+                    if (!consumerResult.Message.Headers.IsNullOrEmpty())
                     {
-                        var delayAt = BitConverter.ToInt64(bytes);
-                        // 没到执行时间,继续放在队列里面
-                        if (delayAt > DateTimeOffset.Now.GetLongDate())
-                            continue;
+                        if (consumerResult.Message.Headers.TryGetLastBytes(EventBusConsts.DelayAtHeaderKey,
+                            out var bytes))
+                        {
+                            var delayAt = BitConverter.ToInt64(bytes);
+                            // 没到执行时间,继续放在队列里面
+                            if (delayAt > DateTimeOffset.Now.GetLongDate())
+                                continue;
+                        }
                     }
-                }
 
-                MessageTransferModel message;
-                try
-                {
-                    message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
-                }
-                catch (Exception exception)
-                {
-                    Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.", exception);
-                    continue;
-                }
+                    MessageTransferModel message;
+                    try
+                    {
+                        message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
+                    }
+                    catch (Exception exception)
+                    {
+                        Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.", exception);
+                        continue;
+                    }
 
-                if (message == null)
-                {
-                    Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
-                    continue;
+                    if (message == null)
+                    {
+                        Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
+                        continue;
+                    }
+
+                    if (message.EventName != listener.Descriptor.EventName)
+                    {
+                        Logger.LogError(
+                            $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\"");
+                        continue;
+                    }
+
+                    Logger.LogDebug(
+                        $"[EventBus-Kafka] received msg: {message?.ToJson()}.");
+
+                    // 处理消息
+                    listener.OnReceive(message, cancellationToken);
+                    // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
+                    cunsumer.Commit(consumerResult);
                 }
-
-                if (message.EventName != listener.Descriptor.EventName)
-                {
-                    Logger.LogError(
-                        $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\"");
-                    continue;
-                }
-
-                Logger.LogDebug(
-                    $"[EventBus-Kafka] received msg: {message?.ToJson()}.");
-
-                // 处理消息
-                listener.OnReceive(message, cancellationToken);
-                // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
-                cunsumer.StoreOffset(consumerResult);
-            }
+            }, cancellationToken);
         }
     }
 }

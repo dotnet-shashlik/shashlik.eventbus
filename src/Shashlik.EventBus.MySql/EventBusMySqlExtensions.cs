@@ -8,13 +8,13 @@ namespace Shashlik.EventBus.MySql
 {
     public static class EventBusMySqlExtensions
     {
-        public static IServiceCollection AddMySql(
-            this IServiceCollection service,
+        public static IEventBusBuilder AddMySql(
+            this IEventBusBuilder service,
             string connectionString,
             string publishTableName = null,
             string receiveTableName = null)
         {
-            service.Configure<EventBusMySqlOptions>(options =>
+            service.Services.Configure<EventBusMySqlOptions>(options =>
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
@@ -26,13 +26,13 @@ namespace Shashlik.EventBus.MySql
             return service.AddMySql();
         }
 
-        public static IServiceCollection AddMySql<TDbContext>(
-            this IServiceCollection service,
+        public static IEventBusBuilder AddMySql<TDbContext>(
+            this IEventBusBuilder service,
             string publishTableName = null,
             string receiveTableName = null)
             where TDbContext : DbContext
         {
-            service.Configure<EventBusMySqlOptions>(options =>
+            service.Services.Configure<EventBusMySqlOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
@@ -44,12 +44,12 @@ namespace Shashlik.EventBus.MySql
             return service.AddMySql();
         }
 
-        public static IServiceCollection AddMySql(this IServiceCollection service)
+        public static IEventBusBuilder AddMySql(this IEventBusBuilder service)
         {
-            service.AddOptions<EventBusMySqlOptions>();
-            service.AddSingleton<IMessageStorage, MySqlMessageStorage>();
-            service.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
-            service.AddSingleton<IConnectionString, DefaultConnectionString>();
+            service.Services.AddOptions<EventBusMySqlOptions>();
+            service.Services.AddSingleton<IMessageStorage, MySqlMessageStorage>();
+            service.Services.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
+            service.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
 
             return service;
         }

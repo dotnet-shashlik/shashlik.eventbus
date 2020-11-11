@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace NodeCommon.Migrations
+namespace MySqlSampleBase.MySqlMigrations
 {
     public partial class init : Migration
     {

@@ -9,13 +9,13 @@ namespace Shashlik.EventBus.PostgreSQL
 {
     public static class EventBusPostgreSQLExtensions
     {
-        public static IServiceCollection AddEventBusPostgreSQLStorage(
-            this IServiceCollection service,
+        public static IEventBusBuilder AddEventBusPostgreSQLStorage(
+            this IEventBusBuilder service,
             string connectionString,
             string publishTableName = null,
             string receiveTableName = null)
         {
-            service.Configure<EventBusPostgreSQLOptions>(options =>
+            service.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
@@ -27,13 +27,13 @@ namespace Shashlik.EventBus.PostgreSQL
             return service.AddEventBusPostgreSQLStorage();
         }
 
-        public static IServiceCollection AddEventBusPostgreSQLStorage<TDbContext>(
-            this IServiceCollection service,
+        public static IEventBusBuilder AddEventBusPostgreSQLStorage<TDbContext>(
+            this IEventBusBuilder service,
             string publishTableName = null,
             string receiveTableName = null)
             where TDbContext : DbContext
         {
-            service.Configure<EventBusPostgreSQLOptions>(options =>
+            service.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
@@ -45,12 +45,12 @@ namespace Shashlik.EventBus.PostgreSQL
             return service.AddEventBusPostgreSQLStorage();
         }
 
-        public static IServiceCollection AddEventBusPostgreSQLStorage(this IServiceCollection service)
+        public static IEventBusBuilder AddEventBusPostgreSQLStorage(this IEventBusBuilder service)
         {
-            service.AddOptions<EventBusPostgreSQLOptions>();
-            service.AddSingleton<IMessageStorage, PostgreSQLMessageStorage>();
-            service.AddTransient<IMessageStorageInitializer, PostgreSqlMessageStorageInitializer>();
-            service.AddSingleton<IConnectionString, DefaultConnectionString>();
+            service.Services.AddOptions<EventBusPostgreSQLOptions>();
+            service.Services.AddSingleton<IMessageStorage, PostgreSQLMessageStorage>();
+            service.Services.AddTransient<IMessageStorageInitializer, PostgreSqlMessageStorageInitializer>();
+            service.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
 
             return service;
         }

@@ -8,38 +8,38 @@ namespace Shashlik.EventBus.Kafka
 {
     public static class KafkaExtensions
     {
-        public static IServiceCollection AddKafka(this IServiceCollection serviceCollection,
+        public static IEventBusBuilder AddKafka(this IEventBusBuilder serviceCollection,
             IConfigurationSection configurationSection)
         {
-            serviceCollection.Configure<EventBusKafkaOptions>(configurationSection);
+            serviceCollection.Services.Configure<EventBusKafkaOptions>(configurationSection);
             return serviceCollection.AddKafka();
         }
 
-        public static IServiceCollection AddKafka(this IServiceCollection serviceCollection,
+        public static IEventBusBuilder AddKafka(this IEventBusBuilder serviceCollection,
             Action<EventBusKafkaOptions> action)
         {
-            serviceCollection.Configure(action);
+            serviceCollection.Services.Configure(action);
             return serviceCollection.AddKafka();
         }
 
-        public static IServiceCollection AddKafka(this IServiceCollection serviceCollection)
+        public static IEventBusBuilder AddKafka(this IEventBusBuilder serviceCollection)
         {
-            serviceCollection.AddOptions<EventBusKafkaOptions>();
+            serviceCollection.Services.AddOptions<EventBusKafkaOptions>();
 
             // 重置一些默认值
-            serviceCollection.Configure<EventBusKafkaOptions>(r =>
+            serviceCollection.Services.Configure<EventBusKafkaOptions>(r =>
             {
                 r.Base.CopyTo(r.Producer);
                 r.Base.CopyTo(r.Consumer);
 
                 // see: https://docs.confluent.io/current/clients/dotnet.html
-                r.Consumer.EnableAutoOffsetStore = false;
-                r.Consumer.EnableAutoCommit = true;
+                //r.Consumer.EnableAutoOffsetStore = false;
+                r.Consumer.EnableAutoCommit = false;
                 r.Consumer.AutoOffsetReset = AutoOffsetReset.Earliest;
             });
-            serviceCollection.AddSingleton<IMessageSender, KafkaMessageSender>();
-            serviceCollection.AddTransient<IEventSubscriber, KafkaEventSubscriber>();
-            serviceCollection.AddSingleton<IKafkaConnection, DefaultKafkaConnection>();
+            serviceCollection.Services.AddSingleton<IMessageSender, KafkaMessageSender>();
+            serviceCollection.Services.AddTransient<IEventSubscriber, KafkaEventSubscriber>();
+            serviceCollection.Services.AddSingleton<IKafkaConnection, DefaultKafkaConnection>();
 
             return serviceCollection;
         }
