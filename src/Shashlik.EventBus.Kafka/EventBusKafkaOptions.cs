@@ -19,16 +19,5 @@ namespace Shashlik.EventBus.Kafka
         /// 消费者配置
         /// </summary>
         public ConsumerConfig Consumer { get; set; } = new ConsumerConfig();
-
-        public void InitOptions()
-        {
-            Base.CopyTo(Producer);
-            Base.CopyTo(Consumer);
-
-            // see: https://docs.confluent.io/current/clients/dotnet.html
-            Consumer.EnableAutoOffsetStore = false;
-            Consumer.EnableAutoCommit = true;
-            Consumer.AutoOffsetReset = AutoOffsetReset.Earliest;
-        }
     }
 }
