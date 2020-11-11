@@ -1,18 +1,68 @@
-﻿using System;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Confluent.Kafka;
+using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.Kafka
 {
-    public class DefaultKafkaConnection : IKafkaConnection, IDisposable
+    public class DefaultKafkaConnection : IKafkaConnection
     {
+        public DefaultKafkaConnection(IOptionsMonitor<EventBusKafkaOptions> options)
+        {
+            Options = options;
+        }
+
+        private ConcurrentDictionary<int, IProducer<string, byte[]>> Producers { get; } =
+            new ConcurrentDictionary<int, IProducer<string, byte[]>>();
+
+        private ConcurrentDictionary<string, IConsumer<string, byte[]>> Consumers { get; } =
+            new ConcurrentDictionary<string, IConsumer<string, byte[]>>();
+
+        private IOptionsMonitor<EventBusKafkaOptions> Options { get; }
+
         public IProducer<string, byte[]> GetProducer()
         {
-            throw new NotImplementedException();
+            var id = Thread.CurrentThread.ManagedThreadId;
+            return Producers.GetOrAdd(id, r =>
+                new ProducerBuilder<string, byte[]>(Options.CurrentValue.Producer).Build()
+            );
+        }
+
+        public IConsumer<string, byte[]> CreateCunsumer(string groupId)
+        {
+            // 移除group.id配置项
+            var list = Options.CurrentValue.Consumer.Where(r => r.Key != "group.id").ToList();
+            list.Add(new KeyValuePair<string, string>("group.id", groupId));
+
+            return Consumers.GetOrAdd(groupId, r =>
+                new ConsumerBuilder<string, byte[]>(list).Build()
+            );
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            try
+            {
+                foreach (var value in Producers.Values)
+                {
+                    value.Dispose();
+                }
+
+                Producers.Clear();
+                foreach (var value in Consumers.Values)
+                {
+                    value.Close();
+                    value.Dispose();
+                }
+
+                Consumers.Clear();
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }

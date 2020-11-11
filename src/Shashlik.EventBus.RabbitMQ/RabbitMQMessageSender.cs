@@ -47,7 +47,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 Encoding.UTF8.GetBytes(MessageSerializer.Serialize(message))
             );
 
-            Logger.LogDebug($"{DateTime.Now}: [EventBus-RabbitMQ] send msg: {message.ToJson()}");
+            Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message.ToJson()}");
 
             await Task.CompletedTask;
         }

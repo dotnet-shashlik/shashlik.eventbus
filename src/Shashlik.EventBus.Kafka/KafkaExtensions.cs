@@ -10,7 +10,6 @@ namespace Shashlik.EventBus.Kafka
             IConfigurationSection configurationSection)
         {
             serviceCollection.Configure<EventBusKafkaOptions>(configurationSection);
-
             return serviceCollection.AddKafka();
         }
 
@@ -18,15 +17,14 @@ namespace Shashlik.EventBus.Kafka
             Action<EventBusKafkaOptions> action)
         {
             serviceCollection.Configure(action);
-
             return serviceCollection.AddKafka();
         }
 
         public static IServiceCollection AddKafka(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddOptions<EventBusKafkaOptions>();
-            serviceCollection.AddSingleton<IMessageSender, RabbitMQMessageSender>();
-            serviceCollection.AddTransient<IMessageCunsumerRegistry, KafkaMessageCunsumerRegistry>();
+            serviceCollection.AddSingleton<IMessageSender, KafkaMessageSender>();
+            serviceCollection.AddTransient<IEventSubscriber, KafkaEventSubscriber>();
             serviceCollection.AddSingleton<IKafkaConnection, DefaultKafkaConnection>();
 
             return serviceCollection;

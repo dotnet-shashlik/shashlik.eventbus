@@ -6,13 +6,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.RabbitMQ
 {
-    public class RabbitMQMessageCunsumerRegistry : IMessageCunsumerRegistry
+    public class RabbitMQEventSubscriber : IEventSubscriber
     {
-        public RabbitMQMessageCunsumerRegistry(IOptionsMonitor<EventBusRabbitMQOptions> options,
-            IRabbitMQConnection connection, ILogger<RabbitMQMessageCunsumerRegistry> logger,
+        public RabbitMQEventSubscriber(IOptionsMonitor<EventBusRabbitMQOptions> options,
+            IRabbitMQConnection connection, ILogger<RabbitMQEventSubscriber> logger,
             IMessageSerializer messageSerializer)
         {
             Options = options;
@@ -23,7 +24,7 @@ namespace Shashlik.EventBus.RabbitMQ
 
         private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
         private IModel Channel { get; }
-        private ILogger<RabbitMQMessageCunsumerRegistry> Logger { get; }
+        private ILogger<RabbitMQEventSubscriber> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
         public void Subscribe(IMessageListener listener, CancellationToken cancellationToken)
@@ -63,15 +64,34 @@ namespace Shashlik.EventBus.RabbitMQ
             var consumer = new EventingBasicConsumer(Channel);
             consumer.Received += (sender, e) =>
             {
-                var body = Encoding.UTF8.GetString(e.Body);
-                var message =
-                    MessageSerializer.Deserialize(body, typeof(MessageTransferModel)) as
-                        MessageTransferModel;
+                MessageTransferModel message;
+                try
+                {
+                    message = MessageSerializer.Deserialize<MessageTransferModel>(e.Body);
+                }
+                catch (Exception exception)
+                {
+                    Logger.LogError("[EventBus-RabbitMQ] deserialize message from rabbit error.", exception);
+                    return;
+                }
+
+                if (message == null)
+                {
+                    Logger.LogError("[EventBus-RabbitMQ] deserialize message from rabbit error.");
+                    return;
+                }
+
+                if (message.EventName != listener.Descriptor.EventName)
+                {
+                    Logger.LogError(
+                        $"[EventBus-RabbitMQ] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\"");
+                    return;
+                }
 
                 Logger.LogDebug(
-                    $"{DateTime.Now}: [EventBus-RabbitMQ] received msg: {body}.");
+                    $"[EventBus-RabbitMQ] received msg: {message?.ToJson()}.");
 
-                listener.Receive(message, cancellationToken);
+                listener.OnReceive(message, cancellationToken);
                 // 一定要在消息接收处理完成后才确认ack
                 Channel.BasicAck(e.DeliveryTag, false);
             };
@@ -79,22 +99,22 @@ namespace Shashlik.EventBus.RabbitMQ
             consumer.Registered += (sender, e) =>
             {
                 Logger.LogInformation(
-                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been registered.");
+                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been registered.");
             };
             consumer.Shutdown += (sender, e) =>
             {
                 Logger.LogWarning(
-                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been shutdown.");
+                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been shutdown.");
             };
             consumer.Unregistered += (sender, e) =>
             {
                 Logger.LogWarning(
-                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been unregistered.");
+                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been unregistered.");
             };
             consumer.ConsumerCancelled += (sender, e) =>
             {
                 Logger.LogWarning(
-                    $"{DateTime.Now}: [EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been cancelled.");
+                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been cancelled.");
             };
 
             Channel.BasicConsume(listener.Descriptor.EventHandlerName, false, consumer);

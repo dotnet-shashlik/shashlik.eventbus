@@ -17,6 +17,6 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <param name="messageTransferModel"></param>
         /// <param name="cancellationToken"></param>
-        void Receive(MessageTransferModel messageTransferModel, CancellationToken cancellationToken);
+        void OnReceive(MessageTransferModel messageTransferModel, CancellationToken cancellationToken);
     }
 }

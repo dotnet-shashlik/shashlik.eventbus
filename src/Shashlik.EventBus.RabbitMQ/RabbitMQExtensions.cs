@@ -26,7 +26,7 @@ namespace Shashlik.EventBus.RabbitMQ
         {
             serviceCollection.AddOptions<EventBusRabbitMQOptions>();
             serviceCollection.AddSingleton<IMessageSender, RabbitMQMessageSender>();
-            serviceCollection.AddTransient<IMessageCunsumerRegistry, RabbitMQMessageCunsumerRegistry>();
+            serviceCollection.AddTransient<IEventSubscriber, RabbitMQEventSubscriber>();
             serviceCollection.AddSingleton<IRabbitMQConnection, DefaultRabbitMQConnection>();
 
             return serviceCollection;

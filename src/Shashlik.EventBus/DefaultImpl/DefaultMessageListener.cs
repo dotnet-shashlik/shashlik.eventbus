@@ -25,7 +25,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageStorage MessageStorage { get; }
         private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
 
-        public void Receive(MessageTransferModel message, CancellationToken cancellationToken)
+        public void OnReceive(MessageTransferModel message, CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
 

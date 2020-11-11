@@ -10,32 +10,26 @@ namespace Shashlik.EventBus
     {
         private IMessageStorageInitializer MessageStorageInitializer { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
-        private IMessageCunsumerRegistry MessageCunsumerRegistry { get; }
-        private IMessageSerializer MessageSerializer { get; }
-        private IMessageStorage MessageStorage { get; }
-        private EventBusOptions EventBusOptions { get; }
-        private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
+        private IEventSubscriber EventSubscriber { get; }
         private IPublishedMessageRetryProvider PublishedMessageRetryProvider { get; }
         private IReceivedMessageRetryProvider ReceivedMessageRetryProvider { get; }
-
+        private IMessageListenerFactory MessageListenerFactory { get; }
         private CancellationTokenSource StopCancellationTokenSource { get; }
 
-        public EventBusStartup(IMessageStorageInitializer messageStorageInitializer,
-            IEventHandlerFindProvider eventHandlerFindProvider, IMessageCunsumerRegistry messageCunsumerRegistry,
-            IMessageSerializer messageSerializer, IMessageStorage messageStorage,
-            IMessageReceiveQueueProvider messageReceiveQueueProvider, IOptions<EventBusOptions> eventBusOptions,
+        public EventBusStartup(
+            IMessageStorageInitializer messageStorageInitializer,
+            IEventHandlerFindProvider eventHandlerFindProvider,
+            IEventSubscriber eventSubscriber,
             IPublishedMessageRetryProvider publishedMessageRetryProvider,
-            IReceivedMessageRetryProvider receivedMessageRetryProvider)
+            IReceivedMessageRetryProvider receivedMessageRetryProvider,
+            IMessageListenerFactory messageListenerFactory)
         {
             MessageStorageInitializer = messageStorageInitializer;
             EventHandlerFindProvider = eventHandlerFindProvider;
-            MessageCunsumerRegistry = messageCunsumerRegistry;
-            MessageSerializer = messageSerializer;
-            MessageStorage = messageStorage;
-            MessageReceiveQueueProvider = messageReceiveQueueProvider;
+            EventSubscriber = eventSubscriber;
             PublishedMessageRetryProvider = publishedMessageRetryProvider;
             ReceivedMessageRetryProvider = receivedMessageRetryProvider;
-            EventBusOptions = eventBusOptions.Value;
+            MessageListenerFactory = messageListenerFactory;
             StopCancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -44,14 +38,15 @@ namespace Shashlik.EventBus
             // 先执行存储设施初始化
             await MessageStorageInitializer.Initialize(StopCancellationTokenSource.Token);
 
-            // 注册监听器
+            // 加载所有的事件处理类
             var descriptors = EventHandlerFindProvider.LoadAll();
-            var environment = EventBusOptions.Environment;
 
+            // 注册事件订阅
             foreach (var eventHandlerDescriptor in descriptors)
             {
-                MessageCunsumerRegistry.Subscribe(new DefaultMessageListener(eventHandlerDescriptor, environment,
-                    MessageSerializer, MessageStorage, MessageReceiveQueueProvider), StopCancellationTokenSource.Token);
+                var listener = MessageListenerFactory
+                    .CreateMessageListener(eventHandlerDescriptor);
+                EventSubscriber.Subscribe(listener, StopCancellationTokenSource.Token);
             }
 
             // 启动重试器

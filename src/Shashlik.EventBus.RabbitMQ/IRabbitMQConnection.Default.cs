@@ -8,16 +8,15 @@ namespace Shashlik.EventBus.RabbitMQ
 {
     public class DefaultRabbitMQConnection : IRabbitMQConnection, IDisposable
     {
-        private static readonly ConcurrentDictionary<int, IModel> Channels = new ConcurrentDictionary<int, IModel>();
-
         public DefaultRabbitMQConnection(IOptionsMonitor<EventBusRabbitMQOptions> options)
         {
             Options = options;
             _connection = new Lazy<IConnection>(Get);
         }
 
-        private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
         private readonly Lazy<IConnection> _connection;
+        private static readonly ConcurrentDictionary<int, IModel> Channels = new ConcurrentDictionary<int, IModel>();
+        private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
         private IConnection Connection => _connection.Value;
 
         public IModel GetChannel()
