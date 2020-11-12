@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 	`eventHandlerName` VARCHAR(255) NOT NULL,
 	`eventBody` LONGTEXT NOT NULL,
 	`createTime` BIGINT NOT NULL,
+	`isDelay` TINYINT NOT NULL,
 	`delayAt` BIGINT NOT NULL,
 	`expireTime` BIGINT NOT NULL,
 	`eventItems` LONGTEXT NULL,

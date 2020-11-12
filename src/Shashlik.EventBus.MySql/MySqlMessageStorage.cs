@@ -135,8 +135,8 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
         {
             var sql = $@"
 INSERT INTO `{Options.CurrentValue.ReceiveTableName}`
-(`msgId`, `environment`, `createTime`, `delayAt`, `expireTime`, `eventName`, `eventHandlerName`, `eventBody`, `eventItems`, `retryCount`, `status`, `isLocking`, `lockEnd`)
-VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
+(`msgId`, `environment`, `createTime`, `isDelay`, `delayAt`, `expireTime`, `eventName`, `eventHandlerName`, `eventBody`, `eventItems`, `retryCount`, `status`, `isLocking`, `lockEnd`)
+VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
 ";
 
             var parameters = new[]
@@ -144,6 +144,7 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new MySqlParameter("@msgId", MySqlDbType.VarChar) {Value = message.MsgId},
                 new MySqlParameter("@environment", MySqlDbType.VarChar) {Value = message.Environment},
                 new MySqlParameter("@createTime", MySqlDbType.Int64) {Value = message.CreateTime.GetLongDate()},
+                new MySqlParameter("@isDelay", MySqlDbType.Byte) {Value = message.DelayAt.HasValue ? 1 : 0},
                 new MySqlParameter("@delayAt", MySqlDbType.Int64) {Value = message.DelayAt?.GetLongDate() ?? 0},
                 new MySqlParameter("@expireTime", MySqlDbType.Int64) {Value = message.ExpireTime?.GetLongDate() ?? 0},
                 new MySqlParameter("@eventName", MySqlDbType.VarChar) {Value = message.EventName},
@@ -153,7 +154,7 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new MySqlParameter("@retryCount", MySqlDbType.Int32) {Value = message.RetryCount},
                 new MySqlParameter("@status", MySqlDbType.VarChar) {Value = message.Status},
                 new MySqlParameter("@isLocking", MySqlDbType.Byte) {Value = message.IsLocking ? 1 : 0},
-                new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0},
+                new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0}
             };
 
             var row = await NonQuery(sql, parameters, cancellationToken);
@@ -184,14 +185,17 @@ WHERE `msgId` = '{msgId}'
             await NonQuery(sql, null, cancellationToken);
         }
 
-        public Task<bool> TryLockPublished(string msgId, bool isLocking, long lockEnd)
+        public async Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd,
+            CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
-        }
+            var nowLong = DateTime.Now.GetLongDate();
 
-        public Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd)
-        {
-            throw new NotImplementedException();
+            var sql = $@"
+UPDATE `{Options.CurrentValue.ReceiveTableName}`
+SET `isLocking` = '1', `lockEnd` = {lockEnd}
+WHERE `msgId` = '{msgId}' AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
+";
+            return await NonQuery(sql, null, cancellationToken) == 1;
         }
 
         public async Task DeleteExpires(CancellationToken cancellationToken = default)
@@ -269,10 +273,13 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
 
-        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLock(int count,
+        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLock(
+            int count,
             int delayRetrySecond,
-            int maxFailedRetryCount, string environment,
-            int lockSecond, CancellationToken cancellationToken = default)
+            int maxFailedRetryCount,
+            string environment,
+            int lockSecond,
+            CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
             var now = DateTime.Now;
@@ -282,7 +289,7 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 SELECT * FROM `{Options.CurrentValue.ReceiveTableName}`
 WHERE
     `environment` = '{environment}'
-    AND `createTime` < {createTimeLimit}
+    AND ((`isDelay` = 0 AND `createTime` < {createTimeLimit}) OR (`isDelay` = 1 AND `delayAt` <= {nowLong} ))
     AND `retryCount` < {maxFailedRetryCount}
     AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
     AND (`status` = '{MessageStatus.Scheduled}' OR `status` = '{MessageStatus.Failed}')

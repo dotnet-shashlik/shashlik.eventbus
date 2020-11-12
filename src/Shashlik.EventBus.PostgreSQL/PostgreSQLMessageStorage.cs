@@ -183,14 +183,17 @@ WHERE ""msgId"" = '{msgId}'
             await NonQuery(sql, null, cancellationToken);
         }
 
-        public Task<bool> TryLockPublished(string msgId, bool isLocking, long lockEnd)
+        public async Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd,
+            CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
-        }
+            var nowLong = DateTime.Now.GetLongDate();
 
-        public Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd)
-        {
-            throw new NotImplementedException();
+            var sql = $@"
+UPDATE ""{Options.CurrentValue.FullReceiveTableName}""
+SET ""isLocking"" = true, ""lockEnd"" = {lockEnd}
+WHERE ""msgId"" = '{msgId}' AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
+";
+            return await NonQuery(sql, null, cancellationToken) == 1;
         }
 
         public async Task DeleteExpires(CancellationToken cancellationToken = default)
@@ -276,7 +279,7 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
 SELECT * FROM {Options.CurrentValue.FullReceiveTableName}
 WHERE
     ""environment"" = '{environment}'
-    AND ""createTime"" < {createTimeLimit}
+    AND ((""isDelay"" = false AND ""createTime"" < {createTimeLimit}) OR (""isDelay"" = true AND ""delayAt"" <= {nowLong} ))
     AND ""retryCount"" < {maxFailedRetryCount}
     AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
     AND (""status"" = '{MessageStatus.Scheduled}' OR ""status"" = '{MessageStatus.Failed}')

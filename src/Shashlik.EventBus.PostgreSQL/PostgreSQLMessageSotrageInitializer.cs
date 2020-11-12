@@ -16,6 +16,7 @@ namespace Shashlik.EventBus.PostgreSQL
 
         private IOptionsMonitor<EventBusPostgreSQLOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
+
         public async Task Initialize(CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS {Options.CurrentValue.FullReceiveTableName}(
     ""eventHandlerName"" varchar(255) COLLATE ""pg_catalog"".""default"" NOT NULL,
     ""eventBody"" text COLLATE ""pg_catalog"".""default"" NOT NULL,
     ""createTime"" int8 NOT NULL,
+	""isDelay"" bool NOT NULL,
     ""delayAt"" int8 NOT NULL,
     ""expireTime"" int8 NOT NULL,
     ""eventItems"" text COLLATE ""pg_catalog"".""default"",

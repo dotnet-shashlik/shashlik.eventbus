@@ -1,6 +1,4 @@
-﻿using System.Threading;
-
-namespace Shashlik.EventBus
+﻿namespace Shashlik.EventBus
 {
     /// <summary>
     /// 消息监听器创建工厂接口

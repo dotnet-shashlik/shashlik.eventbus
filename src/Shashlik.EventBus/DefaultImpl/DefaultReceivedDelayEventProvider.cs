@@ -46,11 +46,12 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task Invoke(MessageStorageModel message, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            if (await MessageStorage.TryLockReceived(message.MsgId, true,
-                DateTimeOffset.Now.AddSeconds(Options.CurrentValue.RetryIntervalSeconds).GetLongDate()))
-            {
+            if (await MessageStorage.TryLockReceived(
+                message.MsgId,
+                true,
+                DateTimeOffset.Now.AddSeconds(Options.CurrentValue.RetryIntervalSeconds).GetLongDate(),
+                cancellationToken))
                 MessageReceiveQueueProvider.Enqueue(message, items, descriptor, cancellationToken);
-            }
         }
     }
 }
