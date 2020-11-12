@@ -88,11 +88,11 @@ namespace Shashlik.EventBus
                         {
                             // 失败的数据不过期
                             await MessageStorage.UpdateReceived(item.MsgId, MessageStatus.Failed, item.RetryCount + 1,
-                                null);
+                                null, cancellationToken);
                         }
-                        catch
+                        catch (Exception exInner)
                         {
-                            // ignored
+                            Logger.LogError($"[EventBus] update received message error.", exInner);
                         }
                     }
                 });

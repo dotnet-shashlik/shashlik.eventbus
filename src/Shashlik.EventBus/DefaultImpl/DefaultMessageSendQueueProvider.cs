@@ -25,7 +25,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageTransferModel messageTransferModel, MessageStorageModel messageStorageModel,
             CancellationToken cancellationToken)
         {
-            // 延迟1秒再执行
+            // 延迟100毫秒再执行
             Thread.Sleep(100);
 
             Task.Run(async () =>
@@ -42,7 +42,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     try
                     {
                         // 确保消息已提交才进行消息发送
-                        if (!await MessageStorage.ExistsPublishMessage(messageStorageModel.MsgId))
+                        if (!await MessageStorage.ExistsPublishMessage(messageStorageModel.MsgId, cancellationToken))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交
                             Thread.Sleep(1000);
@@ -58,9 +58,9 @@ namespace Shashlik.EventBus.DefaultImpl
                                 await MessageStorage.UpdatePublished(messageStorageModel.MsgId, MessageStatus.Failed,
                                     failCount, null, cancellationToken);
                             }
-                            catch
+                            catch (Exception ex)
                             {
-                                // ignored
+                                Logger.LogError($"[EventBus] update published message error.", ex);
                             }
 
                             return;

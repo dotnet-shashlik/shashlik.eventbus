@@ -30,7 +30,7 @@ namespace Shashlik.EventBus.Kafka
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var consumerResult = cunsumer.Consume(cancellationToken);
-                    if (consumerResult.IsPartitionEOF || consumerResult.Message.Value == null) continue;
+                    if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty()) continue;
                     if (!consumerResult.Message.Headers.IsNullOrEmpty())
                     {
                         if (consumerResult.Message.Headers.TryGetLastBytes(EventBusConsts.DelayAtHeaderKey,

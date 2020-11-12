@@ -29,8 +29,8 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            // 延迟1秒再执行
-            Thread.Sleep(1000);
+            // 延迟100毫秒再执行
+            Thread.Sleep(100);
 
             Task.Run(async () =>
             {
@@ -51,9 +51,9 @@ namespace Shashlik.EventBus.DefaultImpl
                             await MessageStorage.UpdateReceived(messageStorageModel.MsgId, MessageStatus.Failed,
                                 failCount, null, cancellationToken);
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            // ignored
+                            Logger.LogError($"[EventBus] update received message error.", ex);
                         }
 
                         return;

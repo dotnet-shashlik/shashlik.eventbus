@@ -60,7 +60,7 @@ namespace Sample.Kafka.Mysql
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                for (int i = 0; i < 0; i++)
+                for (int i = 0; i < 1; i++)
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 

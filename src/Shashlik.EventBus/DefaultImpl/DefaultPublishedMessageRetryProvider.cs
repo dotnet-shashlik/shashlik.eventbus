@@ -81,9 +81,9 @@ namespace Shashlik.EventBus
                             await MessageStorage.UpdatePublished(item.MsgId, MessageStatus.Failed, item.RetryCount + 1,
                                 null, cancellationToken);
                         }
-                        catch
+                        catch (Exception exInner)
                         {
-                            // ignored
+                            Logger.LogError($"[EventBus] update published message error.", exInner);
                         }
                     }
                 });
