@@ -17,7 +17,7 @@ namespace Sample.Kafka.Mysql
     public class Program
     {
         public const string ConnectionString =
-            "server=192.168.50.178;database=eventbustest;user=root;password=jizhen.cool.0416;Pooling=True;Min Pool Size=3;Max Pool Size=5;";
+            "server=192.168.50.178;database=eventbustest;user=testuser;password=123123;Pooling=True;Min Pool Size=3;Max Pool Size=5;";
 
         private static async Task Main(string[] args)
         {
@@ -60,22 +60,24 @@ namespace Sample.Kafka.Mysql
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                for (int i = 0; i < 1; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
-                    // await EventPublisher.PublishAsync(new Event1 {Name = $"张三: {i}"},
-                    //     new TransactionContext(DbContext, transaction), cancellationToken: cancellationToken);
-                    await EventPublisher.PublishAsync(new DelayEvent {Name = $"李四: {i}"},
-                        new TransactionContext(DbContext, transaction), DateTimeOffset.Now.AddSeconds(10),
-                        cancellationToken: cancellationToken);
-
-                    if (i == 2 || i == 4)
+                    if (i % 3 == 0)
                     {
                         Console.WriteLine("rollback");
                         await transaction.RollbackAsync(cancellationToken);
                         continue;
                     }
+
+                    if (i % 2 == 0)
+                        await EventPublisher.PublishAsync(new Event1 {Name = $"张三: {i}"},
+                            new TransactionContext(DbContext, transaction), cancellationToken: cancellationToken);
+                    else
+                        await EventPublisher.PublishAsync(new DelayEvent {Name = $"李四: {i}"},
+                            new TransactionContext(DbContext, transaction), DateTimeOffset.Now.AddSeconds(20),
+                            cancellationToken: cancellationToken);
 
                     await transaction.CommitAsync(cancellationToken);
                     await Task.Delay(1000, cancellationToken);
