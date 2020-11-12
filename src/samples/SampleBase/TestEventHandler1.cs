@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Shashlik.EventBus;
 using Shashlik.Utils.Extensions;
 
-namespace MySqlSampleBase
+namespace SampleBase
 {
     public class TestEventHandler1 : IEventHandler<Event1>
     {

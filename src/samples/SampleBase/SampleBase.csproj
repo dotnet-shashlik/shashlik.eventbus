@@ -8,7 +8,7 @@
     </ItemGroup>
     
     <ItemGroup>
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.4" />
+        
         <ProjectReference Include="..\..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus\Shashlik.EventBus.csproj" />

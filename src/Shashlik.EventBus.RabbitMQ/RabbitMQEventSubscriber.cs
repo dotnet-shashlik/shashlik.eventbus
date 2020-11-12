@@ -47,7 +47,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 }
                 catch (Exception exception)
                 {
-                    Logger.LogError("[EventBus-RabbitMQ] deserialize message from rabbit error.", exception);
+                    Logger.LogError(exception, "[EventBus-RabbitMQ] deserialize message from rabbit error.");
                     return;
                 }
 
@@ -60,16 +60,25 @@ namespace Shashlik.EventBus.RabbitMQ
                 if (message.EventName != listener.Descriptor.EventName)
                 {
                     Logger.LogError(
-                        $"[EventBus-RabbitMQ] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\"");
+                        $"[EventBus-RabbitMQ] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\".");
                     return;
                 }
 
                 Logger.LogDebug(
                     $"[EventBus-RabbitMQ] received msg: {message.ToJson()}.");
 
-                listener.OnReceive(message, cancellationToken);
-                // 一定要在消息接收处理完成后才确认ack
-                Channel.BasicAck(e.DeliveryTag, false);
+                try
+                {
+                    // 处理消息
+                    listener.OnReceive(message, cancellationToken);
+                    // 一定要在消息接收处理完成后才确认ack
+                    Channel.BasicAck(e.DeliveryTag, false);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex,
+                        $"[EventBus-Kafka] received msg execute OnReceive error: {message.ToJson()}.");
+                }
             };
 
             consumer.Registered += (sender, e) =>

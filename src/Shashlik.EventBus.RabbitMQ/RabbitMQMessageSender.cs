@@ -39,7 +39,7 @@ namespace Shashlik.EventBus.RabbitMQ
             Channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
                 MessageSerializer.SerializeToBytes(message));
 
-            Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message.ToJson()}");
+            Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message.ToJson()}.");
 
             await Task.CompletedTask;
         }

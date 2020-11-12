@@ -27,9 +27,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.PostgreSQ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Kafka.Mysql", "samples\Sample.Kafka.Mysql\Sample.Kafka.Mysql.csproj", "{844331B0-8B76-4C7C-8357-9A7258504684}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySqlSampleBase", "samples\MySqlSampleBase\MySqlSampleBase.csproj", "{31AEB9D1-F4E8-4C6E-9055-5DE96B6248B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Kafka.PostgreSQL", "samples\Sample.Kafka.PostgreSQL\Sample.Kafka.PostgreSQL.csproj", "{121DC790-E5D6-4054-A0B9-73D794C097B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgreSqlSampleBase", "samples\PostgreSqlSampleBase\PostgreSqlSampleBase.csproj", "{097943A0-661D-4F51-B70A-43C9726F4B04}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleBase", "samples\SampleBase\SampleBase.csproj", "{12390BC5-888D-4521-8F1B-F2E95D775D04}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,22 +69,22 @@ Global
 		{844331B0-8B76-4C7C-8357-9A7258504684}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{844331B0-8B76-4C7C-8357-9A7258504684}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{844331B0-8B76-4C7C-8357-9A7258504684}.Release|Any CPU.Build.0 = Release|Any CPU
-		{31AEB9D1-F4E8-4C6E-9055-5DE96B6248B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{31AEB9D1-F4E8-4C6E-9055-5DE96B6248B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{31AEB9D1-F4E8-4C6E-9055-5DE96B6248B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{31AEB9D1-F4E8-4C6E-9055-5DE96B6248B6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{097943A0-661D-4F51-B70A-43C9726F4B04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{097943A0-661D-4F51-B70A-43C9726F4B04}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{097943A0-661D-4F51-B70A-43C9726F4B04}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{097943A0-661D-4F51-B70A-43C9726F4B04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{121DC790-E5D6-4054-A0B9-73D794C097B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{121DC790-E5D6-4054-A0B9-73D794C097B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{121DC790-E5D6-4054-A0B9-73D794C097B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{121DC790-E5D6-4054-A0B9-73D794C097B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12390BC5-888D-4521-8F1B-F2E95D775D04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12390BC5-888D-4521-8F1B-F2E95D775D04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12390BC5-888D-4521-8F1B-F2E95D775D04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12390BC5-888D-4521-8F1B-F2E95D775D04}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{844331B0-8B76-4C7C-8357-9A7258504684} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
-		{31AEB9D1-F4E8-4C6E-9055-5DE96B6248B6} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
-		{097943A0-661D-4F51-B70A-43C9726F4B04} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
+		{121DC790-E5D6-4054-A0B9-73D794C097B7} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
+		{12390BC5-888D-4521-8F1B-F2E95D775D04} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

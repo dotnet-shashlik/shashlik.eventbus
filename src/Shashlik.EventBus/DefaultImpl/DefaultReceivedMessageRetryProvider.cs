@@ -69,7 +69,7 @@ namespace Shashlik.EventBus
                     if (!EventHandlerDescriptors.TryGetValue(item.EventHandlerName, out var descriptor))
                     {
                         Logger.LogWarning(
-                            $"[EventBus] can not find event handler: {item.EventHandlerName}, event: {item.EventName}, msgId: {item.MsgId}");
+                            $"[EventBus] can not find event handler: {item.EventHandlerName}, event: {item.EventName}, msgId: {item.MsgId}.");
                         return;
                     }
 
@@ -85,7 +85,7 @@ namespace Shashlik.EventBus
                     catch (Exception ex)
                     {
                         Logger.LogError(ex,
-                            $"[EventBus] received event retry fail, event: {item.EventName}, msgId: {item.MsgId}");
+                            $"[EventBus] received event retry fail, event: {item.EventName}, msgId: {item.MsgId}.");
                         try
                         {
                             // 失败的数据不过期
@@ -94,7 +94,7 @@ namespace Shashlik.EventBus
                         }
                         catch (Exception exInner)
                         {
-                            Logger.LogError($"[EventBus] update received message error.", exInner);
+                            Logger.LogError(exInner, $"[EventBus] update received message error.");
                         }
                     }
                 });

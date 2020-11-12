@@ -37,9 +37,9 @@ namespace Shashlik.EventBus.Kafka
                     {
                         message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
                     }
-                    catch (Exception exception)
+                    catch (Exception e)
                     {
-                        Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.", exception);
+                        Logger.LogError(e, "[EventBus-Kafka] deserialize message from kafka error.");
                         continue;
                     }
 
@@ -52,17 +52,25 @@ namespace Shashlik.EventBus.Kafka
                     if (message.EventName != listener.Descriptor.EventName)
                     {
                         Logger.LogError(
-                            $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\"");
+                            $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\".");
                         continue;
                     }
 
                     Logger.LogDebug(
-                        $"[EventBus-Kafka] received msg: {message?.ToJson()}.");
+                        $"[EventBus-Kafka] received msg: {message.ToJson()}.");
 
-                    // 处理消息
-                    listener.OnReceive(message, cancellationToken);
-                    // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
-                    cunsumer.StoreOffset(consumerResult);
+                    try
+                    {
+                        // 处理消息
+                        listener.OnReceive(message, cancellationToken);
+                        // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
+                        cunsumer.StoreOffset(consumerResult);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e,
+                            $"[EventBus-Kafka] received msg execute OnReceive error: {message.ToJson()}.");
+                    }
                 }
             }, cancellationToken);
         }

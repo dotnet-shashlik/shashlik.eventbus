@@ -33,11 +33,11 @@ namespace Shashlik.EventBus.PostgreSQL
         /// <summary>
         /// 已发布消息表全名
         /// </summary>
-        public string FullPublishTableName => $"\"{Schema}\".\"{PublishTableName}\"";
+        public string FullPublishTableName => $@"""{Schema}"".""{PublishTableName}""";
 
         /// <summary>
         /// 已接收的消息表全名
         /// </summary>
-        public string FullReceiveTableName => $"\"{Schema}\".\"{ReceiveTableName}\"";
+        public string FullReceiveTableName => $@"""{Schema}"".""{ReceiveTableName}""";
     }
 }

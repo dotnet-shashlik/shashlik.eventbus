@@ -7,7 +7,8 @@ namespace Shashlik.EventBus.PostgreSQL
 {
     public class DefaultConnectionString : IConnectionString
     {
-        public DefaultConnectionString(IServiceScopeFactory serviceScopeFactory, IOptions<EventBusPostgreSQLOptions> options)
+        public DefaultConnectionString(IServiceScopeFactory serviceScopeFactory,
+            IOptions<EventBusPostgreSQLOptions> options)
         {
             ServiceScopeFactory = serviceScopeFactory;
             Options = options.Value;

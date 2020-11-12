@@ -1,4 +1,4 @@
-﻿namespace MySqlSampleBase
+﻿namespace SampleBase
 {
     public class Users
     {

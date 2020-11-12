@@ -53,7 +53,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError($"[EventBus] update received message error.", ex);
+                            Logger.LogError(ex, $"[EventBus] update received message error.");
                         }
 
                         return;
@@ -73,7 +73,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         failCount++;
                         Logger.LogError(ex,
-                            $"[EventBus] message receive error, will try again later, event: {descriptor.EventName}, handler: {descriptor.EventHandlerName}, msgId: {messageStorageModel.MsgId}");
+                            $"[EventBus] message receive error, will try again later, event: {descriptor.EventName}, handler: {descriptor.EventHandlerName}, msgId: {messageStorageModel.MsgId}.");
                     }
                 }
             }, cancellationToken);

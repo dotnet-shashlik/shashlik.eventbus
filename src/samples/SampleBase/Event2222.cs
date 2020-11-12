@@ -1,6 +1,6 @@
 ﻿using Shashlik.EventBus;
 
-namespace MySqlSampleBase
+namespace SampleBase
 {
     [EventBusName("Event2")]
     public class Event2222 : IEvent

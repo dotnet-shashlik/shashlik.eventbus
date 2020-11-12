@@ -10,14 +10,14 @@ using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
 using Shashlik.EventBus.Kafka;
-using Shashlik.EventBus.MySql;
+using Shashlik.EventBus.PostgreSQL;
 
-namespace Sample.Kafka.Mysql
+namespace Sample.Kafka.PostgreSQL
 {
     public class Program
     {
         public const string ConnectionString =
-            "server=192.168.50.178;database=eventbustest;user=testuser;password=123123;Pooling=True;Min Pool Size=3;Max Pool Size=5;";
+            "server=192.168.50.178;user id=testuser;password=123123;persistsecurityinfo=true;database=eventbustest;Pooling=True;Minimum Pool Size=3;Maximum Pool Size=5;";
 
         private static async Task Main(string[] args)
         {
@@ -31,12 +31,12 @@ namespace Sample.Kafka.Mysql
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(ConnectionString,
+                        r.UseNpgsql(ConnectionString,
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     });
 
                     services.AddEventBus(r => { r.Environment = "DemoKafka"; })
-                        .AddMySql<DemoDbContext>()
+                        .AddNpgsql<DemoDbContext>()
                         .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
 
                     services.AddHostedService<TestService>();
@@ -96,7 +96,7 @@ namespace Sample.Kafka.Mysql
         public DemoDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<DemoDbContext>();
-            optionsBuilder.UseMySql(Program.ConnectionString);
+            optionsBuilder.UseNpgsql(Program.ConnectionString);
 
             return new DemoDbContext(optionsBuilder.Options);
         }

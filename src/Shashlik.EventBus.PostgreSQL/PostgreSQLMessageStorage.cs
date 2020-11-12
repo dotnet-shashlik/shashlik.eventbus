@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
@@ -18,14 +20,16 @@ namespace Shashlik.EventBus.PostgreSQL
     public class PostgreSQLMessageStorage : IMessageStorage
     {
         public PostgreSQLMessageStorage(IOptionsMonitor<EventBusPostgreSQLOptions> options,
-            IConnectionString connectionString)
+            IConnectionString connectionString, ILogger<PostgreSQLMessageStorage> logger)
         {
             Options = options;
             ConnectionString = connectionString;
+            Logger = logger;
         }
 
         private IOptionsMonitor<EventBusPostgreSQLOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
+        private ILogger<PostgreSQLMessageStorage> Logger { get; }
 
         public async ValueTask<bool> ExistsPublishMessage(string msgId, CancellationToken cancellationToken = default)
         {
@@ -133,8 +137,8 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
         {
             var sql = $@"
 INSERT INTO {Options.CurrentValue.FullReceiveTableName}
-(""msgId"", ""environment"", ""createTime"", ""delayAt"", ""expireTime"", ""eventName"", ""eventHandlerName"", ""eventBody"", ""eventItems"", ""retryCount"", ""status"", ""isLocking"", ""lockEnd"")
-VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
+(""msgId"", ""environment"", ""createTime"", ""isDelay"", ""delayAt"", ""expireTime"", ""eventName"", ""eventHandlerName"", ""eventBody"", ""eventItems"", ""retryCount"", ""status"", ""isLocking"", ""lockEnd"")
+VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
 ";
 
             var parameters = new[]
@@ -142,6 +146,7 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new NpgsqlParameter("@msgId", NpgsqlDbType.Varchar) {Value = message.MsgId},
                 new NpgsqlParameter("@environment", NpgsqlDbType.Varchar) {Value = message.Environment},
                 new NpgsqlParameter("@createTime", NpgsqlDbType.Bigint) {Value = message.CreateTime.GetLongDate()},
+                new NpgsqlParameter("@isDelay", NpgsqlDbType.Boolean) {Value = message.DelayAt.HasValue},
                 new NpgsqlParameter("@delayAt", NpgsqlDbType.Bigint) {Value = message.DelayAt?.GetLongDate() ?? 0},
                 new NpgsqlParameter("@expireTime", NpgsqlDbType.Bigint)
                     {Value = message.ExpireTime?.GetLongDate() ?? 0},
@@ -189,11 +194,19 @@ WHERE ""msgId"" = '{msgId}'
             var nowLong = DateTime.Now.GetLongDate();
 
             var sql = $@"
-UPDATE ""{Options.CurrentValue.FullReceiveTableName}""
+UPDATE {Options.CurrentValue.FullReceiveTableName}
 SET ""isLocking"" = true, ""lockEnd"" = {lockEnd}
 WHERE ""msgId"" = '{msgId}' AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
 ";
-            return await NonQuery(sql, null, cancellationToken) == 1;
+            try
+            {
+                return await NonQuery(sql, null, cancellationToken) == 1;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, $"[EventBus] TryLockReceived error.");
+                return false;
+            }
         }
 
         public async Task DeleteExpires(CancellationToken cancellationToken = default)

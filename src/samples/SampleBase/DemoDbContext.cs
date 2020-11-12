@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace MySqlSampleBase
+namespace SampleBase
 {
     public class DemoDbContext : DbContext
     {

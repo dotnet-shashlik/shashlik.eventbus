@@ -1,6 +1,6 @@
 ﻿using Shashlik.EventBus;
 
-namespace NodeCommon
+namespace SampleBase
 {
     public class Event1 : IEvent
     {

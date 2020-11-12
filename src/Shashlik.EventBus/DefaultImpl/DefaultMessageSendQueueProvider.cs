@@ -60,7 +60,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             }
                             catch (Exception ex)
                             {
-                                Logger.LogError($"[EventBus] update published message error.", ex);
+                                Logger.LogError(ex, $"[EventBus] update published message error.");
                             }
 
                             return;
@@ -79,7 +79,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         failCount++;
                         Logger.LogError(ex,
-                            $"[EventBus] message publish error, will try again later, event: {messageStorageModel.EventName},  msgId: {messageStorageModel.MsgId}");
+                            $"[EventBus] message publish error, will try again later, event: {messageStorageModel.EventName},  msgId: {messageStorageModel.MsgId}.");
                     }
                 }
             }, cancellationToken);

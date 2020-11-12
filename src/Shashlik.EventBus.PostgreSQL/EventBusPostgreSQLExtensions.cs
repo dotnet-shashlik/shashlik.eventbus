@@ -9,7 +9,7 @@ namespace Shashlik.EventBus.PostgreSQL
 {
     public static class EventBusPostgreSQLExtensions
     {
-        public static IEventBusBuilder AddEventBusPostgreSQLStorage(
+        public static IEventBusBuilder AddNpgsql(
             this IEventBusBuilder service,
             string connectionString,
             string publishTableName = null,
@@ -24,10 +24,10 @@ namespace Shashlik.EventBus.PostgreSQL
                     options.ReceiveTableName = receiveTableName!;
             });
 
-            return service.AddEventBusPostgreSQLStorage();
+            return service.AddNpgsql();
         }
 
-        public static IEventBusBuilder AddEventBusPostgreSQLStorage<TDbContext>(
+        public static IEventBusBuilder AddNpgsql<TDbContext>(
             this IEventBusBuilder service,
             string publishTableName = null,
             string receiveTableName = null)
@@ -42,10 +42,10 @@ namespace Shashlik.EventBus.PostgreSQL
                     options.ReceiveTableName = receiveTableName!;
             });
 
-            return service.AddEventBusPostgreSQLStorage();
+            return service.AddNpgsql();
         }
 
-        public static IEventBusBuilder AddEventBusPostgreSQLStorage(this IEventBusBuilder service)
+        public static IEventBusBuilder AddNpgsql(this IEventBusBuilder service)
         {
             service.Services.AddOptions<EventBusPostgreSQLOptions>();
             service.Services.AddSingleton<IMessageStorage, PostgreSQLMessageStorage>();
