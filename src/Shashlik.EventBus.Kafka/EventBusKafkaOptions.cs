@@ -1,23 +1,12 @@
-﻿using Confluent.Kafka;
-using Shashlik.Utils.Extensions;
+﻿using System.Collections.Generic;
 
 namespace Shashlik.EventBus.Kafka
 {
     public class EventBusKafkaOptions
     {
         /// <summary>
-        /// 基础配置
+        /// see: https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
         /// </summary>
-        public ClientConfig Base { get; set; } = new ClientConfig();
-
-        /// <summary>
-        /// 生产者配置
-        /// </summary>
-        public ProducerConfig Producer { get; set; } = new ProducerConfig();
-
-        /// <summary>
-        /// 消费者配置
-        /// </summary>
-        public ConsumerConfig Consumer { get; set; } = new ConsumerConfig();
+        public List<string[]> Properties { get; set; } = new List<string[]>();
     }
 }

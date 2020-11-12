@@ -1,6 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Confluent.Kafka;
 using Microsoft.Extensions.Options;
@@ -24,26 +22,18 @@ namespace Shashlik.EventBus.Kafka
 
         public IProducer<string, byte[]> GetProducer()
         {
-            //allow.auto.create.topics
-            // 移除group.id配置项
-            var list = Options.CurrentValue.Consumer.ToList();
-            list.Add(new KeyValuePair<string, string>("allow.auto.create.topics", "true"));
-
             var id = Thread.CurrentThread.ManagedThreadId;
             return Producers.GetOrAdd(id, r =>
-                new ProducerBuilder<string, byte[]>(Options.CurrentValue.Producer).Build()
+                new ProducerBuilder<string, byte[]>(Options.CurrentValue.Properties.ConvertToDictionary()).Build()
             );
         }
 
         public IConsumer<string, byte[]> CreateCunsumer(string groupId)
         {
-            // 移除group.id配置项
-            var list = Options.CurrentValue.Consumer.Where(r => r.Key != "group.id").ToList();
-            list.Add(new KeyValuePair<string, string>("group.id", groupId));
-            list.Add(new KeyValuePair<string, string>("allow.auto.create.topics", "true"));
-
+            var dic = Options.CurrentValue.Properties.ConvertToDictionary();
+            dic["group.id"] = groupId;
             return Consumers.GetOrAdd(groupId, r =>
-                new ConsumerBuilder<string, byte[]>(list).Build()
+                new ConsumerBuilder<string, byte[]>(dic).Build()
             );
         }
 

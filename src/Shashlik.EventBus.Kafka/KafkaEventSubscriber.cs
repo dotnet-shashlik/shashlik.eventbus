@@ -31,17 +31,6 @@ namespace Shashlik.EventBus.Kafka
                 {
                     var consumerResult = cunsumer.Consume(cancellationToken);
                     if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty()) continue;
-                    if (!consumerResult.Message.Headers.IsNullOrEmpty())
-                    {
-                        if (consumerResult.Message.Headers.TryGetLastBytes(EventBusConsts.DelayAtHeaderKey,
-                            out var bytes))
-                        {
-                            var delayAt = BitConverter.ToInt64(bytes);
-                            // 没到执行时间,继续放在队列里面
-                            if (delayAt > DateTimeOffset.Now.GetLongDate())
-                                continue;
-                        }
-                    }
 
                     MessageTransferModel message;
                     try
@@ -73,7 +62,7 @@ namespace Shashlik.EventBus.Kafka
                     // 处理消息
                     listener.OnReceive(message, cancellationToken);
                     // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
-                    cunsumer.Commit(consumerResult);
+                    cunsumer.StoreOffset(consumerResult);
                 }
             }, cancellationToken);
         }

@@ -85,7 +85,7 @@ namespace Shashlik.EventBus
                         }
                         catch (Exception exInner)
                         {
-                            Logger.LogError($"[EventBus] update published message error.", exInner);
+                            Logger.LogError(exInner, $"[EventBus] update published message error.");
                         }
                     }
                 });

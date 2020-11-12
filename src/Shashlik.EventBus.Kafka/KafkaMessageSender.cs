@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.Kafka
@@ -30,15 +27,8 @@ namespace Shashlik.EventBus.Kafka
         {
             var producer = Connection.GetProducer();
 
-            // 延迟消息的延迟时间写到header中
-            var headers = new Headers();
-            if (message.DelayAt.HasValue)
-                headers.Add(EventBusConsts.DelayAtHeaderKey,
-                    BitConverter.GetBytes(message.DelayAt.Value.GetLongDate()));
-
             var result = await producer.ProduceAsync(message.EventName, new Message<string, byte[]>
             {
-                Headers = headers,
                 Key = message.MsgId,
                 Value = Encoding.UTF8.GetBytes(MessageSerializer.Serialize(message))
             });
@@ -49,7 +39,8 @@ namespace Shashlik.EventBus.Kafka
                 return;
             }
 
-            throw new InvalidOperationException($"[EventBus-RabbitMQ] send msg fail: {message.ToJson()}");
+            throw new PublishException(
+                $"[EventBus-RabbitMQ] send msg fail, produce status \"{result.Status}\", message: {message.ToJson()}");
         }
     }
 }

@@ -8,14 +8,9 @@ namespace Shashlik.EventBus.RabbitMQ
     public class EventBusRabbitMQOptions
     {
         /// <summary>
-        /// 正常通信交换机名称
+        /// 交换机名称
         /// </summary>
         public string Exchange { get; set; } = "eventbus.ex";
-
-        /// <summary>
-        /// 死信交换机名称,用于延迟队列
-        /// </summary>
-        public string DeadExchange { get; set; } = "eventbus.ex.dead";
 
         /// <summary>
         /// 主机名称
@@ -32,15 +27,18 @@ namespace Shashlik.EventBus.RabbitMQ
         /// </summary>
         public string Password { get; set; }
 
+        /// <summary>
+        /// virtual host, default: /
+        /// </summary>
         public string VirtualHost { get; set; } = "/";
 
         /// <summary>
-        /// 端口号
+        /// 端口号, default: 5672
         /// </summary>
         public int Port { get; set; } = 5672;
 
         /// <summary>
-        /// 自定义连接创建
+        /// 自定义连接创建,优先使用此属性
         /// </summary>
         public Func<ConnectionFactory> ConnectionFactory { get; set; }
     }

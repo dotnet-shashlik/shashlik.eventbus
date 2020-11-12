@@ -37,7 +37,7 @@ namespace Sample.Kafka.Mysql
 
                     services.AddEventBus(r => { r.Environment = "DemoKafka"; })
                         .AddMySql<DemoDbContext>()
-                        .AddKafka(r => { r.Base.BootstrapServers = "192.168.50.178:9092"; });
+                        .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
 
                     services.AddHostedService<TestService>();
                 })

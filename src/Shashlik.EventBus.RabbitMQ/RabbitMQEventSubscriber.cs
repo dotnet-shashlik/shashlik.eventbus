@@ -29,37 +29,13 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public void Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
-            // 注册基础通信交换机
+            // 注册基础通信交换机,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
-            // 注册死信交换机
-            Channel.ExchangeDeclare(Options.CurrentValue.DeadExchange, "topic", true);
-            // 如果是延迟队列,先定义死信交换机
+            // 定义队列
             Channel.QueueDeclare(listener.Descriptor.EventHandlerName, true, false, false);
-
-            // 延迟队列需要配置死信队列
-            if (listener.Descriptor.IsDelay)
-            {
-                // 配置延迟队列
-                var delayQueue = $"{listener.Descriptor.EventHandlerName}.DELAY";
-                var map = new Dictionary<string, object>
-                {
-                    {"x-dead-letter-exchange", Options.CurrentValue.DeadExchange},
-                    {"x-dead-letter-routing-key", listener.Descriptor.EventName}
-                };
-                // 如果是延迟队列,先定义死信交换机
-                Channel.QueueDeclare(delayQueue, true, false, false, map);
-
-                // 如果是延迟任务,队列绑定到死信交换机
-                Channel.QueueBind(listener.Descriptor.EventHandlerName, Options.CurrentValue.DeadExchange,
-                    listener.Descriptor.EventName);
-                // 如果是延迟任务,延迟队列绑定正常的交换机
-                Channel.QueueBind(delayQueue, Options.CurrentValue.Exchange, listener.Descriptor.EventName);
-            }
-            else
-            {
-                Channel.QueueBind(listener.Descriptor.EventHandlerName, Options.CurrentValue.Exchange,
-                    listener.Descriptor.EventName);
-            }
+            // 绑定队列到交换机以及routing key
+            Channel.QueueBind(listener.Descriptor.EventHandlerName, Options.CurrentValue.Exchange,
+                listener.Descriptor.EventName);
 
             var consumer = new EventingBasicConsumer(Channel);
             consumer.Received += (sender, e) =>
@@ -89,7 +65,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 }
 
                 Logger.LogDebug(
-                    $"[EventBus-RabbitMQ] received msg: {message?.ToJson()}.");
+                    $"[EventBus-RabbitMQ] received msg: {message.ToJson()}.");
 
                 listener.OnReceive(message, cancellationToken);
                 // 一定要在消息接收处理完成后才确认ack

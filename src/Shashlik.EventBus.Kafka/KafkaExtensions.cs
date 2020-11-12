@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.Kafka
@@ -25,23 +28,32 @@ namespace Shashlik.EventBus.Kafka
         public static IEventBusBuilder AddKafka(this IEventBusBuilder serviceCollection)
         {
             serviceCollection.Services.AddOptions<EventBusKafkaOptions>();
-
-            // 重置一些默认值
-            serviceCollection.Services.Configure<EventBusKafkaOptions>(r =>
-            {
-                r.Base.CopyTo(r.Producer);
-                r.Base.CopyTo(r.Consumer);
-
-                // see: https://docs.confluent.io/current/clients/dotnet.html
-                //r.Consumer.EnableAutoOffsetStore = false;
-                r.Consumer.EnableAutoCommit = false;
-                r.Consumer.AutoOffsetReset = AutoOffsetReset.Earliest;
-            });
             serviceCollection.Services.AddSingleton<IMessageSender, KafkaMessageSender>();
             serviceCollection.Services.AddTransient<IEventSubscriber, KafkaEventSubscriber>();
             serviceCollection.Services.AddSingleton<IKafkaConnection, DefaultKafkaConnection>();
 
             return serviceCollection;
+        }
+
+        public static IDictionary<string, string> ConvertToDictionary(this List<string[]> list)
+        {
+            var dic = list.ToDictionary(r =>
+            {
+                if (r.IsNullOrEmpty() || r.Length != 2)
+                    throw new InvalidCastException(
+                        $"[EventBus-Kafka] kafka configuration must two element, like \"['allow.auto.create.topics', 'true']\"");
+                return r[0];
+            }, r => r[1]);
+
+            // 允许自动创建topic
+            dic["allow.auto.create.topics"] = "true";
+            // 禁止自动保存offset
+            dic["enable.auto.offset.store"] = "false";
+            // 启用自动提交
+            dic["enable.auto.commit"] = "true";
+            dic["auto.offset.reset"] = "earliest";
+
+            return dic;
         }
     }
 }

@@ -30,22 +30,14 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public async Task Send(MessageTransferModel message)
         {
+            // 交换机定义,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
 
             var basicProperties = Channel.CreateBasicProperties();
             basicProperties.MessageId = message.MsgId;
-            basicProperties.Headers = new Dictionary<string, object>();
-
-            if (message.DelayAt.HasValue)
-            {
-                basicProperties = Channel.CreateBasicProperties();
-                var ex = (long) (message.DelayAt.Value - DateTimeOffset.Now).TotalMilliseconds;
-                basicProperties.Expiration = ex.ToString();
-            }
 
             Channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
-                Encoding.UTF8.GetBytes(MessageSerializer.Serialize(message))
-            );
+                MessageSerializer.SerializeToBytes(message));
 
             Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message.ToJson()}");
 
