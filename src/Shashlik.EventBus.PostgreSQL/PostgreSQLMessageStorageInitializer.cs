@@ -5,9 +5,9 @@ using Npgsql;
 
 namespace Shashlik.EventBus.PostgreSQL
 {
-    internal class PostgreSqlMessageStorageInitializer : IMessageStorageInitializer
+    internal class PostgreSQLMessageStorageInitializer : IMessageStorageInitializer
     {
-        public PostgreSqlMessageStorageInitializer(IOptionsMonitor<EventBusPostgreSQLOptions> options,
+        public PostgreSQLMessageStorageInitializer(IOptionsMonitor<EventBusPostgreSQLOptions> options,
             IConnectionString connectionString)
         {
             Options = options;
