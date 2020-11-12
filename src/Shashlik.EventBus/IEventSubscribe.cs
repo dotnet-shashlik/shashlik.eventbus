@@ -3,7 +3,7 @@
 namespace Shashlik.EventBus
 {
     /// <summary>
-    /// 消费者注册
+    /// 事件订阅器
     /// </summary>
     public interface IEventSubscriber
     {

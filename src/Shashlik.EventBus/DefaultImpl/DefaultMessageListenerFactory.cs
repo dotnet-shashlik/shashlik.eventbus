@@ -10,23 +10,26 @@ namespace Shashlik.EventBus.DefaultImpl
     {
         public DefaultMessageListenerFactory(IOptionsMonitor<EventBusOptions> options,
             IMessageSerializer messageSerializer, IMessageStorage messageStorage,
-            IMessageReceiveQueueProvider messageReceiveQueueProvider)
+            IMessageReceiveQueueProvider messageReceiveQueueProvider,
+            IReceivedDelayEventProvider receivedDelayEventProvider)
         {
             Options = options;
             MessageSerializer = messageSerializer;
             MessageStorage = messageStorage;
             MessageReceiveQueueProvider = messageReceiveQueueProvider;
+            ReceivedDelayEventProvider = receivedDelayEventProvider;
         }
 
         private IOptionsMonitor<EventBusOptions> Options { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IMessageStorage MessageStorage { get; }
         private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
+        private IReceivedDelayEventProvider ReceivedDelayEventProvider { get; }
 
         public IMessageListener CreateMessageListener(EventHandlerDescriptor descriptor)
         {
             return new DefaultMessageListener(descriptor, Options.CurrentValue.Environment, MessageSerializer,
-                MessageStorage, MessageReceiveQueueProvider);
+                MessageStorage, MessageReceiveQueueProvider, ReceivedDelayEventProvider);
         }
     }
 }

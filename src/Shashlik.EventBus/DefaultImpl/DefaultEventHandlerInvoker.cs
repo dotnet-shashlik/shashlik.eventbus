@@ -22,20 +22,17 @@ namespace Shashlik.EventBus.DefaultImpl
             EventHandlerDescriptor eventHandlerDescriptor)
         {
             using var scope = ServiceScopeFactory.CreateScope();
-            var eventHandlerInstance = scope.ServiceProvider.GetService(eventHandlerDescriptor.EventHandlerType);
-            if (eventHandlerInstance == null)
-                throw new InvalidCastException(
-                    $"[EventBus] can not find event handler of service type: {eventHandlerDescriptor.EventHandlerType}.");
+            var eventHandlerInstance =
+                scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
+            var eventBody =
+                MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
 
             var method =
                 eventHandlerDescriptor.EventHandlerType.GetMethod("Execute",
                     new Type[] {eventHandlerDescriptor.EventType, typeof(IDictionary<string, string>)});
 
-            var eventBody =
-                MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
-
             var task = (Task) method!.Invoke(eventHandlerInstance, new object[] {eventBody, items});
-            task.ConfigureAwait(false).GetAwaiter().GetResult();
+            task.GetAwaiter().GetResult();
         }
     }
 }

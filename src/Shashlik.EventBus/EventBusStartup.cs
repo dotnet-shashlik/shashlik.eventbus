@@ -44,8 +44,7 @@ namespace Shashlik.EventBus
             // 注册事件订阅
             foreach (var eventHandlerDescriptor in descriptors)
             {
-                var listener = MessageListenerFactory
-                    .CreateMessageListener(eventHandlerDescriptor);
+                var listener = MessageListenerFactory.CreateMessageListener(eventHandlerDescriptor);
                 EventSubscriber.Subscribe(listener, StopCancellationTokenSource.Token);
             }
 

@@ -183,6 +183,16 @@ WHERE ""msgId"" = '{msgId}'
             await NonQuery(sql, null, cancellationToken);
         }
 
+        public Task<bool> TryLockPublished(string msgId, bool isLocking, long lockEnd)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task DeleteExpires(CancellationToken cancellationToken = default)
         {
             var now = DateTime.Now.GetLongDate();

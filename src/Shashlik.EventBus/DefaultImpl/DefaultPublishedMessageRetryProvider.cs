@@ -36,8 +36,10 @@ namespace Shashlik.EventBus
         {
             await Retry(cancellationToken);
 
-            TimerHelper.SetInterval(async () => await Retry(cancellationToken),
-                TimeSpan.FromSeconds(Options.CurrentValue.RetryIntervalSeconds),
+            // 重试器执行间隔为5秒
+            TimerHelper.SetInterval(
+                async () => await Retry(cancellationToken),
+                TimeSpan.FromSeconds(Options.CurrentValue.RetryWorkingIntervalSeconds),
                 cancellationToken);
         }
 
@@ -46,7 +48,7 @@ namespace Shashlik.EventBus
             // 一次最多读取200条数据
             var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(
                 Options.CurrentValue.RetryLimitCount,
-                Options.CurrentValue.RetryAfterSeconds,
+                Options.CurrentValue.StartRetryAfterSeconds,
                 Options.CurrentValue.RetryFailedMax, Options.CurrentValue.Environment,
                 Options.CurrentValue.RetryIntervalSeconds, cancellationToken);
             if (messages.IsNullOrEmpty())

@@ -82,6 +82,24 @@ namespace Shashlik.EventBus
         Task UpdateReceived(string msgId, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default);
 
+        // /// <summary>
+        // /// 更新已发布消息的锁数据
+        // /// </summary>
+        // /// <param name="msgId"></param>
+        // /// <param name="isLocking"></param>
+        // /// <param name="lockEnd"></param>
+        // /// <returns></returns>
+        // Task<bool> TryLockPublished(string msgId, bool isLocking, long lockEnd);
+
+        /// <summary>
+        /// 更新已接收消息的锁数据
+        /// </summary>
+        /// <param name="msgId"></param>
+        /// <param name="isLocking"></param>
+        /// <param name="lockEnd"></param>
+        /// <returns></returns>
+        Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd);
+
         /// <summary>
         /// 删除已过期的数据
         /// </summary>

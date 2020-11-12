@@ -10,13 +10,15 @@ namespace Shashlik.EventBus.DefaultImpl
             string environment,
             IMessageSerializer messageSerializer,
             IMessageStorage messageStorage,
-            IMessageReceiveQueueProvider messageReceiveQueueProvider)
+            IMessageReceiveQueueProvider messageReceiveQueueProvider,
+            IReceivedDelayEventProvider receivedDelayEventProvider)
         {
             Descriptor = descriptor;
             Environment = environment;
             MessageSerializer = messageSerializer;
             MessageStorage = messageStorage;
             MessageReceiveQueueProvider = messageReceiveQueueProvider;
+            ReceivedDelayEventProvider = receivedDelayEventProvider;
         }
 
         public EventHandlerDescriptor Descriptor { get; }
@@ -24,6 +26,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageSerializer MessageSerializer { get; }
         private IMessageStorage MessageStorage { get; }
         private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
+        private IReceivedDelayEventProvider ReceivedDelayEventProvider { get; }
 
         public void OnReceive(MessageTransferModel message, CancellationToken cancellationToken)
         {
@@ -52,9 +55,16 @@ namespace Shashlik.EventBus.DefaultImpl
 
             // 保存接收到的消息
             MessageStorage.SaveReceived(receiveMessageStorageModel, cancellationToken).GetAwaiter().GetResult();
-            // 进入接收消息处理队列
-            MessageReceiveQueueProvider.Enqueue(receiveMessageStorageModel, message.Items, Descriptor,
-                cancellationToken);
+
+            // 非延迟事件直接进入执行队列
+            if (!message.DelayAt.HasValue)
+                // 进入接收消息处理队列
+                MessageReceiveQueueProvider.Enqueue(receiveMessageStorageModel, message.Items, Descriptor,
+                    cancellationToken);
+            // 延迟事件进入延迟执行队列
+            else
+                ReceivedDelayEventProvider.Enqueue(receiveMessageStorageModel, message.Items, Descriptor,
+                    cancellationToken);
         }
     }
 }
