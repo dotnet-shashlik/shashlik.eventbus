@@ -46,7 +46,6 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task Invoke(MessageStorageModel message, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            return;
             if (await MessageStorage.TryLockReceived(
                 message.MsgId,
                 true,
