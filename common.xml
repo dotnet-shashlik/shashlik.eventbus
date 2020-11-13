@@ -6,6 +6,6 @@
     <RepositoryUrl>https://github.com/dotnet-shashlik/shashlik.eventbus</RepositoryUrl>
     <PackageTags>shashlik</PackageTags>
     <Authors>dotnet-shashlik</Authors>
-    <Version>0.1.0-preview-00041</Version>
+    <Version>0.1.0-preview-00042</Version>
   </PropertyGroup>
 </Project>
