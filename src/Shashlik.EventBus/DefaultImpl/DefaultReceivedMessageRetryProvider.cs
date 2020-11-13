@@ -1,6 +1,4 @@
-﻿// ReSharper disable CheckNamespace
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -10,7 +8,7 @@ using Microsoft.Extensions.Options;
 using Shashlik.Utils.Extensions;
 using Shashlik.Utils.Helpers;
 
-namespace Shashlik.EventBus
+namespace Shashlik.EventBus.DefaultImpl
 {
     /// <summary>
     /// 已接收的消息重试提供类

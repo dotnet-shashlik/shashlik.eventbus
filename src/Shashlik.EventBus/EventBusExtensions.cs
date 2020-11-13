@@ -63,6 +63,7 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
             serviceCollection.TryAddSingleton<IMessageListenerFactory, DefaultMessageListenerFactory>();
             serviceCollection.TryAddSingleton<IReceivedDelayEventProvider, DefaultReceivedDelayEventProvider>();
+            serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
 
             serviceCollection.AddSingleton<IHostedService, EventBusStartup>();
             return new DefaultEventBusBuilder(serviceCollection);

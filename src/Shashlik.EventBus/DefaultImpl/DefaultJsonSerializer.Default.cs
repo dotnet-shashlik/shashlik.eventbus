@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 
-// ReSharper disable CheckNamespace
-
-namespace Shashlik.EventBus
+namespace Shashlik.EventBus.DefaultImpl
 {
     /// <summary>
     /// 默认json序列化器

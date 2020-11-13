@@ -14,6 +14,7 @@ namespace Shashlik.EventBus
         private IPublishedMessageRetryProvider PublishedMessageRetryProvider { get; }
         private IReceivedMessageRetryProvider ReceivedMessageRetryProvider { get; }
         private IMessageListenerFactory MessageListenerFactory { get; }
+        private IExpiredMessageProvider ExpiredMessageProvider { get; }
         private CancellationTokenSource StopCancellationTokenSource { get; }
 
         public EventBusStartup(
@@ -22,7 +23,7 @@ namespace Shashlik.EventBus
             IEventSubscriber eventSubscriber,
             IPublishedMessageRetryProvider publishedMessageRetryProvider,
             IReceivedMessageRetryProvider receivedMessageRetryProvider,
-            IMessageListenerFactory messageListenerFactory)
+            IMessageListenerFactory messageListenerFactory, IExpiredMessageProvider expiredMessageProvider)
         {
             MessageStorageInitializer = messageStorageInitializer;
             EventHandlerFindProvider = eventHandlerFindProvider;
@@ -30,6 +31,7 @@ namespace Shashlik.EventBus
             PublishedMessageRetryProvider = publishedMessageRetryProvider;
             ReceivedMessageRetryProvider = receivedMessageRetryProvider;
             MessageListenerFactory = messageListenerFactory;
+            ExpiredMessageProvider = expiredMessageProvider;
             StopCancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -52,6 +54,8 @@ namespace Shashlik.EventBus
             await PublishedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token);
             // 启动重试器
             await ReceivedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token);
+            // 启动过期消息删除
+            ExpiredMessageProvider.DoDelete(StopCancellationTokenSource.Token);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
