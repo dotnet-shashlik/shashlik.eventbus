@@ -9,11 +9,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
-using Shashlik.EventBus.Kafka;
-using Shashlik.EventBus.MySql;
+using Shashlik.EventBus.PostgreSQL;
+using Shashlik.EventBus.RabbitMQ;
 using Shashlik.Utils.Extensions;
 
-namespace Sample.Kafka.Mysql
+namespace Sample.Rabbit.PostgreSQL
 {
     public class Program
     {
@@ -44,8 +44,13 @@ namespace Sample.Kafka.Mysql
                     }, 5);
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaMySql"; })
-                        .AddMySql<DemoDbContext>()
-                        .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
+                        .AddNpgsql<DemoDbContext>()
+                        .AddRabbitMQ(r =>
+                        {
+                            r.Host = "192.168.50.178";
+                            r.UserName = "rabbit";
+                            r.Password = "8NnT2nUNoOwpBAue";
+                        });
 
                     services.AddHostedService<TestService>();
                 })

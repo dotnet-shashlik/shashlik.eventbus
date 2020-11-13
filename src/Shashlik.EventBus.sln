@@ -31,6 +31,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Kafka.PostgreSQL", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleBase", "samples\SampleBase\SampleBase.csproj", "{12390BC5-888D-4521-8F1B-F2E95D775D04}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Rabbit.Mysql", "samples\Sample.Rabbit.Mysql\Sample.Rabbit.Mysql.csproj", "{A9221772-C462-4C03-9D94-28DD49DAFD19}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Rabbit.PostgreSQL", "samples\Sample.Rabbit.PostgreSQL\Sample.Rabbit.PostgreSQL.csproj", "{5F709E28-646B-44D8-BD53-86CA685E5715}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +81,14 @@ Global
 		{12390BC5-888D-4521-8F1B-F2E95D775D04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12390BC5-888D-4521-8F1B-F2E95D775D04}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12390BC5-888D-4521-8F1B-F2E95D775D04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9221772-C462-4C03-9D94-28DD49DAFD19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9221772-C462-4C03-9D94-28DD49DAFD19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9221772-C462-4C03-9D94-28DD49DAFD19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9221772-C462-4C03-9D94-28DD49DAFD19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F709E28-646B-44D8-BD53-86CA685E5715}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F709E28-646B-44D8-BD53-86CA685E5715}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F709E28-646B-44D8-BD53-86CA685E5715}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F709E28-646B-44D8-BD53-86CA685E5715}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -85,6 +97,8 @@ Global
 		{844331B0-8B76-4C7C-8357-9A7258504684} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
 		{121DC790-E5D6-4054-A0B9-73D794C097B7} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
 		{12390BC5-888D-4521-8F1B-F2E95D775D04} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
+		{A9221772-C462-4C03-9D94-28DD49DAFD19} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
+		{5F709E28-646B-44D8-BD53-86CA685E5715} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

@@ -32,45 +32,48 @@ namespace Shashlik.EventBus.Kafka
                     var consumerResult = cunsumer.Consume(cancellationToken);
                     if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty()) continue;
 
-                    MessageTransferModel message;
-                    try
+                    Task.Run(() =>
                     {
-                        message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.LogError(e, "[EventBus-Kafka] deserialize message from kafka error.");
-                        continue;
-                    }
+                        MessageTransferModel message;
+                        try
+                        {
+                            message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e, "[EventBus-Kafka] deserialize message from kafka error.");
+                            return;
+                        }
 
-                    if (message == null)
-                    {
-                        Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
-                        continue;
-                    }
+                        if (message == null)
+                        {
+                            Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
+                            return;
+                        }
 
-                    if (message.EventName != listener.Descriptor.EventName)
-                    {
-                        Logger.LogError(
-                            $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\".");
-                        continue;
-                    }
+                        if (message.EventName != listener.Descriptor.EventName)
+                        {
+                            Logger.LogError(
+                                $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\".");
+                            return;
+                        }
 
-                    Logger.LogDebug(
-                        $"[EventBus-Kafka] received msg: {message.ToJson()}.");
+                        Logger.LogDebug(
+                            $"[EventBus-Kafka] received msg: {message.ToJson()}.");
 
-                    try
-                    {
-                        // 处理消息
-                        listener.OnReceive(message, cancellationToken);
-                        // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
-                        cunsumer.StoreOffset(consumerResult);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.LogError(e,
-                            $"[EventBus-Kafka] received msg execute OnReceive error: {message.ToJson()}.");
-                    }
+                        try
+                        {
+                            // 处理消息
+                            listener.OnReceive(message, cancellationToken);
+                            // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
+                            cunsumer.StoreOffset(consumerResult);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e,
+                                $"[EventBus-Kafka] received msg execute OnReceive error: {message.ToJson()}.");
+                        }
+                    }, cancellationToken);
                 }
             }, cancellationToken);
         }

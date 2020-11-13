@@ -342,7 +342,8 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
         private async Task<DataTable> SqlQuery(string sql, CancellationToken cancellationToken = default)
         {
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
-            await connection.OpenAsync(cancellationToken);
+            if (connection.State == ConnectionState.Closed)
+                await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
@@ -354,7 +355,8 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
         private async Task<object> SqlScalar(string sql, CancellationToken cancellationToken = default)
         {
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
-            await connection.OpenAsync(cancellationToken);
+            if (connection.State == ConnectionState.Closed)
+                await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
             return await cmd.ExecuteScalarAsync(cancellationToken);
