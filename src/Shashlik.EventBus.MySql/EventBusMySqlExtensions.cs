@@ -2,56 +2,75 @@
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.Utils.Extensions;
 
-// ReSharper disable AssignNullToNotNullAttribute
-
 namespace Shashlik.EventBus.MySql
 {
     public static class EventBusMySqlExtensions
     {
+        /// <summary>
+        /// add mysql services
+        /// </summary>
+        /// <param name="eventBusBuilder"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="publishTableName"></param>
+        /// <param name="receiveTableName"></param>
+        /// <returns></returns>
         public static IEventBusBuilder AddMySql(
-            this IEventBusBuilder service,
+            this IEventBusBuilder eventBusBuilder,
             string connectionString,
             string publishTableName = null,
             string receiveTableName = null)
         {
-            service.Services.Configure<EventBusMySqlOptions>(options =>
+            eventBusBuilder.Services.Configure<EventBusMySqlOptions>(options =>
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName;
+                    options.PublishTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName;
+                    options.ReceiveTableName = receiveTableName!;
             });
 
-            return service.AddMySql();
+            return eventBusBuilder.AddMySqlCore();
         }
 
+        /// <summary>
+        /// add mysql services
+        /// </summary>
+        /// <param name="eventBusBuilder"></param>
+        /// <param name="publishTableName"></param>
+        /// <param name="receiveTableName"></param>
+        /// <typeparam name="TDbContext"></typeparam>
+        /// <returns></returns>
         public static IEventBusBuilder AddMySql<TDbContext>(
-            this IEventBusBuilder service,
+            this IEventBusBuilder eventBusBuilder,
             string publishTableName = null,
             string receiveTableName = null)
             where TDbContext : DbContext
         {
-            service.Services.Configure<EventBusMySqlOptions>(options =>
+            eventBusBuilder.Services.Configure<EventBusMySqlOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName;
+                    options.PublishTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName;
+                    options.ReceiveTableName = receiveTableName!;
             });
 
-            return service.AddMySql();
+            return eventBusBuilder.AddMySqlCore();
         }
 
-        public static IEventBusBuilder AddMySql(this IEventBusBuilder service)
+        /// <summary>
+        /// add mysql core services
+        /// </summary>
+        /// <param name="eventBusBuilder"></param>
+        /// <returns></returns>
+        public static IEventBusBuilder AddMySqlCore(this IEventBusBuilder eventBusBuilder)
         {
-            service.Services.AddOptions<EventBusMySqlOptions>();
-            service.Services.AddSingleton<IMessageStorage, MySqlMessageStorage>();
-            service.Services.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
-            service.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
+            eventBusBuilder.Services.AddOptions<EventBusMySqlOptions>();
+            eventBusBuilder.Services.AddSingleton<IMessageStorage, MySqlMessageStorage>();
+            eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
+            eventBusBuilder.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
 
-            return service;
+            return eventBusBuilder;
         }
     }
 }

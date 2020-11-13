@@ -9,13 +9,23 @@ namespace Shashlik.EventBus.PostgreSQL
 {
     public static class EventBusPostgreSQLExtensions
     {
+        /// <summary>
+        /// add npgsql services
+        /// </summary>
+        /// <param name="eventBusBuilder"></param>
+        /// <param name="connectionString"></param>
+        /// <param name="publishTableName"></param>
+        /// <param name="receiveTableName"></param>
+        /// <returns></returns>
         public static IEventBusBuilder AddNpgsql(
-            this IEventBusBuilder service,
+            this IEventBusBuilder eventBusBuilder,
             string connectionString,
             string publishTableName = null,
             string receiveTableName = null)
         {
-            service.Services.Configure<EventBusPostgreSQLOptions>(options =>
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(connectionString));
+            eventBusBuilder.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
@@ -24,16 +34,24 @@ namespace Shashlik.EventBus.PostgreSQL
                     options.ReceiveTableName = receiveTableName!;
             });
 
-            return service.AddNpgsql();
+            return eventBusBuilder.AddNpgsqlCore();
         }
 
+        /// <summary>
+        /// add npgsql services
+        /// </summary>
+        /// <param name="eventBusBuilder"></param>
+        /// <param name="publishTableName"></param>
+        /// <param name="receiveTableName"></param>
+        /// <typeparam name="TDbContext"></typeparam>
+        /// <returns></returns>
         public static IEventBusBuilder AddNpgsql<TDbContext>(
-            this IEventBusBuilder service,
+            this IEventBusBuilder eventBusBuilder,
             string publishTableName = null,
             string receiveTableName = null)
             where TDbContext : DbContext
         {
-            service.Services.Configure<EventBusPostgreSQLOptions>(options =>
+            eventBusBuilder.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
@@ -42,17 +60,22 @@ namespace Shashlik.EventBus.PostgreSQL
                     options.ReceiveTableName = receiveTableName!;
             });
 
-            return service.AddNpgsql();
+            return eventBusBuilder.AddNpgsqlCore();
         }
 
-        public static IEventBusBuilder AddNpgsql(this IEventBusBuilder service)
+        /// <summary>
+        /// add npgsql core services
+        /// </summary>
+        /// <param name="eventBusBuilder"></param>
+        /// <returns></returns>
+        public static IEventBusBuilder AddNpgsqlCore(this IEventBusBuilder eventBusBuilder)
         {
-            service.Services.AddOptions<EventBusPostgreSQLOptions>();
-            service.Services.AddSingleton<IMessageStorage, PostgreSQLMessageStorage>();
-            service.Services.AddTransient<IMessageStorageInitializer, PostgreSQLMessageStorageInitializer>();
-            service.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
+            eventBusBuilder.Services.AddOptions<EventBusPostgreSQLOptions>();
+            eventBusBuilder.Services.AddSingleton<IMessageStorage, PostgreSQLMessageStorage>();
+            eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, PostgreSQLMessageStorageInitializer>();
+            eventBusBuilder.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
 
-            return service;
+            return eventBusBuilder;
         }
     }
 }

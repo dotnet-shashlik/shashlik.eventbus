@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.DefaultImpl
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            await Publish(@event, transactionContext, null, items);
+            await Publish(@event, transactionContext, null, items, cancellationToken);
         }
 
         public async Task PublishAsync<TEvent>(
@@ -47,7 +47,7 @@ namespace Shashlik.EventBus.DefaultImpl
             CancellationToken cancellationToken = default
         ) where TEvent : IDelayEvent
         {
-            await Publish(@event, transactionContext, delayAt, items);
+            await Publish(@event, transactionContext, delayAt, items, cancellationToken);
         }
 
         private async Task Publish<TEvent>(

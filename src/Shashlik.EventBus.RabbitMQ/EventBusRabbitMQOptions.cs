@@ -1,6 +1,4 @@
-﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
-
-using System;
+﻿using System;
 using RabbitMQ.Client;
 
 namespace Shashlik.EventBus.RabbitMQ
@@ -15,17 +13,17 @@ namespace Shashlik.EventBus.RabbitMQ
         /// <summary>
         /// 主机名称
         /// </summary>
-        public string Host { get; set; }
+        public string Host { get; set; } = "localhost";
 
         /// <summary>
         /// 用户名
         /// </summary>
-        public string UserName { get; set; }
+        public string UserName { get; set; } = "guest";
 
         /// <summary>
         /// 密码
         /// </summary>
-        public string Password { get; set; }
+        public string Password { get; set; } = "guest";
 
         /// <summary>
         /// virtual host, default: /

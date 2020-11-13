@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -14,8 +11,11 @@ namespace Shashlik.EventBus.RabbitMQ
     /// </summary>
     public class RabbitMQMessageSender : IMessageSender
     {
-        public RabbitMQMessageSender(IOptionsMonitor<EventBusRabbitMQOptions> options,
-            IRabbitMQConnection connection, ILogger<RabbitMQMessageSender> logger, IMessageSerializer messageSerializer)
+        public RabbitMQMessageSender(
+            IOptionsMonitor<EventBusRabbitMQOptions> options,
+            IRabbitMQConnection connection,
+            ILogger<RabbitMQMessageSender> logger,
+            IMessageSerializer messageSerializer)
         {
             Options = options;
             Logger = logger;

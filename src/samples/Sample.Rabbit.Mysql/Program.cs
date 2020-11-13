@@ -45,6 +45,7 @@ namespace Sample.Rabbit.Mysql
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitMySql"; })
                         .AddMySql<DemoDbContext>()
+                        .AddEfCoreExtensions<DemoDbContext>()
                         .AddRabbitMQ(r =>
                         {
                             r.Host = "192.168.50.178";
@@ -84,12 +85,19 @@ namespace Sample.Rabbit.Mysql
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
+                    if (i % 3 == 0)
+                    {
+                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】王五: {i}"},
+                            cancellationToken: cancellationToken);
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
                     if (i % 2 == 0)
                         await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"},
-                            new TransactionContext(DbContext, transaction), cancellationToken: cancellationToken);
+                            cancellationToken: cancellationToken);
                     else
                         await EventPublisher.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
-                            new TransactionContext(DbContext, transaction),
                             DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)),
                             cancellationToken: cancellationToken);
 

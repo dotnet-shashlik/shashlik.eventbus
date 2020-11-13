@@ -45,6 +45,7 @@ namespace Sample.Kafka.Mysql
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaMySql"; })
                         .AddMySql<DemoDbContext>()
+                        .AddEfCoreExtensions<DemoDbContext>()
                         .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
 
                     services.AddHostedService<TestService>();
@@ -75,16 +76,23 @@ namespace Sample.Kafka.Mysql
             {
                 await Task.CompletedTask;
 
-                for (var i = 0; i < 30000; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
+                    if (i % 3 == 0)
+                    {
+                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】王五: {i}"},
+                            cancellationToken: cancellationToken);
+                        await transaction.RollbackAsync(cancellationToken);
+                        continue;
+                    }
+
                     if (i % 2 == 0)
                         await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"},
-                            new TransactionContext(DbContext, transaction), cancellationToken: cancellationToken);
+                            cancellationToken: cancellationToken);
                     else
                         await EventPublisher.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
-                            new TransactionContext(DbContext, transaction),
                             DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)),
                             cancellationToken: cancellationToken);
 

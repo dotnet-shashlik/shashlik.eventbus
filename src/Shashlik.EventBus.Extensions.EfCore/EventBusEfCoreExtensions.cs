@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,18 +16,18 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 注册event bus  ef core 扩展: 自动包装事务上下文
         /// </summary>
-        /// <param name="serviceCollection"></param>
+        /// <param name="eventBusBuilder"></param>
         /// <typeparam name="TDbContext"></typeparam>
         /// <returns></returns>
-        public static IServiceCollection AddEventBusEfCoreExtensions<TDbContext>(
-            this IServiceCollection serviceCollection)
+        public static IEventBusBuilder AddEfCoreExtensions<TDbContext>(
+            this IEventBusBuilder eventBusBuilder)
             where TDbContext : DbContext
         {
-            serviceCollection.Configure<EventBusEfCoreOptions>(r => { r.DbContextType = typeof(TDbContext); });
+            eventBusBuilder.Services.Configure<EventBusEfCoreOptions>(r => { r.DbContextType = typeof(TDbContext); });
             // 这里要用Transient不能用单例
-            serviceCollection.AddTransient<IEventPublisher, EfCoreEventPublisher>();
+            eventBusBuilder.Services.AddTransient<IEventPublisher, EfCoreEventPublisher>();
 
-            return serviceCollection;
+            return eventBusBuilder;
         }
 
 
@@ -36,21 +37,21 @@ namespace Shashlik.EventBus
         /// <param name="eventPublisher"></param>
         /// <param name="event"></param>
         /// <param name="items"></param>
+        /// <param name="cancellationToken"></param>
         /// <typeparam name="TEvent"></typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidCastException"></exception>
         public static async Task PublishAsync<TEvent>(
             this IEventPublisher eventPublisher,
             TEvent @event,
-            IDictionary<string, string>? items = null
+            IDictionary<string, string>? items = null,
+            CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
             if (eventPublisher is EfCoreEventPublisher efCoreEventPublisher)
-            {
-                await efCoreEventPublisher.PublishAsync(@event, items);
-            }
-
-            throw new InvalidCastException($"Make sure invoke AddEventBusEfCoreExtensions<>().");
+                await efCoreEventPublisher.PublishAsync(@event, items, cancellationToken);
+            else
+                throw new InvalidCastException($"Make sure invoke AddEventBusEfCoreExtensions<>().");
         }
 
         /// <summary>
@@ -60,6 +61,7 @@ namespace Shashlik.EventBus
         /// <param name="event"></param>
         /// <param name="delayAt"></param>
         /// <param name="items"></param>
+        /// <param name="cancellationToken"></param>
         /// <typeparam name="TEvent"></typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidCastException"></exception>
@@ -67,14 +69,14 @@ namespace Shashlik.EventBus
             this IEventPublisher eventPublisher,
             TEvent @event,
             DateTimeOffset delayAt,
-            IDictionary<string, string>? items = null) where TEvent : IDelayEvent
+            IDictionary<string, string>? items = null,
+            CancellationToken cancellationToken = default
+        ) where TEvent : IDelayEvent
         {
             if (eventPublisher is EfCoreEventPublisher efCoreEventPublisher)
-            {
-                await efCoreEventPublisher.PublishAsync(@event, delayAt, items);
-            }
-
-            throw new InvalidCastException($"Make sure invoke AddEventBusEfCoreExtensions<>().");
+                await efCoreEventPublisher.PublishAsync(@event, delayAt, items, cancellationToken);
+            else
+                throw new InvalidCastException($"Make sure invoke AddEventBusEfCoreExtensions<>().");
         }
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.MySql
 {
@@ -20,7 +21,15 @@ namespace Shashlik.EventBus.MySql
 
         private string GetConnectionString()
         {
-            if (Options.DbContextType == null) return Options.ConnectionString;
+            if (Options.DbContextType == null)
+            {
+                if (Options.ConnectionString.IsNullOrWhiteSpace())
+                    throw new OptionsValidationException(nameof(Options.ConnectionString),
+                        typeof(EventBusMySqlOptions),
+                        new[] {"ConnectionString and DbContextType can't all be empty."});
+                return Options.ConnectionString;
+            }
+
             using var scope = ServiceScopeFactory.CreateScope();
             using var dbContext = scope.ServiceProvider.GetRequiredService(Options.DbContextType) as DbContext;
             return dbContext!.Database.GetDbConnection().ConnectionString;
