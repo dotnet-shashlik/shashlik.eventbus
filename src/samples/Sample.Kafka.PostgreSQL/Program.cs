@@ -35,7 +35,7 @@ namespace Sample.Kafka.PostgreSQL
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     });
 
-                    services.AddEventBus(r => { r.Environment = "DemoKafka"; })
+                    services.AddEventBus(r => { r.Environment = "DemoKafkaPostgre"; })
                         .AddNpgsql<DemoDbContext>()
                         .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
 
