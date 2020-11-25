@@ -185,14 +185,16 @@ WHERE `msgId` = '{msgId}'
             await NonQuery(sql, null, cancellationToken);
         }
 
-        public async Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd,
+        public async Task<bool> TryLockReceived(string msgId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
+            if (lockEndAt <= DateTimeOffset.Now)
+                throw new ArgumentOutOfRangeException(nameof(lockEndAt));
             var nowLong = DateTime.Now.GetLongDate();
 
             var sql = $@"
 UPDATE `{Options.CurrentValue.ReceiveTableName}`
-SET `isLocking` = '1', `lockEnd` = {lockEnd}
+SET `isLocking` = '1', `lockEnd` = {lockEndAt.GetLongDate()}
 WHERE `msgId` = '{msgId}' AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
 ";
             return await NonQuery(sql, null, cancellationToken) == 1;

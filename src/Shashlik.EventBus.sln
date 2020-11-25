@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Rabbit.PostgreSQL", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MemoryQueue", "Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj", "{26E090A3-1289-4A1E-A47F-CDA314CD82B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MemoryStorage", "Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj", "{26D9C32A-0CED-404D-8477-1A554C8CCB48}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +97,10 @@ Global
 		{26E090A3-1289-4A1E-A47F-CDA314CD82B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26E090A3-1289-4A1E-A47F-CDA314CD82B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26E090A3-1289-4A1E-A47F-CDA314CD82B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26D9C32A-0CED-404D-8477-1A554C8CCB48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26D9C32A-0CED-404D-8477-1A554C8CCB48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26D9C32A-0CED-404D-8477-1A554C8CCB48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26D9C32A-0CED-404D-8477-1A554C8CCB48}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

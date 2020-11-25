@@ -48,8 +48,7 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             if (await MessageStorage.TryLockReceived(
                 message.MsgId,
-                true,
-                DateTimeOffset.Now.AddSeconds(Options.CurrentValue.RetryIntervalSeconds).GetLongDate(),
+                DateTimeOffset.Now.AddSeconds(Options.CurrentValue.RetryIntervalSeconds),
                 cancellationToken))
                 MessageReceiveQueueProvider.Enqueue(message, items, descriptor, cancellationToken);
         }

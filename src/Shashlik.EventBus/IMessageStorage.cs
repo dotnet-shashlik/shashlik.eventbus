@@ -95,11 +95,10 @@ namespace Shashlik.EventBus
         /// 更新已接收消息的锁数据
         /// </summary>
         /// <param name="msgId"></param>
-        /// <param name="isLocking"></param>
-        /// <param name="lockEnd"></param>
+        /// <param name="lockEndAt">锁定结束时间</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd, CancellationToken cancellationToken);
+        Task<bool> TryLockReceived(string msgId, DateTimeOffset lockEndAt, CancellationToken cancellationToken);
 
         /// <summary>
         /// 删除已过期的数据
