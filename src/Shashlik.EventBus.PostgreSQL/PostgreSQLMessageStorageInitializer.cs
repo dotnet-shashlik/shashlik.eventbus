@@ -19,8 +19,9 @@ namespace Shashlik.EventBus.PostgreSQL
 
         public async Task Initialize(CancellationToken cancellationToken = default)
         {
+            // 9.2及以下不支持CREATE SCHEMA IF NOT EXISTS，只能使用public
             var sql = $@"
-CREATE SCHEMA IF NOT EXISTS ""{Options.CurrentValue.Schema}"";
+{(Options.CurrentValue.Schema == "public" ? "CREATE SCHEMA IF NOT EXISTS " + Options.CurrentValue.Schema + ";" : "")}
 
 CREATE TABLE IF NOT EXISTS {Options.CurrentValue.FullPublishTableName}(
     ""msgId"" varchar(32) COLLATE ""pg_catalog"".""default"" NOT NULL,
