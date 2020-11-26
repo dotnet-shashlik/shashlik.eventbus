@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
-using MySql.Data.MySqlClient;
+using Microsoft.Data.SqlClient;
 using Shashlik.Utils.Extensions;
 
 // ReSharper disable ConvertIfStatementToSwitchExpression
@@ -17,23 +17,23 @@ using Shashlik.Utils.Extensions;
 // ReSharper disable ConvertIfStatementToSwitchStatement
 // ReSharper disable RedundantIfElseBlock
 
-namespace Shashlik.EventBus.MySql
+namespace Shashlik.EventBus.SqlServer
 {
-    public class MySqlMessageStorage : IMessageStorage
+    public class SqlServerMessageStorage : IMessageStorage
     {
-        public MySqlMessageStorage(IOptionsMonitor<EventBusMySqlOptions> options, IConnectionString connectionString)
+        public SqlServerMessageStorage(IOptionsMonitor<EventBusSqlServerOptions> options, IConnectionString connectionString)
         {
             Options = options;
             ConnectionString = connectionString;
         }
 
-        private IOptionsMonitor<EventBusMySqlOptions> Options { get; }
+        private IOptionsMonitor<EventBusSqlServerOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
 
         public async ValueTask<bool> ExistsPublishMessage(string msgId, CancellationToken cancellationToken = default)
         {
             var sql = $@"
-SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.PublishTableName}` WHERE `msgId`='{msgId}';";
+SELECT COUNT([msgId]) FROM [{Options.CurrentValue.PublishTableName}] WHERE [msgId]='{msgId}';";
 
             var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
@@ -42,7 +42,7 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.PublishTableName}` WHERE `msgI
         public async ValueTask<bool> ExistsReceiveMessage(string msgId, CancellationToken cancellationToken = default)
         {
             var sql = $@"
-SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgId`='{msgId}';";
+SELECT COUNT([msgId]) FROM [{Options.CurrentValue.ReceiveTableName}] WHERE [msgId]='{msgId}';";
 
             var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
@@ -51,7 +51,7 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
         public async Task<MessageStorageModel> FindPublishedById(string id,
             CancellationToken cancellationToken = default)
         {
-            var sql = $"SELECT * FROM `{Options.CurrentValue.PublishTableName}` WHERE `msgId`='{id}';";
+            var sql = $"SELECT * FROM [{Options.CurrentValue.PublishTableName}] WHERE [msgId]='{id}';";
 
             var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -77,7 +77,7 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
         public async Task<MessageStorageModel> FindReceivedById(string id,
             CancellationToken cancellationToken = default)
         {
-            var sql = $"SELECT * FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgId`='{id}';";
+            var sql = $"SELECT * FROM [{Options.CurrentValue.ReceiveTableName}] WHERE [msgId]='{id}';";
 
             var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -105,25 +105,25 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-INSERT INTO `{Options.CurrentValue.PublishTableName}`
-(`msgId`, `environment`, `createTime`, `delayAt`, `expireTime`, `eventName`, `eventBody`, `eventItems`, `retryCount`, `status`, `isLocking`, `lockEnd`)
+INSERT INTO [{Options.CurrentValue.PublishTableName}]
+([msgId], [environment], [createTime], [delayAt], [expireTime], [eventName], [eventBody], [eventItems], [retryCount], [status], [isLocking], [lockEnd])
 VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
 ";
 
             var parameters = new[]
             {
-                new MySqlParameter("@msgId", MySqlDbType.VarChar) {Value = message.MsgId},
-                new MySqlParameter("@environment", MySqlDbType.VarChar) {Value = message.Environment},
-                new MySqlParameter("@createTime", MySqlDbType.Int64) {Value = message.CreateTime.GetLongDate()},
-                new MySqlParameter("@delayAt", MySqlDbType.Int64) {Value = message.DelayAt?.GetLongDate() ?? 0},
-                new MySqlParameter("@expireTime", MySqlDbType.Int64) {Value = message.ExpireTime?.GetLongDate() ?? 0},
-                new MySqlParameter("@eventName", MySqlDbType.VarChar) {Value = message.EventName},
-                new MySqlParameter("@eventBody", MySqlDbType.LongText) {Value = message.EventBody},
-                new MySqlParameter("@eventItems", MySqlDbType.LongText) {Value = message.EventItems},
-                new MySqlParameter("@retryCount", MySqlDbType.Int32) {Value = message.RetryCount},
-                new MySqlParameter("@status", MySqlDbType.VarChar) {Value = message.Status},
-                new MySqlParameter("@isLocking", MySqlDbType.Byte) {Value = message.IsLocking ? 1 : 0},
-                new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0},
+                new SqlParameter("@msgId", SqlDbType.VarChar) {Value = message.MsgId},
+                new SqlParameter("@environment", SqlDbType.VarChar) {Value = message.Environment},
+                new SqlParameter("@createTime", SqlDbType.BigInt) {Value = message.CreateTime.GetLongDate()},
+                new SqlParameter("@delayAt", SqlDbType.BigInt) {Value = message.DelayAt?.GetLongDate() ?? 0},
+                new SqlParameter("@expireTime", SqlDbType.BigInt) {Value = message.ExpireTime?.GetLongDate() ?? 0},
+                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = message.EventName},
+                new SqlParameter("@eventBody", SqlDbType.Text) {Value = message.EventBody},
+                new SqlParameter("@eventItems", SqlDbType.Text) {Value = message.EventItems},
+                new SqlParameter("@retryCount", SqlDbType.Int) {Value = message.RetryCount},
+                new SqlParameter("@status", SqlDbType.VarChar) {Value = message.Status},
+                new SqlParameter("@isLocking", SqlDbType.Bit) {Value = message.IsLocking ? 1 : 0},
+                new SqlParameter("@lockEnd", SqlDbType.BigInt) {Value = message.LockEnd?.GetLongDate() ?? 0},
             };
 
             var row = await NonQuery(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -134,27 +134,27 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
         public async Task SaveReceived(MessageStorageModel message, CancellationToken cancellationToken = default)
         {
             var sql = $@"
-INSERT INTO `{Options.CurrentValue.ReceiveTableName}`
-(`msgId`, `environment`, `createTime`, `isDelay`, `delayAt`, `expireTime`, `eventName`, `eventHandlerName`, `eventBody`, `eventItems`, `retryCount`, `status`, `isLocking`, `lockEnd`)
+INSERT INTO [{Options.CurrentValue.ReceiveTableName}]
+([msgId], [environment], [createTime], [isDelay], [delayAt], [expireTime], [eventName], [eventHandlerName], [eventBody], [eventItems], [retryCount], [status], [isLocking], [lockEnd])
 VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
 ";
 
             var parameters = new[]
             {
-                new MySqlParameter("@msgId", MySqlDbType.VarChar) {Value = message.MsgId},
-                new MySqlParameter("@environment", MySqlDbType.VarChar) {Value = message.Environment},
-                new MySqlParameter("@createTime", MySqlDbType.Int64) {Value = message.CreateTime.GetLongDate()},
-                new MySqlParameter("@isDelay", MySqlDbType.Byte) {Value = message.DelayAt.HasValue ? 1 : 0},
-                new MySqlParameter("@delayAt", MySqlDbType.Int64) {Value = message.DelayAt?.GetLongDate() ?? 0},
-                new MySqlParameter("@expireTime", MySqlDbType.Int64) {Value = message.ExpireTime?.GetLongDate() ?? 0},
-                new MySqlParameter("@eventName", MySqlDbType.VarChar) {Value = message.EventName},
-                new MySqlParameter("@eventHandlerName", MySqlDbType.VarChar) {Value = message.EventHandlerName},
-                new MySqlParameter("@eventBody", MySqlDbType.LongText) {Value = message.EventBody},
-                new MySqlParameter("@eventItems", MySqlDbType.LongText) {Value = message.EventItems},
-                new MySqlParameter("@retryCount", MySqlDbType.Int32) {Value = message.RetryCount},
-                new MySqlParameter("@status", MySqlDbType.VarChar) {Value = message.Status},
-                new MySqlParameter("@isLocking", MySqlDbType.Byte) {Value = message.IsLocking ? 1 : 0},
-                new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0}
+                new SqlParameter("@msgId", SqlDbType.VarChar) {Value = message.MsgId},
+                new SqlParameter("@environment", SqlDbType.VarChar) {Value = message.Environment},
+                new SqlParameter("@createTime", SqlDbType.BigInt) {Value = message.CreateTime.GetLongDate()},
+                new SqlParameter("@isDelay", SqlDbType.Bit) {Value = message.DelayAt.HasValue ? 1 : 0},
+                new SqlParameter("@delayAt", SqlDbType.BigInt) {Value = message.DelayAt?.GetLongDate() ?? 0},
+                new SqlParameter("@expireTime", SqlDbType.BigInt) {Value = message.ExpireTime?.GetLongDate() ?? 0},
+                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = message.EventName},
+                new SqlParameter("@eventHandlerName", SqlDbType.VarChar) {Value = message.EventHandlerName},
+                new SqlParameter("@eventBody", SqlDbType.Text) {Value = message.EventBody},
+                new SqlParameter("@eventItems", SqlDbType.Text) {Value = message.EventItems},
+                new SqlParameter("@retryCount", SqlDbType.Int) {Value = message.RetryCount},
+                new SqlParameter("@status", SqlDbType.VarChar) {Value = message.Status},
+                new SqlParameter("@isLocking", SqlDbType.Bit) {Value = message.IsLocking ? 1 : 0},
+                new SqlParameter("@lockEnd", SqlDbType.BigInt) {Value = message.LockEnd?.GetLongDate() ?? 0}
             };
 
             var row = await NonQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -166,9 +166,9 @@ VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @even
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-UPDATE `{Options.CurrentValue.PublishTableName}`
-SET `status` = '{status}', `retryCount` = {retryCount}, `expireTime` = {expireTime?.GetLongDate() ?? 0}
-WHERE `msgId` = '{msgId}'
+UPDATE [{Options.CurrentValue.PublishTableName}]
+SET [status] = '{status}', [retryCount] = {retryCount}, [expireTime] = {expireTime?.GetLongDate() ?? 0}
+WHERE [msgId] = '{msgId}'
 ";
 
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
@@ -178,9 +178,9 @@ WHERE `msgId` = '{msgId}'
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-UPDATE `{Options.CurrentValue.ReceiveTableName}`
-SET `status` = '{status}', `retryCount` = {retryCount}, `expireTime` = {expireTime?.GetLongDate() ?? 0}
-WHERE `msgId` = '{msgId}'
+UPDATE [{Options.CurrentValue.ReceiveTableName}]
+SET [status] = '{status}', [retryCount] = {retryCount}, [expireTime] = {expireTime?.GetLongDate() ?? 0}
+WHERE [msgId] = '{msgId}'
 ";
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
@@ -193,9 +193,9 @@ WHERE `msgId` = '{msgId}'
             var nowLong = DateTime.Now.GetLongDate();
 
             var sql = $@"
-UPDATE `{Options.CurrentValue.ReceiveTableName}`
-SET `isLocking` = 1, `lockEnd` = {lockEndAt.GetLongDate()}
-WHERE `msgId` = '{msgId}' AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
+UPDATE [{Options.CurrentValue.ReceiveTableName}]
+SET [isLocking] = 1, [lockEnd] = {lockEndAt.GetLongDate()}
+WHERE [msgId] = '{msgId}' AND ([isLocking] = 0 OR [lockEnd] < {nowLong})
 ";
             return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
@@ -204,8 +204,8 @@ WHERE `msgId` = '{msgId}' AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
         {
             var now = DateTime.Now.GetLongDate();
             var sql = $@"
-DELETE FROM `{Options.CurrentValue.PublishTableName}` WHERE `expireTime` != 0 AND `expireTime` < {now} AND `status` != '{MessageStatus.Scheduled}';
-DELETE FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `expireTime` != 0 AND `expireTime` < {now} AND `status` != '{MessageStatus.Scheduled}';
+DELETE FROM [{Options.CurrentValue.PublishTableName}] WHERE [expireTime] != 0 AND [expireTime] < {now} AND [status] != '{MessageStatus.Scheduled}';
+DELETE FROM [{Options.CurrentValue.ReceiveTableName}] WHERE [expireTime] != 0 AND [expireTime] < {now} AND [status] != '{MessageStatus.Scheduled}';
 ";
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
@@ -223,13 +223,13 @@ DELETE FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `expireTime` != 0 AN
             var nowLong = now.GetLongDate();
 
             var sql = $@"
-SELECT * FROM `{Options.CurrentValue.PublishTableName}`
+SELECT * FROM [{Options.CurrentValue.PublishTableName}]
 WHERE
-    `environment` = '{environment}'
-    AND `createTime` < {createTimeLimit}
-    AND `retryCount` < {maxFailedRetryCount}
-    AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
-    AND (`status` = '{MessageStatus.Scheduled}' OR `status` = '{MessageStatus.Failed}')
+    [environment] = '{environment}'
+    AND [createTime] < {createTimeLimit}
+    AND [retryCount] < {maxFailedRetryCount}
+    AND ([isLocking] = 0 OR [lockEnd] < {nowLong})
+    AND ([status] = '{MessageStatus.Scheduled}' OR [status] = '{MessageStatus.Failed}')
 LIMIT {count};
 ";
 
@@ -267,9 +267,9 @@ LIMIT {count};
 
             var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
             var updateSql = $@"
-UPDATE `{Options.CurrentValue.PublishTableName}`
-SET `isLocking` = 1, `lockEnd` = {lockEnd}
-WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
+UPDATE [{Options.CurrentValue.PublishTableName}]
+SET [isLocking] = 1, [lockEnd] = {lockEnd}
+WHERE [msgId] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
 ";
             var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
@@ -288,13 +288,13 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
             var nowLong = now.GetLongDate();
 
             var sql = $@"
-SELECT * FROM `{Options.CurrentValue.ReceiveTableName}`
+SELECT * FROM [{Options.CurrentValue.ReceiveTableName}]
 WHERE
-    `environment` = '{environment}'
-    AND ((`isDelay` = 0 AND `createTime` < {createTimeLimit}) OR (`isDelay` = 1 AND `delayAt` <= {nowLong} ))
-    AND `retryCount` < {maxFailedRetryCount}
-    AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
-    AND (`status` = '{MessageStatus.Scheduled}' OR `status` = '{MessageStatus.Failed}')
+    [environment] = '{environment}'
+    AND (([isDelay] = 0 AND [createTime] < {createTimeLimit}) OR ([isDelay] = 1 AND [delayAt] <= {nowLong} ))
+    AND [retryCount] < {maxFailedRetryCount}
+    AND ([isLocking] = 0 OR [lockEnd] < {nowLong})
+    AND ([status] = '{MessageStatus.Scheduled}' OR [status] = '{MessageStatus.Failed}')
 LIMIT {count};
 ";
 
@@ -333,9 +333,9 @@ LIMIT {count};
 
             var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
             var updateSql = $@"
-UPDATE `{Options.CurrentValue.ReceiveTableName}`
-SET `isLocking` = 1, `lockEnd` = {lockEnd}
-WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
+UPDATE [{Options.CurrentValue.ReceiveTableName}]
+SET [isLocking] = 1, [lockEnd] = {lockEnd}
+WHERE [msgId] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
 ";
             var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
@@ -343,7 +343,7 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 
         private async Task<DataTable> SqlQuery(string sql, CancellationToken cancellationToken = default)
         {
-            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
+            await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
@@ -356,7 +356,7 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 
         private async Task<object> SqlScalar(string sql, CancellationToken cancellationToken = default)
         {
-            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
+            await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
@@ -364,21 +364,21 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
             return await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<int> NonQuery(string sql, MySqlParameter[] parameter,
+        private async Task<int> NonQuery(string sql, SqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
+            await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             if (!parameter.IsNullOrEmpty())
-                foreach (var mySqlParameter in parameter)
-                    cmd.Parameters.Add(mySqlParameter);
+                foreach (var sqlParameter in parameter)
+                    cmd.Parameters.Add(sqlParameter);
             cmd.CommandText = sql;
             return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<int> NonQuery(TransactionContext transactionContext, string sql, MySqlParameter[] parameter,
+        private async Task<int> NonQuery(TransactionContext transactionContext, string sql, SqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
             if (transactionContext == null)
@@ -390,8 +390,8 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
                     await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
                 await using var cmd = connection.CreateCommand();
                 if (!parameter.IsNullOrEmpty())
-                    foreach (var mySqlParameter in parameter)
-                        cmd.Parameters.Add(mySqlParameter);
+                    foreach (var sqlParameter in parameter)
+                        cmd.Parameters.Add(sqlParameter);
 
                 cmd.CommandText = sql;
 
@@ -416,8 +416,8 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
                     await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
                 await using var cmd = connection.CreateCommand();
                 if (!parameter.IsNullOrEmpty())
-                    foreach (var mySqlParameter in parameter)
-                        cmd.Parameters.Add(mySqlParameter);
+                    foreach (var sqlParameter in parameter)
+                        cmd.Parameters.Add(sqlParameter);
                 cmd.CommandText = sql;
 
                 if (transactionContext.TransactionInstance is DbTransaction dbTransaction)

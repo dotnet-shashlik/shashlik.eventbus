@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishTableName}`
 	`status` VARCHAR(32) NOT NULL,
 	`retryCount` INT NOT NULL,
 	`isLocking` TINYINT NOT NULL,
-	`lockEnd` LONG NOT NULL
+	`lockEnd` BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 	`status` VARCHAR(32) NOT NULL,
 	`retryCount` INT NOT NULL,
 	`isLocking` TINYINT NOT NULL,
-	`lockEnd` LONG NOT NULL
+	`lockEnd` BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ";
 
