@@ -62,7 +62,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 return;
 
             // 并行重试
-            Parallel.ForEach(messages, new ParallelOptions { MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism },
+            Parallel.ForEach(messages, new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
                 async (item) =>
                 {
                     if (!EventHandlerDescriptors.TryGetValue(item.EventHandlerName, out var descriptor))
@@ -75,14 +75,14 @@ namespace Shashlik.EventBus.DefaultImpl
                     try
                     {
                         var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
-                        EventHandlerInvoker.Invoke(item, items, descriptor);
+                        await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
                         await MessageStorage.UpdateReceived(
-                            item.MsgId,
-                            MessageStatus.Succeeded,
-                            item.RetryCount + 1,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
-                            cancellationToken)
-                        .ConfigureAwait(false);
+                                item.MsgId,
+                                MessageStatus.Succeeded,
+                                item.RetryCount + 1,
+                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                                cancellationToken)
+                            .ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -92,12 +92,12 @@ namespace Shashlik.EventBus.DefaultImpl
                         {
                             // 失败的数据不过期
                             await MessageStorage.UpdateReceived(
-                                item.MsgId,
-                                MessageStatus.Failed,
-                                item.RetryCount + 1,
-                                null,
-                                cancellationToken)
-                            .ConfigureAwait(false);
+                                    item.MsgId,
+                                    MessageStatus.Failed,
+                                    item.RetryCount + 1,
+                                    null,
+                                    cancellationToken)
+                                .ConfigureAwait(false);
                         }
                         catch (Exception exInner)
                         {

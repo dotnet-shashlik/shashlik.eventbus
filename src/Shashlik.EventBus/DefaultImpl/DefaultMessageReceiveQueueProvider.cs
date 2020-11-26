@@ -63,7 +63,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     try
                     {
                         // 执行事件消费
-                        EventHandlerInvoker.Invoke(messageStorageModel, items, descriptor);
+                        await EventHandlerInvoker.Invoke(messageStorageModel, items, descriptor).ConfigureAwait(false);
 
                         // 消息处理没问题就更新数据库状态
                         await MessageStorage.UpdateReceived(

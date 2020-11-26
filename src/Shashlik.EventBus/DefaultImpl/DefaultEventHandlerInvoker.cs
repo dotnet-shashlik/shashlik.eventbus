@@ -19,7 +19,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IServiceScopeFactory ServiceScopeFactory { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public void Invoke(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
+        public async Task Invoke(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor eventHandlerDescriptor)
         {
             using var scope = ServiceScopeFactory.CreateScope();
@@ -33,7 +33,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     new Type[] {eventHandlerDescriptor.EventType, typeof(IDictionary<string, string>)});
 
             var task = (Task) method!.Invoke(eventHandlerInstance, new object[] {eventBody, items});
-            task.GetAwaiter().GetResult();
+            await task.ConfigureAwait(false);
         }
     }
 }
