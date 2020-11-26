@@ -18,7 +18,7 @@ namespace Sample.Kafka.PostgreSQL
     public class Program
     {
         public const string ConnectionString =
-            "server=192.168.50.178;database=eventbustest;user=testuser;password=123123;Pooling=True;Min Pool Size=5;Max Pool Size=10;";
+            "server=192.168.50.178;user id=testuser;password=123123;persistsecurityinfo=true;database=eventbustest;Pooling=True;Minimum Pool Size=3;Maximum Pool Size=5;";
 
         public static string ClusterId { get; set; }
 
@@ -35,7 +35,7 @@ namespace Sample.Kafka.PostgreSQL
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Debug); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
@@ -68,7 +68,7 @@ namespace Sample.Kafka.PostgreSQL
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 30000; i++)
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 

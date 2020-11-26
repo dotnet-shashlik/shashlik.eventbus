@@ -35,7 +35,7 @@ namespace Sample.Kafka.Mysql
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Warning); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {

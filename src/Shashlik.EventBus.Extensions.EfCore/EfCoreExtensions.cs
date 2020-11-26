@@ -15,7 +15,7 @@ namespace Shashlik.EventBus
     public static class EfCoreExtensions
     {
         /// <summary>
-        /// 发布事件，自动包装事务上下文
+        /// 通过DbContext发布事件，自动使用DbContext事务上下文和连接信息
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="event"></param>
@@ -47,7 +47,7 @@ namespace Shashlik.EventBus
         }
 
         /// <summary>
-        /// 发布延迟事件，自动包装事务上下文
+        /// 通过DbContext发布延迟事件，自动使用DbContext事务上下文和连接信息
         /// </summary>
         /// <param name="dbContext"></param>
         /// <param name="event"></param>
