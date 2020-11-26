@@ -12,8 +12,8 @@ namespace Shashlik.EventBus.PostgreSQL
         public static IEventBusBuilder AddNpgsql(
             this IEventBusBuilder service,
             string connectionString,
-            string publishTableName = null,
-            string receiveTableName = null)
+            string? publishTableName = null,
+            string? receiveTableName = null)
         {
             service.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
@@ -29,8 +29,8 @@ namespace Shashlik.EventBus.PostgreSQL
 
         public static IEventBusBuilder AddNpgsql<TDbContext>(
             this IEventBusBuilder service,
-            string publishTableName = null,
-            string receiveTableName = null)
+            string? publishTableName = null,
+            string? receiveTableName = null)
             where TDbContext : DbContext
         {
             service.Services.Configure<EventBusPostgreSQLOptions>(options =>

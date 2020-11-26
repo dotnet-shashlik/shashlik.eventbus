@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
-using Microsoft.Data.SqlClient;
 
 namespace Shashlik.EventBus.SqlServer
 {

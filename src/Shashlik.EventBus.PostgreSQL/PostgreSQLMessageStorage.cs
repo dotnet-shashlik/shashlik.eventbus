@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.PostgreSQL
@@ -49,8 +47,8 @@ namespace Shashlik.EventBus.PostgreSQL
             return count > 0;
         }
 
-        public async Task<MessageStorageModel> FindPublishedById(string id,
-            CancellationToken cancellationToken = default)
+        public async Task<MessageStorageModel?> FindPublishedById(string id,
+            CancellationToken cancellationToken)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{id}';";
 
@@ -75,7 +73,7 @@ namespace Shashlik.EventBus.PostgreSQL
             };
         }
 
-        public async Task<MessageStorageModel> FindReceivedById(string id,
+        public async Task<MessageStorageModel?> FindReceivedById(string id,
             CancellationToken cancellationToken = default)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{id}';";
@@ -102,7 +100,7 @@ namespace Shashlik.EventBus.PostgreSQL
             };
         }
 
-        public async Task SavePublished(MessageStorageModel message, TransactionContext transactionContext,
+        public async Task SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -365,7 +363,7 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
             return await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<int> NonQuery(string sql, NpgsqlParameter[] parameter,
+        private async Task<int> NonQuery(string sql, NpgsqlParameter[]? parameter,
             CancellationToken cancellationToken = default)
         {
             await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);
@@ -373,65 +371,37 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using var cmd = connection.CreateCommand();
             if (!parameter.IsNullOrEmpty())
-                foreach (var mySqlParameter in parameter)
+                foreach (var mySqlParameter in parameter!)
                     cmd.Parameters.Add(mySqlParameter);
             cmd.CommandText = sql;
             return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<int> NonQuery(TransactionContext transactionContext, string sql, NpgsqlParameter[] parameter,
+        private async Task<int> NonQuery(ITransactionContext? transactionContext, string sql, NpgsqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            if (transactionContext == null)
+            if (transactionContext is null)
                 return await NonQuery(sql, parameter, cancellationToken).ConfigureAwait(false);
-            else if (transactionContext.ConnectionInstance is DbContext dbContext)
+
+            if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
+                throw new InvalidCastException(
+                    $"Event bus mysql storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
+
+            if (relationDbStorageTransactionContext.DbTransaction is NpgsqlTransaction tran)
             {
-                var connection = dbContext.Database.GetDbConnection();
-                if (connection.State == ConnectionState.Closed)
-                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                var connection = tran.Connection;
                 await using var cmd = connection.CreateCommand();
                 if (!parameter.IsNullOrEmpty())
                     foreach (var mySqlParameter in parameter)
                         cmd.Parameters.Add(mySqlParameter);
 
                 cmd.CommandText = sql;
-
-                if (transactionContext.TransactionInstance == null)
-                {
-                    if (dbContext.Database.CurrentTransaction != null)
-                        cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
-                }
-                else if (transactionContext.TransactionInstance is IDbContextTransaction dbContextTransaction)
-                    cmd.Transaction = dbContextTransaction.GetDbTransaction();
-                else if (transactionContext.TransactionInstance is IDbTransaction dbTransaction)
-                    cmd.Transaction = dbTransaction as DbTransaction;
-                else
-                    throw new InvalidCastException(
-                        $"[EventBus] invalid transaction context data. you can use DbContext or DbConnection for ConnectionInstance, and use IDbContextTransaction or IDbTransaction for TransactionInstance.");
+                cmd.Transaction = tran;
 
                 return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
-            else if (transactionContext.ConnectionInstance is DbConnection connection)
-            {
-                if (connection.State == ConnectionState.Closed)
-                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                await using var cmd = connection.CreateCommand();
-                if (!parameter.IsNullOrEmpty())
-                    foreach (var mySqlParameter in parameter)
-                        cmd.Parameters.Add(mySqlParameter);
-                cmd.CommandText = sql;
-
-                if (transactionContext.TransactionInstance is DbTransaction dbTransaction)
-                    cmd.Transaction = dbTransaction;
-                else
-                    throw new InvalidCastException(
-                        $"[EventBus] invalid transaction context data. you can use DbContext or DbConnection for ConnectionInstance, and use IDbContextTransaction or IDbTransaction for TransactionInstance.");
-
-                return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            throw new InvalidCastException(
-                $"[EventBus] invalid transaction context data. you can use DbContext or DbConnection for ConnectionInstance, and use IDbContextTransaction or IDbTransaction for TransactionInstance.");
+            else
+                throw new InvalidCastException("Invalid mysql connection instance");
         }
     }
 }

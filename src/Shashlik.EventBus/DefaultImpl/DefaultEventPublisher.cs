@@ -31,29 +31,29 @@ namespace Shashlik.EventBus.DefaultImpl
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,
-            TransactionContext? transactionContext,
+            ITransactionContext? transactionContext,
             IDictionary<string, string>? items = null,
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            await Publish(@event, transactionContext, null, items, cancellationToken).ConfigureAwait(false);
+            await Publish(@event, null, transactionContext, items, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,
-            TransactionContext? transactionContext,
             DateTimeOffset delayAt,
+            ITransactionContext? transactionContext,
             IDictionary<string, string>? items = null,
             CancellationToken cancellationToken = default
         ) where TEvent : IDelayEvent
         {
-            await Publish(@event, transactionContext, delayAt, items, cancellationToken).ConfigureAwait(false);
+            await Publish(@event, delayAt, transactionContext, items, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task Publish<TEvent>(
             TEvent @event,
-            TransactionContext? transactionContext,
             DateTimeOffset? delayAt,
+            ITransactionContext? transactionContext,
             IDictionary<string, string>? items = null,
             CancellationToken cancellationToken = default
         )

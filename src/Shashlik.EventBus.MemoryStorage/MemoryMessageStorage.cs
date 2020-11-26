@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.Common;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using Shashlik.Utils.Extensions;
 
 // ReSharper disable ConvertIfStatementToSwitchExpression
@@ -32,17 +28,17 @@ namespace Shashlik.EventBus.MemoryStorage
             return new ValueTask<bool>(_received.ContainsKey(msgId));
         }
 
-        public Task<MessageStorageModel> FindPublishedById(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedById(string id, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_published.GetOrDefault(id));
+            return await Task.FromResult(_published.GetOrDefault(id));
         }
 
-        public Task<MessageStorageModel> FindReceivedById(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedById(string id, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_received.GetOrDefault(id));
+            return await Task.FromResult(_received.GetOrDefault(id));
         }
 
-        public Task SavePublished(MessageStorageModel message, TransactionContext transactionContext, CancellationToken cancellationToken)
+        public Task SavePublished(MessageStorageModel message, ITransactionContext? transactionContext, CancellationToken cancellationToken)
         {
             _published.TryAdd(message.MsgId, message);
             return Task.CompletedTask;

@@ -5,6 +5,7 @@
     </PropertyGroup>
   
     <ItemGroup>
+      <ProjectReference Include="..\Shashlik.EventBus.RelationDbStorage\Shashlik.EventBus.RelationDbStorage.csproj" />
       <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
     </ItemGroup>
   

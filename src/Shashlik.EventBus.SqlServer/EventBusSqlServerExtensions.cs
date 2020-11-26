@@ -11,16 +11,16 @@ namespace Shashlik.EventBus.SqlServer
         public static IEventBusBuilder AddSqlServer(
             this IEventBusBuilder service,
             string connectionString,
-            string publishTableName = null,
-            string receiveTableName = null)
+            string? publishTableName = null,
+            string? receiveTableName = null)
         {
             service.Services.Configure<EventBusSqlServerOptions>(options =>
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName;
+                    options.PublishTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName;
+                    options.ReceiveTableName = receiveTableName!;
             });
 
             return service.AddSqlServer();
@@ -28,17 +28,17 @@ namespace Shashlik.EventBus.SqlServer
 
         public static IEventBusBuilder AddSqlServer<TDbContext>(
             this IEventBusBuilder service,
-            string publishTableName = null,
-            string receiveTableName = null)
+            string? publishTableName = null,
+            string? receiveTableName = null)
             where TDbContext : DbContext
         {
             service.Services.Configure<EventBusSqlServerOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName;
+                    options.PublishTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName;
+                    options.ReceiveTableName = receiveTableName!;
             });
 
             return service.AddSqlServer();

@@ -32,7 +32,7 @@ namespace Shashlik.EventBus
         /// <param name="id"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<MessageStorageModel> FindPublishedById(string id, CancellationToken cancellationToken);
+        Task<MessageStorageModel?> FindPublishedById(string id, CancellationToken cancellationToken);
 
         /// <summary>
         /// 根据id查找接收的消息
@@ -40,7 +40,7 @@ namespace Shashlik.EventBus
         /// <param name="id"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<MessageStorageModel> FindReceivedById(string id, CancellationToken cancellationToken);
+        Task<MessageStorageModel?> FindReceivedById(string id, CancellationToken cancellationToken);
 
         /// <summary>
         /// 保存发布消息
@@ -49,7 +49,7 @@ namespace Shashlik.EventBus
         /// <param name="transactionContext"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SavePublished(MessageStorageModel message, TransactionContext transactionContext,
+        Task SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken);
 
         /// <summary>

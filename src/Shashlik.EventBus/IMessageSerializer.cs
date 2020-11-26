@@ -1,6 +1,4 @@
-﻿// ReSharper disable CheckNamespace
-
-using System;
+﻿using System;
 
 namespace Shashlik.EventBus
 {
