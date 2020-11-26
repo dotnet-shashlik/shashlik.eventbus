@@ -21,6 +21,8 @@ namespace Shashlik.EventBus.MemoryQueue
         {
             MessageSender.OnMessageReceived += async (sender, e) =>
             {
+                if (token.IsCancellationRequested)
+                    return;
                 MessageTransferModel message = e.MessageTransferModel;
 
                 if (message == null)

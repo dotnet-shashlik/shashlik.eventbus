@@ -29,6 +29,8 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageStorageModel message, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
+            if(cancellationToken.IsCancellationRequested)
+                return;
             Task.Run(async () =>
             {
                 if (!message.DelayAt.HasValue)

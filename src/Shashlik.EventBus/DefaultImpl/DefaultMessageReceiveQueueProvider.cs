@@ -29,6 +29,8 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
+            if(cancellationToken.IsCancellationRequested)
+                return;
             Task.Run(async () =>
             {
                 // 执行失败的次数

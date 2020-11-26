@@ -28,7 +28,7 @@ namespace Shashlik.EventBus.RabbitMQ
         private ILogger<RabbitMQEventSubscriber> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public  Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
+        public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
             // 注册基础通信交换机,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
@@ -41,6 +41,8 @@ namespace Shashlik.EventBus.RabbitMQ
             var consumer = new EventingBasicConsumer(Channel);
             consumer.Received += async (sender, e) =>
             {
+                if (cancellationToken.IsCancellationRequested)
+                    return;
                 MessageTransferModel message;
                 try
                 {
@@ -93,7 +95,7 @@ namespace Shashlik.EventBus.RabbitMQ
                     $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been shutdown.");
             };
             Channel.BasicConsume(listener.Descriptor.EventHandlerName, false, consumer);
-            
+
             return Task.CompletedTask;
         }
     }
