@@ -41,7 +41,7 @@ namespace Shashlik.EventBus.Kafka
             {
                 if (r.IsNullOrEmpty() || r.Length != 2)
                     throw new InvalidCastException(
-                        $"[EventBus-Kafka] kafka configuration must two element, like \"['allow.auto.create.topics', 'true']\"");
+                        $"[EventBus-Kafka] kafka configuration must be two item, like \"['allow.auto.create.topics', 'true']\"");
                 return r[0];
             }, r => r[1]);
 
