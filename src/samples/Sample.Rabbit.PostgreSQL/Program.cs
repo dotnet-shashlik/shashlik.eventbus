@@ -94,7 +94,7 @@ namespace Sample.Rabbit.PostgreSQL
                             cancellationToken: cancellationToken);
 
                     await transaction.CommitAsync(cancellationToken);
-                    Thread.Sleep(5);
+                    await Task.Delay(5, cancellationToken);
                 }
 
                 Logger.LogWarning($"all message send completed.");

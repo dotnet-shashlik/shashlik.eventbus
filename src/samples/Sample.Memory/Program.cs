@@ -1,51 +1,38 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
-using Shashlik.EventBus.Kafka;
-using Shashlik.EventBus.MySql;
+using Shashlik.EventBus.MemoryQueue;
+using Shashlik.EventBus.MemoryStorage;
 using Shashlik.Utils.Extensions;
 
-namespace Sample.Kafka.Mysql
+namespace Sample.Memory
 {
     public class Program
     {
         public const string ConnectionString =
             "server=192.168.50.178;database=eventbustest;user=testuser;password=123123;Pooling=True;Min Pool Size=5;Max Pool Size=10;";
 
-        public static string ClusterId { get; set; }
+        public static string ClusterId { get; set; } = "memory";
 
         private static async Task Main(string[] args)
         {
-            Console.Write($"请输入节点集群ID:");
-            ClusterId = Console.ReadLine();
-            if (ClusterId.IsNullOrWhiteSpace())
-                return;
-
             var host = new HostBuilder().ConfigureHostConfiguration(configHost => { configHost.AddCommandLine(args); })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Warning); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Debug); });
 
-                    services.AddDbContextPool<DemoDbContext>(r =>
-                    {
-                        r.UseMySql(ConnectionString,
-                            db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
-                    }, 5);
-
-                    services.AddEventBus(r => { r.Environment = "DemoKafkaMySql"; })
-                        .AddMySql<DemoDbContext>()
-                        .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
+                    services.AddEventBus(r => { r.Environment = "DemoMemory"; })
+                        .AddMemoryQueue()
+                        .AddMemoryStorage();
 
                     services.AddHostedService<TestService>();
                 })
@@ -58,37 +45,31 @@ namespace Sample.Kafka.Mysql
         public class TestService : IHostedService
         {
             public TestService(IEventPublisher eventPublisher, IServiceScopeFactory serviceScopeFactory,
-                ILogger<TestService> logger, DemoDbContext dbContext)
+                ILogger<TestService> logger)
             {
                 EventPublisher = eventPublisher;
                 ServiceScopeFactory = serviceScopeFactory;
                 Logger = logger;
-                DbContext = dbContext;
             }
 
             private IEventPublisher EventPublisher { get; }
             private IServiceScopeFactory ServiceScopeFactory { get; }
             private ILogger<TestService> Logger { get; }
-            private DemoDbContext DbContext { get; }
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
                 await Task.CompletedTask;
 
-                for (var i = 0; i < 30000; i++)
+                for (var i = 0; i < 10; i++)
                 {
-                    var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
-
                     if (i % 2 == 0)
-                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"},
-                            new TransactionContext(DbContext, transaction), cancellationToken: cancellationToken);
+                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null,
+                            cancellationToken: cancellationToken);
                     else
-                        await EventPublisher.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
-                            new TransactionContext(DbContext, transaction),
+                        await EventPublisher.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"}, null,
                             DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)),
                             cancellationToken: cancellationToken);
 
-                    await transaction.CommitAsync(cancellationToken);
                     await Task.Delay(5, cancellationToken);
                 }
 
@@ -99,17 +80,6 @@ namespace Sample.Kafka.Mysql
             {
                 return Task.CompletedTask;
             }
-        }
-    }
-
-    public class DbContextFactory : IDesignTimeDbContextFactory<DemoDbContext>
-    {
-        public DemoDbContext CreateDbContext(string[] args)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<DemoDbContext>();
-            optionsBuilder.UseMySql(Program.ConnectionString);
-
-            return new DemoDbContext(optionsBuilder.Options);
         }
     }
 }

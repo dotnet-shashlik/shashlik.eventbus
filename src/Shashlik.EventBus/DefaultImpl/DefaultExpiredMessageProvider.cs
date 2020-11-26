@@ -20,7 +20,7 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             // 每个小时执行1次删除
             TimerHelper.SetInterval(
-                async () => await MessageStorage.DeleteExpires(cancellationToken),
+                async () => await MessageStorage.DeleteExpires(cancellationToken).ConfigureAwait(false),
                 TimeSpan.FromHours(1),
                 cancellationToken);
         }

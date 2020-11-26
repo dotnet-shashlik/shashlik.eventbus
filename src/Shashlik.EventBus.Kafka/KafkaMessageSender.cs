@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.Kafka
             {
                 Key = message.MsgId,
                 Value = Encoding.UTF8.GetBytes(MessageSerializer.Serialize(message))
-            });
+            }).ConfigureAwait(false);
 
             if (result.Status == PersistenceStatus.Persisted || result.Status == PersistenceStatus.PossiblyPersisted)
                 Logger.LogDebug($"[EventBus-Kafka] send msg success: {message.ToJson()}.");

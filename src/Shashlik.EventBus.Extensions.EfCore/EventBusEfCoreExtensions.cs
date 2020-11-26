@@ -47,7 +47,7 @@ namespace Shashlik.EventBus
         {
             if (eventPublisher is EfCoreEventPublisher efCoreEventPublisher)
             {
-                await efCoreEventPublisher.PublishAsync(@event, items);
+                await efCoreEventPublisher.PublishAsync(@event, items).ConfigureAwait(false);
             }
 
             throw new InvalidCastException($"Make sure invoke AddEventBusEfCoreExtensions<>().");
@@ -71,7 +71,7 @@ namespace Shashlik.EventBus
         {
             if (eventPublisher is EfCoreEventPublisher efCoreEventPublisher)
             {
-                await efCoreEventPublisher.PublishAsync(@event, delayAt, items);
+                await efCoreEventPublisher.PublishAsync(@event, delayAt, items).ConfigureAwait(false);
             }
 
             throw new InvalidCastException($"Make sure invoke AddEventBusEfCoreExtensions<>().");

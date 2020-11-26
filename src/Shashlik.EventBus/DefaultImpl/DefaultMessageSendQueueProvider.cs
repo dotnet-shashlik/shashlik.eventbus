@@ -25,8 +25,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageTransferModel messageTransferModel, MessageStorageModel messageStorageModel,
             CancellationToken cancellationToken)
         {
-            // 延迟100毫秒再执行
-            Thread.Sleep(100);
+            Task.Delay(100, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
 
             Task.Run(async () =>
             {
@@ -34,29 +33,33 @@ namespace Shashlik.EventBus.DefaultImpl
                 var failCount = 0;
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (messageStorageModel.CreateTime <=
-                        DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
+                    if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
                         // 超过时间了,就不管了,状态还是SCHEDULED
                         return;
 
                     try
                     {
                         // 确保消息已提交才进行消息发送
-                        if (!await MessageStorage.ExistsPublishMessage(messageStorageModel.MsgId, cancellationToken))
+                        if (!await MessageStorage.ExistsPublishMessage(messageStorageModel.MsgId, cancellationToken).ConfigureAwait(false))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交
-                            Thread.Sleep(1000);
+                            await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
                             continue;
                         }
 
                         if (failCount > 4)
-                            // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
+                        // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
                         {
                             // 消息发送没问题就更新数据库状态
                             try
                             {
-                                await MessageStorage.UpdatePublished(messageStorageModel.MsgId, MessageStatus.Failed,
-                                    failCount, null, cancellationToken);
+                                await MessageStorage.UpdatePublished(
+                                    messageStorageModel.MsgId,
+                                    MessageStatus.Failed,
+                                    failCount,
+                                    null,
+                                    cancellationToken)
+                                .ConfigureAwait(false);
                             }
                             catch (Exception ex)
                             {
@@ -70,8 +73,13 @@ namespace Shashlik.EventBus.DefaultImpl
                         // 事务已提交,执行消息发送和更新状态
                         await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
                         // 消息发送没问题就更新数据库状态
-                        await MessageStorage.UpdatePublished(messageStorageModel.MsgId, MessageStatus.Succeeded, 0,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour), cancellationToken);
+                        await MessageStorage.UpdatePublished(
+                            messageStorageModel.MsgId,
+                            MessageStatus.Succeeded,
+                            0,
+                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                            cancellationToken)
+                        .ConfigureAwait(false);
 
                         return;
                     }
@@ -82,7 +90,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             $"[EventBus] message publish error, will try again later, event: {messageStorageModel.EventName},  msgId: {messageStorageModel.MsgId}.");
                     }
                 }
-            }, cancellationToken);
+            }, cancellationToken).ConfigureAwait(false);
         }
     }
 }

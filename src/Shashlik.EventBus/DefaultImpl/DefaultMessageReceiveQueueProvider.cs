@@ -29,27 +29,28 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            // 延迟100毫秒再执行
-            Thread.Sleep(100);
-
             Task.Run(async () =>
             {
                 // 执行失败的次数
                 var failCount = 0;
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (messageStorageModel.CreateTime <=
-                        DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
+                    if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
                         // 超过时间了,就不管了,状态还是SCHEDULED
                         return;
                     if (failCount > 4)
-                        // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
                     {
+                        // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
                         // 消息处理没问题就更新数据库状态
                         try
                         {
-                            await MessageStorage.UpdateReceived(messageStorageModel.MsgId, MessageStatus.Failed,
-                                failCount, null, cancellationToken);
+                            await MessageStorage.UpdateReceived(
+                                    messageStorageModel.MsgId,
+                                    MessageStatus.Failed,
+                                    failCount,
+                                    null,
+                                    cancellationToken)
+                                .ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {
@@ -63,9 +64,15 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         // 执行事件消费
                         EventHandlerInvoker.Invoke(messageStorageModel, items, descriptor);
+
                         // 消息处理没问题就更新数据库状态
-                        await MessageStorage.UpdateReceived(messageStorageModel.MsgId, MessageStatus.Succeeded, 0,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour), cancellationToken);
+                        await MessageStorage.UpdateReceived(
+                                messageStorageModel.MsgId,
+                                MessageStatus.Succeeded,
+                                0,
+                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                                cancellationToken)
+                            .ConfigureAwait(false);
 
                         return;
                     }
@@ -75,6 +82,8 @@ namespace Shashlik.EventBus.DefaultImpl
                         Logger.LogError(ex,
                             $"[EventBus] message receive error, will try again later, event: {descriptor.EventName}, handler: {descriptor.EventHandlerName}, msgId: {messageStorageModel.MsgId}.");
                     }
+
+                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                 }
             }, cancellationToken);
         }

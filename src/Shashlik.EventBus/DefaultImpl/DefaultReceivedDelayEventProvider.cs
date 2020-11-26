@@ -34,13 +34,13 @@ namespace Shashlik.EventBus.DefaultImpl
                 if (!message.DelayAt.HasValue)
                     return;
                 if (message.DelayAt.Value <= DateTimeOffset.Now)
-                    await Invoke(message, items, descriptor, cancellationToken);
+                    await Invoke(message, items, descriptor, cancellationToken).ConfigureAwait(false);
                 else
                     TimerHelper.SetTimeout(
-                        async () => await Invoke(message, items, descriptor, cancellationToken),
+                        async () => await Invoke(message, items, descriptor, cancellationToken).ConfigureAwait(false),
                         message.DelayAt!.Value,
                         cancellationToken);
-            }, cancellationToken);
+            }, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task Invoke(MessageStorageModel message, IDictionary<string, string> items,
@@ -49,7 +49,7 @@ namespace Shashlik.EventBus.DefaultImpl
             if (await MessageStorage.TryLockReceived(
                 message.MsgId,
                 DateTimeOffset.Now.AddSeconds(Options.CurrentValue.RetryIntervalSeconds),
-                cancellationToken))
+                cancellationToken).ConfigureAwait(false))
                 MessageReceiveQueueProvider.Enqueue(message, items, descriptor, cancellationToken);
         }
     }

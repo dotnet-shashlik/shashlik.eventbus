@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Shashlik.EventBus.MemoryQueue
 {
@@ -12,7 +11,7 @@ namespace Shashlik.EventBus.MemoryQueue
 
         public Task Send(MessageTransferModel message)
         {
-            ThreadPool.QueueUserWorkItem(_ =>
+            var _ = Task.Run(() =>
             {
                 OnMessageReceived?.Invoke(this, new OnMessageTransferEventArgs
                 {

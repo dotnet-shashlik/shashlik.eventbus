@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.DefaultImpl
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            await Publish(@event, transactionContext, null, items);
+            await Publish(@event, transactionContext, null, items, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task PublishAsync<TEvent>(
@@ -47,7 +47,7 @@ namespace Shashlik.EventBus.DefaultImpl
             CancellationToken cancellationToken = default
         ) where TEvent : IDelayEvent
         {
-            await Publish(@event, transactionContext, delayAt, items);
+            await Publish(@event, transactionContext, delayAt, items, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task Publish<TEvent>(
@@ -106,7 +106,7 @@ namespace Shashlik.EventBus.DefaultImpl
             };
 
             // 消息持久化
-            await MessageStorage.SavePublished(messageStorageModel, transactionContext, cancellationToken);
+            await MessageStorage.SavePublished(messageStorageModel, transactionContext, cancellationToken).ConfigureAwait(false);
             // 进入消息发送队列
             MessageSendQueueProvider.Enqueue(messageTransferModel, messageStorageModel, cancellationToken);
         }

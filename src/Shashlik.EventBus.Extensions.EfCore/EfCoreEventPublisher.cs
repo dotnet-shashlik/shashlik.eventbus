@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.Extensions.EfCore
             if (!(ServiceProvider.GetRequiredService(Options.Value.DbContextType) is DbContext dbContext))
                 throw new InvalidCastException($"Invalid DbContextType of {Options.Value.DbContextType}");
 
-            await base.PublishAsync(@event, new TransactionContext(dbContext), items);
+            await base.PublishAsync(@event, new TransactionContext(dbContext), items).ConfigureAwait(false);
         }
 
         public async Task PublishAsync<TEvent>(
@@ -43,7 +43,7 @@ namespace Shashlik.EventBus.Extensions.EfCore
             if (!(ServiceProvider.GetRequiredService(Options.Value.DbContextType) is DbContext dbContext))
                 throw new InvalidCastException($"Invalid DbContextType of {Options.Value.DbContextType}");
 
-            await base.PublishAsync(@event, new TransactionContext(dbContext), delayAt, items);
+            await base.PublishAsync(@event, new TransactionContext(dbContext), delayAt, items).ConfigureAwait(false);
         }
     }
 }

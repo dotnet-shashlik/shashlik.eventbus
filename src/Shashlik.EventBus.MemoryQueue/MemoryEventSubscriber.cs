@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shashlik.Utils.Extensions;
 
@@ -7,18 +8,18 @@ namespace Shashlik.EventBus.MemoryQueue
 {
     public class MemoryEventSubscriber : IEventSubscriber
     {
-        public MemoryEventSubscriber(IMessageSender messageSender, Logger<MemoryEventSubscriber> logger)
+        public MemoryEventSubscriber(IMessageSender messageSender, ILogger<MemoryEventSubscriber> logger)
         {
             Logger = logger;
             MessageSender = messageSender as MemoryMessageSender;
         }
 
         private MemoryMessageSender MessageSender { get; }
-        private Logger<MemoryEventSubscriber> Logger { get; }
+        private ILogger<MemoryEventSubscriber> Logger { get; }
 
-        public void Subscribe(IMessageListener listener, CancellationToken token)
+        public Task Subscribe(IMessageListener listener, CancellationToken token)
         {
-            MessageSender.OnMessageReceived += (sender, e) =>
+            MessageSender.OnMessageReceived += async (sender, e) =>
             {
                 MessageTransferModel message = e.MessageTransferModel;
 
@@ -29,11 +30,7 @@ namespace Shashlik.EventBus.MemoryQueue
                 }
 
                 if (message.EventName != listener.Descriptor.EventName)
-                {
-                    Logger.LogError(
-                        $"[EventBus-Memory] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\".");
                     return;
-                }
 
                 Logger.LogDebug(
                     $"[EventBus-Memory] received msg: {message.ToJson()}.");
@@ -43,7 +40,7 @@ namespace Shashlik.EventBus.MemoryQueue
                     try
                     {
                         // 处理消息
-                        listener.OnReceive(message, token);
+                        await listener.OnReceive(message, token).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -51,9 +48,11 @@ namespace Shashlik.EventBus.MemoryQueue
                             $"[EventBus-Memory] received msg execute OnReceive error: {message.ToJson()}.");
                     }
 
-                    Thread.Sleep(20);
+                    Task.Delay(100, token).ConfigureAwait(false).GetAwaiter().GetResult();
                 }
             };
+
+            return Task.CompletedTask;
         }
     }
 }

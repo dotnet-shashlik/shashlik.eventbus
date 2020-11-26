@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 ";
 
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
-            await connection.OpenAsync(cancellationToken);
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
-            await cmd.ExecuteNonQueryAsync(cancellationToken);
+            await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }
