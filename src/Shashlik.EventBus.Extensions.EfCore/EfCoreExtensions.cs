@@ -79,5 +79,22 @@ namespace Shashlik.EventBus
                         cancellationToken)
                     .ConfigureAwait(false);
         }
+        
+        /// <summary>
+        /// 从DbContext中获取ITransactionContext
+        /// </summary>
+        /// <param name="dbContext"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static ITransactionContext? GetTransactionContext(this DbContext dbContext)
+        {
+            if (dbContext == null)
+                throw new ArgumentNullException(nameof(dbContext));
+
+            if (dbContext.Database.CurrentTransaction is null)
+                return null;
+
+            return new RelationDbStorageTransactionContext(dbContext.Database.CurrentTransaction.GetDbTransaction());
+        }
     }
 }

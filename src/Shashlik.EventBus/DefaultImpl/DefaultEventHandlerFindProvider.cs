@@ -21,7 +21,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         public IEnumerable<EventHandlerDescriptor> LoadAll()
         {
-            var types = ReflectHelper.GetFinalSubTypes(typeof(IEventHandler<>));
+            var types = ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>));
 
             foreach (var typeInfo in types)
             {
@@ -30,7 +30,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 {
                     EventHandlerName = EventHandlerNameRuler.GetName(typeInfo),
                     EventName = EventNameRuler.GetName(GetEventType(typeInfo)),
-                    IsDelay = eventType.IsSubTypeOf<IDelayEvent>(),
+                    IsDelay = eventType.IsSubTypeOrEqualsOf<IDelayEvent>(),
                     EventType = eventType,
                     EventHandlerType = typeInfo
                 };

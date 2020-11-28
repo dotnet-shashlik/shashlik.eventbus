@@ -46,7 +46,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 MessageTransferModel message;
                 try
                 {
-                    message = MessageSerializer.Deserialize<MessageTransferModel>(e.Body);
+                    message = MessageSerializer.Deserialize<MessageTransferModel>(e.Body.ToArray());
                 }
                 catch (Exception exception)
                 {
