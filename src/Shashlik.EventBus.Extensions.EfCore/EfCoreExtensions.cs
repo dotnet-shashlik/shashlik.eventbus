@@ -79,12 +79,12 @@ namespace Shashlik.EventBus
                         cancellationToken)
                     .ConfigureAwait(false);
         }
-        
+
         /// <summary>
         /// 从DbContext中获取ITransactionContext
         /// </summary>
         /// <param name="dbContext"></param>
-        /// <returns></returns>
+        /// <returns>事务上下文，如果事务未开启，返回null</returns>
         /// <exception cref="ArgumentNullException"></exception>
         public static ITransactionContext? GetTransactionContext(this DbContext dbContext)
         {
