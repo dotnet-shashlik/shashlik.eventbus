@@ -86,16 +86,16 @@ namespace Sample.Rabbit.PostgreSQL
 
                     if (i % 3 == 0)
                     {
-                        await DbContext.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
                         await transaction.RollbackAsync(cancellationToken);
                         await Task.Delay(5, cancellationToken);
                         continue;
                     }
 
                     if (i % 2 == 0)
-                        await DbContext.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
                     else
-                        await DbContext.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
+                        await DbContext.PublishEventAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
                             DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null, cancellationToken);
 
                     await transaction.CommitAsync(cancellationToken);

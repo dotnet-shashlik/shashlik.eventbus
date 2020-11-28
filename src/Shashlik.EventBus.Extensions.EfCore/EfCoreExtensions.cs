@@ -24,7 +24,7 @@ namespace Shashlik.EventBus
         /// <typeparam name="TEvent"></typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public static async Task PublishAsync<TEvent>(
+        public static async Task PublishEventAsync<TEvent>(
             this DbContext dbContext,
             TEvent @event,
             IDictionary<string, string>? items = null,
@@ -57,7 +57,7 @@ namespace Shashlik.EventBus
         /// <typeparam name="TEvent"></typeparam>
         /// <returns></returns>
         /// <exception cref="InvalidCastException"></exception>
-        public static async Task PublishAsync<TEvent>(
+        public static async Task PublishEventAsync<TEvent>(
             this DbContext dbContext,
             TEvent @event,
             DateTimeOffset delayAt,
