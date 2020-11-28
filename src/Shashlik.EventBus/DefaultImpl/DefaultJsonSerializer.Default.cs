@@ -1,6 +1,5 @@
 ﻿using System;
 using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
