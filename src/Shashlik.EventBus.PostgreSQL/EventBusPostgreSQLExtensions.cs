@@ -18,9 +18,9 @@ namespace Shashlik.EventBus.PostgreSQL
             service.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.ConnectionString = connectionString;
-                if (!publishTableName.IsNullOrWhiteSpace())
+                if (!publishTableName!.IsNullOrWhiteSpace())
                     options.PublishTableName = publishTableName!;
-                if (!receiveTableName.IsNullOrWhiteSpace())
+                if (!receiveTableName!.IsNullOrWhiteSpace())
                     options.ReceiveTableName = receiveTableName!;
             });
 
@@ -36,9 +36,9 @@ namespace Shashlik.EventBus.PostgreSQL
             service.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
-                if (!publishTableName.IsNullOrWhiteSpace())
+                if (!publishTableName!.IsNullOrWhiteSpace())
                     options.PublishTableName = publishTableName!;
-                if (!receiveTableName.IsNullOrWhiteSpace())
+                if (!receiveTableName!.IsNullOrWhiteSpace())
                     options.ReceiveTableName = receiveTableName!;
             });
 
