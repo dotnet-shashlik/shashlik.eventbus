@@ -32,11 +32,11 @@ namespace Shashlik.EventBus.DefaultImpl
 
         public async Task DoRetry(CancellationToken cancellationToken)
         {
-            await Retry(cancellationToken);
+            await Retry(cancellationToken).ConfigureAwait(false);
 
             // 重试器执行间隔为5秒
             TimerHelper.SetInterval(
-                async () => await Retry(cancellationToken),
+                async () => await Retry(cancellationToken).ConfigureAwait(false),
                 TimeSpan.FromSeconds(Options.CurrentValue.RetryWorkingIntervalSeconds),
                 cancellationToken);
         }
@@ -47,14 +47,15 @@ namespace Shashlik.EventBus.DefaultImpl
             var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(
                 Options.CurrentValue.RetryLimitCount,
                 Options.CurrentValue.StartRetryAfterSeconds,
-                Options.CurrentValue.RetryFailedMax, Options.CurrentValue.Environment,
-                Options.CurrentValue.RetryIntervalSeconds, cancellationToken);
+                Options.CurrentValue.RetryFailedMax,
+                Options.CurrentValue.Environment,
+                Options.CurrentValue.RetryIntervalSeconds,
+                cancellationToken).ConfigureAwait(false);
             if (messages.IsNullOrEmpty())
                 return;
 
             // 并行重试
-            Parallel.ForEach(messages,
-                new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
+            Parallel.ForEach(messages, new ParallelOptions { MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism },
                 async (item) =>
                 {
                     var messageTransferModel = new MessageTransferModel
@@ -65,11 +66,17 @@ namespace Shashlik.EventBus.DefaultImpl
                         SendAt = DateTimeOffset.Now,
                         DelayAt = item.DelayAt
                     };
+
                     try
                     {
-                        await MessageSender.Send(messageTransferModel);
-                        await MessageStorage.UpdatePublished(item.MsgId, MessageStatus.Succeeded, item.RetryCount + 1,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour), cancellationToken);
+                        await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
+                        await MessageStorage.UpdatePublished(
+                            item.MsgId,
+                            MessageStatus.Succeeded,
+                            item.RetryCount + 1,
+                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                            cancellationToken)
+                        .ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -78,8 +85,13 @@ namespace Shashlik.EventBus.DefaultImpl
                         try
                         {
                             // 失败的数据不过期
-                            await MessageStorage.UpdatePublished(item.MsgId, MessageStatus.Failed, item.RetryCount + 1,
-                                null, cancellationToken);
+                            await MessageStorage.UpdatePublished(
+                                item.MsgId,
+                                MessageStatus.Failed,
+                                item.RetryCount + 1,
+                                null,
+                                cancellationToken)
+                            .ConfigureAwait(false);
                         }
                         catch (Exception exInner)
                         {

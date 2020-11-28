@@ -20,17 +20,17 @@ namespace Shashlik.EventBus.PostgreSQL
         public static IEventBusBuilder AddNpgsql(
             this IEventBusBuilder eventBusBuilder,
             string connectionString,
-            string publishTableName = null,
-            string receiveTableName = null)
+            string? publishTableName = null,
+            string? receiveTableName = null)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(connectionString));
             eventBusBuilder.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.ConnectionString = connectionString;
-                if (!publishTableName.IsNullOrWhiteSpace())
+                if (!publishTableName!.IsNullOrWhiteSpace())
                     options.PublishTableName = publishTableName!;
-                if (!receiveTableName.IsNullOrWhiteSpace())
+                if (!receiveTableName!.IsNullOrWhiteSpace())
                     options.ReceiveTableName = receiveTableName!;
             });
 
@@ -47,16 +47,16 @@ namespace Shashlik.EventBus.PostgreSQL
         /// <returns></returns>
         public static IEventBusBuilder AddNpgsql<TDbContext>(
             this IEventBusBuilder eventBusBuilder,
-            string publishTableName = null,
-            string receiveTableName = null)
+            string? publishTableName = null,
+            string? receiveTableName = null)
             where TDbContext : DbContext
         {
             eventBusBuilder.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
-                if (!publishTableName.IsNullOrWhiteSpace())
+                if (!publishTableName!.IsNullOrWhiteSpace())
                     options.PublishTableName = publishTableName!;
-                if (!receiveTableName.IsNullOrWhiteSpace())
+                if (!receiveTableName!.IsNullOrWhiteSpace())
                     options.ReceiveTableName = receiveTableName!;
             });
 

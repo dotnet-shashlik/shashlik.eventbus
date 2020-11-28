@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -21,9 +20,9 @@ namespace Shashlik.EventBus.Kafka
         private IMessageSerializer MessageSerializer { get; }
         private ILogger<KafkaEventSubscriber> Logger { get; }
 
-        public void Subscribe(IMessageListener listener, CancellationToken cancellationToken)
+        public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
-            Task.Run(() =>
+            var _ = Task.Run(async () =>
             {
                 var cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
                 cunsumer.Subscribe(listener.Descriptor.EventName);
@@ -32,7 +31,7 @@ namespace Shashlik.EventBus.Kafka
                     var consumerResult = cunsumer.Consume(cancellationToken);
                     if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty()) continue;
 
-                    Task.Run(() =>
+                    var __ = Task.Run(async () =>
                     {
                         MessageTransferModel message;
                         try
@@ -64,7 +63,7 @@ namespace Shashlik.EventBus.Kafka
                         try
                         {
                             // 处理消息
-                            listener.OnReceive(message, cancellationToken);
+                            await listener.OnReceive(message, cancellationToken).ConfigureAwait(false);
                             // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
                             cunsumer.StoreOffset(consumerResult);
                         }
@@ -74,8 +73,12 @@ namespace Shashlik.EventBus.Kafka
                                 $"[EventBus-Kafka] received msg execute OnReceive error: {message.ToJson()}.");
                         }
                     }, cancellationToken);
+
+                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                 }
             }, cancellationToken);
+
+            return Task.CompletedTask;
         }
     }
 }

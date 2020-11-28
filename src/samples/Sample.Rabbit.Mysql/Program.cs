@@ -35,7 +35,7 @@ namespace Sample.Rabbit.Mysql
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Warning); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
@@ -45,7 +45,6 @@ namespace Sample.Rabbit.Mysql
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitMySql"; })
                         .AddMySql<DemoDbContext>()
-                        .AddEfCoreExtensions<DemoDbContext>()
                         .AddRabbitMQ(r =>
                         {
                             r.Host = "192.168.50.178";
@@ -87,22 +86,20 @@ namespace Sample.Rabbit.Mysql
 
                     if (i % 3 == 0)
                     {
-                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】王五: {i}"},
-                            cancellationToken: cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
                         await transaction.RollbackAsync(cancellationToken);
+                        await Task.Delay(5, cancellationToken);
                         continue;
                     }
 
                     if (i % 2 == 0)
-                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"},
-                            cancellationToken: cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
                     else
-                        await EventPublisher.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
-                            DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)),
-                            cancellationToken: cancellationToken);
+                        await DbContext.PublishEventAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
+                            DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null, cancellationToken);
 
                     await transaction.CommitAsync(cancellationToken);
-                    Thread.Sleep(5);
+                    await Task.Delay(5, cancellationToken);
                 }
 
                 Logger.LogWarning($"all message send completed.");

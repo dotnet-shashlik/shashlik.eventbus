@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace Shashlik.EventBus
 {
@@ -17,6 +18,6 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <param name="messageTransferModel"></param>
         /// <param name="cancellationToken"></param>
-        void OnReceive(MessageTransferModel messageTransferModel, CancellationToken cancellationToken);
+        Task OnReceive(MessageTransferModel messageTransferModel, CancellationToken cancellationToken);
     }
 }

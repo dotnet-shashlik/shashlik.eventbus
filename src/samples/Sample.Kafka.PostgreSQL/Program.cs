@@ -28,14 +28,14 @@ namespace Sample.Kafka.PostgreSQL
             ClusterId = Console.ReadLine();
             if (ClusterId.IsNullOrWhiteSpace())
                 return;
-            
+
             var host = new HostBuilder().ConfigureHostConfiguration(configHost => { configHost.AddCommandLine(args); })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Debug); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
@@ -45,7 +45,6 @@ namespace Sample.Kafka.PostgreSQL
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaPostgre"; })
                         .AddNpgsql<DemoDbContext>()
-                        .AddEfCoreExtensions<DemoDbContext>()
                         .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
 
                     services.AddHostedService<TestService>();
@@ -69,28 +68,26 @@ namespace Sample.Kafka.PostgreSQL
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 30000; i++)
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
                     if (i % 3 == 0)
                     {
-                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】王五: {i}"},
-                            cancellationToken: cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
                         await transaction.RollbackAsync(cancellationToken);
+                        await Task.Delay(5, cancellationToken);
                         continue;
                     }
 
                     if (i % 2 == 0)
-                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"},
-                            cancellationToken: cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
                     else
-                        await EventPublisher.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
-                            DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)),
-                            cancellationToken: cancellationToken);
+                        await DbContext.PublishEventAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
+                            DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null, cancellationToken);
 
                     await transaction.CommitAsync(cancellationToken);
-                    Thread.Sleep(5);
+                    await Task.Delay(5, cancellationToken);
                 }
             }
 

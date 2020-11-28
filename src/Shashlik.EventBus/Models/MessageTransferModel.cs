@@ -1,8 +1,8 @@
-﻿// ReSharper disable CheckNamespace
-
+﻿#nullable disable
 using System;
 using System.Collections.Generic;
 
+// ReSharper disable CheckNamespace
 // ReSharper disable ClassNeverInstantiated.Global
 
 namespace Shashlik.EventBus

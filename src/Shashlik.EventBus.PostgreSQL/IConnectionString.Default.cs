@@ -24,11 +24,12 @@ namespace Shashlik.EventBus.PostgreSQL
         {
             if (Options.DbContextType == null)
             {
-                if (Options.ConnectionString.IsNullOrWhiteSpace())
-                    throw new OptionsValidationException(nameof(Options.ConnectionString),
+                if (Options.ConnectionString!.IsNullOrWhiteSpace())
+                    throw new OptionsValidationException(
+                        nameof(Options.ConnectionString),
                         typeof(EventBusPostgreSQLOptions),
                         new[] {"ConnectionString and DbContextType can't all be empty."});
-                return Options.ConnectionString;
+                return Options.ConnectionString!;
             }
 
             using var scope = ServiceScopeFactory.CreateScope();

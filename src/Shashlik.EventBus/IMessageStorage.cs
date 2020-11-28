@@ -32,7 +32,7 @@ namespace Shashlik.EventBus
         /// <param name="id"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<MessageStorageModel> FindPublishedById(string id, CancellationToken cancellationToken);
+        Task<MessageStorageModel?> FindPublishedById(string id, CancellationToken cancellationToken);
 
         /// <summary>
         /// 根据id查找接收的消息
@@ -40,7 +40,7 @@ namespace Shashlik.EventBus
         /// <param name="id"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<MessageStorageModel> FindReceivedById(string id, CancellationToken cancellationToken);
+        Task<MessageStorageModel?> FindReceivedById(string id, CancellationToken cancellationToken);
 
         /// <summary>
         /// 保存发布消息
@@ -49,7 +49,7 @@ namespace Shashlik.EventBus
         /// <param name="transactionContext"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SavePublished(MessageStorageModel message, TransactionContext transactionContext,
+        Task SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken);
 
         /// <summary>
@@ -95,11 +95,10 @@ namespace Shashlik.EventBus
         /// 更新已接收消息的锁数据
         /// </summary>
         /// <param name="msgId"></param>
-        /// <param name="isLocking"></param>
-        /// <param name="lockEnd"></param>
+        /// <param name="lockEndAt">锁定结束时间</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd, CancellationToken cancellationToken);
+        Task<bool> TryLockReceived(string msgId, DateTimeOffset lockEndAt, CancellationToken cancellationToken);
 
         /// <summary>
         /// 删除已过期的数据

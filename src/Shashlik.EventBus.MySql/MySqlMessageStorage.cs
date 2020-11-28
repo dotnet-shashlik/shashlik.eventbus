@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using MySql.Data.MySqlClient;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.Utils.Extensions;
 
 // ReSharper disable ConvertIfStatementToSwitchExpression
@@ -35,7 +34,7 @@ namespace Shashlik.EventBus.MySql
             var sql = $@"
 SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.PublishTableName}` WHERE `msgId`='{msgId}';";
 
-            var count = (await SqlScalar(sql, cancellationToken))?.ParseTo<int>() ?? 0;
+            var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
         }
 
@@ -44,16 +43,16 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.PublishTableName}` WHERE `msgI
             var sql = $@"
 SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgId`='{msgId}';";
 
-            var count = (await SqlScalar(sql, cancellationToken))?.ParseTo<int>() ?? 0;
+            var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
         }
 
-        public async Task<MessageStorageModel> FindPublishedById(string id,
-            CancellationToken cancellationToken = default)
+        public async Task<MessageStorageModel?> FindPublishedById(string id,
+            CancellationToken cancellationToken)
         {
             var sql = $"SELECT * FROM `{Options.CurrentValue.PublishTableName}` WHERE `msgId`='{id}';";
 
-            var table = await SqlQuery(sql, cancellationToken);
+            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return null;
 
@@ -74,12 +73,12 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
             };
         }
 
-        public async Task<MessageStorageModel> FindReceivedById(string id,
+        public async Task<MessageStorageModel?> FindReceivedById(string id,
             CancellationToken cancellationToken = default)
         {
             var sql = $"SELECT * FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgId`='{id}';";
 
-            var table = await SqlQuery(sql, cancellationToken);
+            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return null;
 
@@ -101,7 +100,7 @@ SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `msgI
             };
         }
 
-        public async Task SavePublished(MessageStorageModel message, TransactionContext transactionContext,
+        public async Task SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -126,7 +125,7 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0},
             };
 
-            var row = await NonQuery(transactionContext, sql, parameters, cancellationToken);
+            var row = await NonQuery(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
             if (row == 0)
                 throw new DbUpdateException();
         }
@@ -157,7 +156,7 @@ VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @even
                 new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0}
             };
 
-            var row = await NonQuery(sql, parameters, cancellationToken);
+            var row = await NonQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
             if (row == 0)
                 throw new DbUpdateException();
         }
@@ -171,7 +170,7 @@ SET `status` = '{status}', `retryCount` = {retryCount}, `expireTime` = {expireTi
 WHERE `msgId` = '{msgId}'
 ";
 
-            await NonQuery(sql, null, cancellationToken);
+            await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task UpdateReceived(string msgId, string status, int retryCount, DateTimeOffset? expireTime,
@@ -182,20 +181,22 @@ UPDATE `{Options.CurrentValue.ReceiveTableName}`
 SET `status` = '{status}', `retryCount` = {retryCount}, `expireTime` = {expireTime?.GetLongDate() ?? 0}
 WHERE `msgId` = '{msgId}'
 ";
-            await NonQuery(sql, null, cancellationToken);
+            await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockReceived(string msgId, bool isLocking, long lockEnd,
+        public async Task<bool> TryLockReceived(string msgId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
+            if (lockEndAt <= DateTimeOffset.Now)
+                throw new ArgumentOutOfRangeException(nameof(lockEndAt));
             var nowLong = DateTime.Now.GetLongDate();
 
             var sql = $@"
 UPDATE `{Options.CurrentValue.ReceiveTableName}`
-SET `isLocking` = '1', `lockEnd` = {lockEnd}
+SET `isLocking` = 1, `lockEnd` = {lockEndAt.GetLongDate()}
 WHERE `msgId` = '{msgId}' AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
 ";
-            return await NonQuery(sql, null, cancellationToken) == 1;
+            return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
 
         public async Task DeleteExpires(CancellationToken cancellationToken = default)
@@ -205,7 +206,7 @@ WHERE `msgId` = '{msgId}' AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
 DELETE FROM `{Options.CurrentValue.PublishTableName}` WHERE `expireTime` != 0 AND `expireTime` < {now} AND `status` != '{MessageStatus.Scheduled}';
 DELETE FROM `{Options.CurrentValue.ReceiveTableName}` WHERE `expireTime` != 0 AND `expireTime` < {now} AND `status` != '{MessageStatus.Scheduled}';
 ";
-            await NonQuery(sql, null, cancellationToken);
+            await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAndLock(
@@ -231,7 +232,7 @@ WHERE
 LIMIT {count};
 ";
 
-            var table = await SqlQuery(sql, cancellationToken);
+            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0) return new List<MessageStorageModel>();
             var idsBuilder = new StringBuilder();
             var list = table.AsEnumerable()
@@ -269,7 +270,7 @@ UPDATE `{Options.CurrentValue.PublishTableName}`
 SET `isLocking` = 1, `lockEnd` = {lockEnd}
 WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 ";
-            var rows = await NonQuery(updateSql, null, cancellationToken);
+            var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
 
@@ -296,7 +297,7 @@ WHERE
 LIMIT {count};
 ";
 
-            var table = await SqlQuery(sql, cancellationToken);
+            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0) return new List<MessageStorageModel>();
             var idsBuilder = new StringBuilder();
             var list = table.AsEnumerable()
@@ -335,7 +336,7 @@ UPDATE `{Options.CurrentValue.ReceiveTableName}`
 SET `isLocking` = 1, `lockEnd` = {lockEnd}
 WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 ";
-            var rows = await NonQuery(updateSql, null, cancellationToken);
+            var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
 
@@ -346,23 +347,23 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             var table = new DataTable();
             table.Load(reader);
             return table;
         }
 
-        private async Task<object> SqlScalar(string sql, CancellationToken cancellationToken = default)
+        private async Task<object?> SqlScalar(string sql, CancellationToken cancellationToken = default)
         {
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
-            return await cmd.ExecuteScalarAsync(cancellationToken);
+            return await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<int> NonQuery(string sql, MySqlParameter[] parameter,
+        private async Task<int> NonQuery(string sql, MySqlParameter[]? parameter,
             CancellationToken cancellationToken = default)
         {
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
@@ -370,65 +371,37 @@ WHERE `msgId` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             if (!parameter.IsNullOrEmpty())
-                foreach (var mySqlParameter in parameter)
+                foreach (var mySqlParameter in parameter!)
                     cmd.Parameters.Add(mySqlParameter);
             cmd.CommandText = sql;
-            return await cmd.ExecuteNonQueryAsync(cancellationToken);
+            return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<int> NonQuery(TransactionContext transactionContext, string sql, MySqlParameter[] parameter,
+        private async Task<int> NonQuery(ITransactionContext? transactionContext, string sql, MySqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            if (transactionContext == null)
-                return await NonQuery(sql, parameter, cancellationToken);
-            else if (transactionContext.ConnectionInstance is DbContext dbContext)
+            if (transactionContext is null)
+                return await NonQuery(sql, parameter, cancellationToken).ConfigureAwait(false);
+
+            if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
+                throw new InvalidCastException(
+                    $"Event bus mysql storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
+
+            if (relationDbStorageTransactionContext.DbTransaction is MySqlTransaction tran)
             {
-                var connection = dbContext.Database.GetDbConnection();
-                if (connection.State == ConnectionState.Closed)
-                    await connection.OpenAsync(cancellationToken);
-                await using var cmd = connection.CreateCommand();
+                var connection = tran.Connection;
+                await using var cmd = connection!.CreateCommand();
                 if (!parameter.IsNullOrEmpty())
                     foreach (var mySqlParameter in parameter)
                         cmd.Parameters.Add(mySqlParameter);
 
                 cmd.CommandText = sql;
+                cmd.Transaction = tran;
 
-                if (transactionContext.TransactionInstance == null)
-                {
-                    if (dbContext.Database.CurrentTransaction != null)
-                        cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
-                }
-                else if (transactionContext.TransactionInstance is IDbContextTransaction dbContextTransaction)
-                    cmd.Transaction = dbContextTransaction.GetDbTransaction();
-                else if (transactionContext.TransactionInstance is IDbTransaction dbTransaction)
-                    cmd.Transaction = dbTransaction as DbTransaction;
-                else
-                    throw new InvalidCastException(
-                        $"[EventBus] invalid transaction context data. you can use DbContext or DbConnection for ConnectionInstance, and use IDbContextTransaction or IDbTransaction for TransactionInstance.");
-
-                return await cmd.ExecuteNonQueryAsync(cancellationToken);
+                return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             }
-            else if (transactionContext.ConnectionInstance is DbConnection connection)
-            {
-                if (connection.State == ConnectionState.Closed)
-                    await connection.OpenAsync(cancellationToken);
-                await using var cmd = connection.CreateCommand();
-                if (!parameter.IsNullOrEmpty())
-                    foreach (var mySqlParameter in parameter)
-                        cmd.Parameters.Add(mySqlParameter);
-                cmd.CommandText = sql;
-
-                if (transactionContext.TransactionInstance is DbTransaction dbTransaction)
-                    cmd.Transaction = dbTransaction;
-                else
-                    throw new InvalidCastException(
-                        $"[EventBus] invalid transaction context data. you can use DbContext or DbConnection for ConnectionInstance, and use IDbContextTransaction or IDbTransaction for TransactionInstance.");
-
-                return await cmd.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            throw new InvalidCastException(
-                $"[EventBus] invalid transaction context data. you can use DbContext or DbConnection for ConnectionInstance, and use IDbContextTransaction or IDbTransaction for TransactionInstance.");
+            else
+                throw new InvalidCastException("Invalid mysql connection instance");
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -25,7 +26,7 @@ namespace Shashlik.EventBus.RabbitMQ
         private ILogger<RabbitMQEventSubscriber> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public void Subscribe(IMessageListener listener, CancellationToken cancellationToken)
+        public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
             // 注册基础通信交换机,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
@@ -36,12 +37,14 @@ namespace Shashlik.EventBus.RabbitMQ
                 listener.Descriptor.EventName);
 
             var consumer = new EventingBasicConsumer(Channel);
-            consumer.Received += (sender, e) =>
+            consumer.Received += async (sender, e) =>
             {
+                if (cancellationToken.IsCancellationRequested)
+                    return;
                 MessageTransferModel message;
                 try
                 {
-                    message = MessageSerializer.Deserialize<MessageTransferModel>(e.Body);
+                    message = MessageSerializer.Deserialize<MessageTransferModel>(e.Body.ToArray());
                 }
                 catch (Exception exception)
                 {
@@ -68,7 +71,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 try
                 {
                     // 处理消息
-                    listener.OnReceive(message, cancellationToken);
+                    await listener.OnReceive(message, cancellationToken).ConfigureAwait(false);
                     // 一定要在消息接收处理完成后才确认ack
                     Channel.BasicAck(e.DeliveryTag, false);
                 }
@@ -89,18 +92,9 @@ namespace Shashlik.EventBus.RabbitMQ
                 Logger.LogWarning(
                     $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been shutdown.");
             };
-            consumer.Unregistered += (sender, e) =>
-            {
-                Logger.LogWarning(
-                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been unregistered.");
-            };
-            consumer.ConsumerCancelled += (sender, e) =>
-            {
-                Logger.LogWarning(
-                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been cancelled.");
-            };
-
             Channel.BasicConsume(listener.Descriptor.EventHandlerName, false, consumer);
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -39,11 +39,11 @@ namespace Shashlik.EventBus.DefaultImpl
 
         public async Task DoRetry(CancellationToken cancellationToken)
         {
-            await Retry(cancellationToken);
+            await Retry(cancellationToken).ConfigureAwait(false);
 
             // 重试器执行间隔为5秒
             TimerHelper.SetInterval(
-                async () => await Retry(cancellationToken),
+                async () => await Retry(cancellationToken).ConfigureAwait(false),
                 TimeSpan.FromSeconds(Options.CurrentValue.RetryWorkingIntervalSeconds),
                 cancellationToken);
         }
@@ -54,14 +54,15 @@ namespace Shashlik.EventBus.DefaultImpl
             var messages = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(
                 Options.CurrentValue.RetryLimitCount,
                 Options.CurrentValue.StartRetryAfterSeconds,
-                Options.CurrentValue.RetryFailedMax, Options.CurrentValue.Environment,
-                Options.CurrentValue.RetryIntervalSeconds, cancellationToken);
+                Options.CurrentValue.RetryFailedMax,
+                Options.CurrentValue.Environment,
+                Options.CurrentValue.RetryIntervalSeconds,
+                cancellationToken).ConfigureAwait(false);
             if (messages.IsNullOrEmpty())
                 return;
 
             // 并行重试
-            Parallel.ForEach(messages,
-                new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
+            Parallel.ForEach(messages, new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
                 async (item) =>
                 {
                     if (!EventHandlerDescriptors.TryGetValue(item.EventHandlerName, out var descriptor))
@@ -73,12 +74,15 @@ namespace Shashlik.EventBus.DefaultImpl
 
                     try
                     {
-                        var items = (IDictionary<string, string>) MessageSerializer.Deserialize(item.EventItems,
-                            typeof(IDictionary<string, string>));
-
-                        EventHandlerInvoker.Invoke(item, items, descriptor);
-                        await MessageStorage.UpdateReceived(item.MsgId, MessageStatus.Succeeded, item.RetryCount + 1,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour), cancellationToken);
+                        var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
+                        await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
+                        await MessageStorage.UpdateReceived(
+                                item.MsgId,
+                                MessageStatus.Succeeded,
+                                item.RetryCount + 1,
+                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                                cancellationToken)
+                            .ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -87,8 +91,13 @@ namespace Shashlik.EventBus.DefaultImpl
                         try
                         {
                             // 失败的数据不过期
-                            await MessageStorage.UpdateReceived(item.MsgId, MessageStatus.Failed, item.RetryCount + 1,
-                                null, cancellationToken);
+                            await MessageStorage.UpdateReceived(
+                                    item.MsgId,
+                                    MessageStatus.Failed,
+                                    item.RetryCount + 1,
+                                    null,
+                                    cancellationToken)
+                                .ConfigureAwait(false);
                         }
                         catch (Exception exInner)
                         {

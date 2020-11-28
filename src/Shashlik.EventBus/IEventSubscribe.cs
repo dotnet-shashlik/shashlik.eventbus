@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace Shashlik.EventBus
 {
@@ -12,6 +13,6 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <param name="listener">消息监听器</param>
         /// <param name="token">取消token</param>
-        void Subscribe(IMessageListener listener, CancellationToken token);
+        Task Subscribe(IMessageListener listener, CancellationToken token);
     }
 }

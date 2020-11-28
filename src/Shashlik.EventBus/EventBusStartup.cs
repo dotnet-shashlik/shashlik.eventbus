@@ -38,7 +38,7 @@ namespace Shashlik.EventBus
         public async Task Build()
         {
             // 先执行存储设施初始化
-            await MessageStorageInitializer.Initialize(StopCancellationTokenSource.Token);
+            await MessageStorageInitializer.Initialize(StopCancellationTokenSource.Token).ConfigureAwait(false);
 
             // 加载所有的事件处理类
             var descriptors = EventHandlerFindProvider.LoadAll();
@@ -47,20 +47,20 @@ namespace Shashlik.EventBus
             foreach (var eventHandlerDescriptor in descriptors)
             {
                 var listener = MessageListenerFactory.CreateMessageListener(eventHandlerDescriptor);
-                EventSubscriber.Subscribe(listener, StopCancellationTokenSource.Token);
+                await EventSubscriber.Subscribe(listener, StopCancellationTokenSource.Token).ConfigureAwait(false);
             }
 
             // 启动重试器
-            await PublishedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token);
+            await PublishedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token).ConfigureAwait(false);
             // 启动重试器
-            await ReceivedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token);
+            await ReceivedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token).ConfigureAwait(false);
             // 启动过期消息删除
             ExpiredMessageProvider.DoDelete(StopCancellationTokenSource.Token);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await Build();
+            await Build().ConfigureAwait(false);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

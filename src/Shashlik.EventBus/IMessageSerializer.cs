@@ -1,6 +1,4 @@
-﻿// ReSharper disable CheckNamespace
-
-using System;
+﻿using System;
 
 namespace Shashlik.EventBus
 {
@@ -11,6 +9,6 @@ namespace Shashlik.EventBus
     {
         string Serialize(object instance);
 
-        object Deserialize(string str, Type type);
+        object? Deserialize(string str, Type type);
     }
 }

@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishTableName}`
 	`status` VARCHAR(32) NOT NULL,
 	`retryCount` INT NOT NULL,
 	`isLocking` TINYINT NOT NULL,
-	`lockEnd` LONG NOT NULL
+	`lockEnd` BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
@@ -51,15 +51,15 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 	`status` VARCHAR(32) NOT NULL,
 	`retryCount` INT NOT NULL,
 	`isLocking` TINYINT NOT NULL,
-	`lockEnd` LONG NOT NULL
+	`lockEnd` BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ";
 
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
-            await connection.OpenAsync(cancellationToken);
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
-            await cmd.ExecuteNonQueryAsync(cancellationToken);
+            await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }
