@@ -6,9 +6,9 @@ namespace Shashlik.EventBus.SqlServer
     public class EventBusSqlServerOptions
     {
         /// <summary>
-        /// scheme
+        /// schema
         /// </summary>
-        public string Scheme { get; set; } = "eventbus";
+        public string Schema { get; set; } = "eventbus";
 
         /// <summary>
         /// 已发布消息表名
@@ -29,5 +29,15 @@ namespace Shashlik.EventBus.SqlServer
         /// mysql数据库连接字符串，和<see cref="DbContextType"/>配其中一个，优先使用<see cref="DbContextType"/>
         /// </summary>
         public string? ConnectionString { get; set; }
+
+        /// <summary>
+        /// 已发布消息表全名
+        /// </summary>
+        public string FullPublishTableName => $@"[{Schema}].[{PublishTableName}]";
+
+        /// <summary>
+        /// 已接收的消息表全名
+        /// </summary>
+        public string FullReceiveTableName => $@"[{Schema}].[{ReceiveTableName}]";
     }
 }

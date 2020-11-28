@@ -27,6 +27,8 @@ namespace Shashlik.EventBus.DefaultImpl
                 scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
             var eventBody =
                 MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
+            if (eventBody is null)
+                throw new InvalidCastException($"[EventBus] event body content deserialize to null, msgId: {messageStorageModel.MsgId}");
 
             var method =
                 eventHandlerDescriptor.EventHandlerType.GetMethod("Execute",

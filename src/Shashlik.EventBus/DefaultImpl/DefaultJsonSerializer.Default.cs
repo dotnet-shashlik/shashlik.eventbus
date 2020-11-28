@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Text.Json;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -11,14 +12,14 @@ namespace Shashlik.EventBus.DefaultImpl
         public string Serialize(object instance)
         {
             if (instance == null) throw new ArgumentNullException(nameof(instance));
-            return JsonSerializer.Serialize(instance);
+            return JsonConvert.SerializeObject(instance);
         }
 
-        public object Deserialize(string str, Type type)
+        public object? Deserialize(string str, Type type)
         {
             if (string.IsNullOrWhiteSpace(str))
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(str));
-            return JsonSerializer.Deserialize(str, type);
+            return JsonConvert.DeserializeObject(str, type);
         }
     }
 }

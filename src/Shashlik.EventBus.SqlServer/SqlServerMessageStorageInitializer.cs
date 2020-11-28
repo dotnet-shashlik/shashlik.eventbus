@@ -20,15 +20,14 @@ namespace Shashlik.EventBus.SqlServer
         public async Task Initialize(CancellationToken cancellationToken = default)
         {
             var sql = $@"
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '{Options.CurrentValue.Scheme}')
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '{Options.CurrentValue.Schema}')
 BEGIN
-	EXEC('CREATE SCHEMA [{Options.CurrentValue.Scheme}]')
-END
-GO
+	EXEC('CREATE SCHEMA [{Options.CurrentValue.Schema}]')
+END;
 
-IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '{Options.CurrentValue.PublishTableName}')
+IF OBJECT_ID(N'{Options.CurrentValue.FullPublishTableName}',N'U') IS NULL
 BEGIN
-	CREATE TABLE IF NOT EXISTS [{Options.CurrentValue.PublishTableName}]
+	CREATE TABLE {Options.CurrentValue.FullPublishTableName}
 	(
 		[msgId] VARCHAR(32) PRIMARY KEY,
 		[environment] VARCHAR(32),
@@ -43,12 +42,11 @@ BEGIN
 		[isLocking] BIT NOT NULL,
 		[lockEnd] BIGINT NOT NULL
 	);
-END
-GO
+END;
 
-IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '{Options.CurrentValue.ReceiveTableName}')
+IF OBJECT_ID(N'{Options.CurrentValue.FullReceiveTableName}',N'U') IS NULL
 BEGIN
-	CREATE TABLE IF NOT EXISTS [{Options.CurrentValue.ReceiveTableName}]
+	CREATE TABLE {Options.CurrentValue.FullReceiveTableName}
 	(
 		[msgId] VARCHAR(32) PRIMARY KEY,
 		[environment] VARCHAR(32),
@@ -65,8 +63,7 @@ BEGIN
 		[isLocking] BIT NOT NULL,
 		[lockEnd] BIGINT NOT NULL
 	);
-END
-GO
+END;
 ";
             await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
