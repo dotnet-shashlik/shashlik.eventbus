@@ -49,6 +49,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Rabbit.SqlServer", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.Sms.EventBus", "Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj", "{48B3EFF3-5170-4A43-87B2-6D65734F271A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{91A4AD7C-779D-4399-92E4-5323B9BD40FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Tests", "Shashlik.EventBus.Tests\Shashlik.EventBus.Tests.csproj", "{686D1D39-ABC7-4246-BF1D-EA6DAF204C91}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +135,10 @@ Global
 		{48B3EFF3-5170-4A43-87B2-6D65734F271A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48B3EFF3-5170-4A43-87B2-6D65734F271A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48B3EFF3-5170-4A43-87B2-6D65734F271A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{686D1D39-ABC7-4246-BF1D-EA6DAF204C91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{686D1D39-ABC7-4246-BF1D-EA6DAF204C91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{686D1D39-ABC7-4246-BF1D-EA6DAF204C91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{686D1D39-ABC7-4246-BF1D-EA6DAF204C91}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -143,6 +151,7 @@ Global
 		{5F709E28-646B-44D8-BD53-86CA685E5715} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
 		{C802ED1B-BB65-4EA8-850D-93B45D07B0FF} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
 		{0AECDB26-BE59-4694-ABE1-23FF05DFC0BD} = {F80153E9-A6D8-40F5-BE5B-F764EC89E257}
+		{686D1D39-ABC7-4246-BF1D-EA6DAF204C91} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}
