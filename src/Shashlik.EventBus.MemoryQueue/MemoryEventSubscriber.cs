@@ -25,9 +25,9 @@ namespace Shashlik.EventBus.MemoryQueue
                     return;
                 MessageTransferModel message = e.MessageTransferModel;
 
-                if (message == null)
+                if (message is null)
                 {
-                    Logger.LogError("[EventBus-Memory] deserialize message from rabbit error.");
+                    Logger.LogError($"[EventBus-Memory: {listener.Descriptor.EventHandlerName}] deserialize message from rabbit error.");
                     return;
                 }
 
@@ -35,7 +35,7 @@ namespace Shashlik.EventBus.MemoryQueue
                     return;
 
                 Logger.LogDebug(
-                    $"[EventBus-Memory] received msg: {message.ToJson()}.");
+                    $"[EventBus-Memory: {listener.Descriptor.EventHandlerName}] received msg: {message.ToJson()}.");
 
                 while (true)
                 {
@@ -43,11 +43,12 @@ namespace Shashlik.EventBus.MemoryQueue
                     {
                         // 处理消息
                         await listener.OnReceive(message, token).ConfigureAwait(false);
+                        return;
                     }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex,
-                            $"[EventBus-Memory] received msg execute OnReceive error: {message.ToJson()}.");
+                            $"[EventBus-Memory: {listener.Descriptor.EventHandlerName}]  received msg execute OnReceive error: {message.ToJson()}.");
                     }
 
                     Task.Delay(100, token).ConfigureAwait(false).GetAwaiter().GetResult();

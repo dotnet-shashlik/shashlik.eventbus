@@ -25,6 +25,8 @@ namespace Shashlik.EventBus.DefaultImpl
             using var scope = ServiceScopeFactory.CreateScope();
             var eventHandlerInstance =
                 scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
+            if (messageStorageModel.EventBody is null)
+                throw new InvalidCastException($"[EventBus] event body content is null, msgId: {messageStorageModel.MsgId}");
             var eventBody =
                 MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
             if (eventBody is null)

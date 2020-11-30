@@ -50,7 +50,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private async Task Retry(CancellationToken cancellationToken)
         {
-            // 一次最多读取200条数据
+            // 一次最多读取100条数据
             var messages = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(
                 Options.CurrentValue.RetryLimitCount,
                 Options.CurrentValue.StartRetryAfterSeconds,

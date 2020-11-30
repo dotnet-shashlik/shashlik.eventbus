@@ -51,10 +51,9 @@ namespace Shashlik.EventBus.DefaultImpl
             };
 
             // 消息id已经存在不再处理
-            if (await MessageStorage.ExistsReceiveMessage(message.MsgId, cancellationToken).ConfigureAwait(false))
-                return;
-            // 保存接收到的消息
-            await MessageStorage.SaveReceived(receiveMessageStorageModel, cancellationToken).ConfigureAwait(false);
+            if (!await MessageStorage.ExistsReceiveMessage(message.MsgId, cancellationToken).ConfigureAwait(false))
+                // 保存接收到的消息
+                await MessageStorage.SaveReceived(receiveMessageStorageModel, cancellationToken).ConfigureAwait(false);
             // 非延迟事件直接进入执行队列
             if (!message.DelayAt.HasValue)
                 // 进入接收消息处理队列
