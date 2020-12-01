@@ -30,6 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.SqlServer\Shashlik.EventBus.SqlServer.csproj" />
         <ProjectReference Include="..\Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj" />

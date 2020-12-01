@@ -75,7 +75,7 @@ namespace Shashlik.EventBus.MySql.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SavePublished(msg, new RelationDbStorageTransactionContext(tran.GetDbTransaction()), default);
+            var id = await MessageStorage.SavePublished(msg, DbContext.GetTransactionContext(), default);
             await tran.CommitAsync();
 
             msg.Id.ShouldBe(id);
