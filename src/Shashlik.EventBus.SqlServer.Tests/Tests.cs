@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
-using Shashlik.EventBus.DefaultImpl;
+using Shashlik.EventBus.RelationDbStorage;
+using Shashlik.EventBus.SqlServer.Tests.Efcore;
 using Shashlik.Utils.Extensions;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests
+namespace Shashlik.EventBus.SqlServer.Tests
 {
     public class Tests : TestBase
     {
@@ -18,291 +18,364 @@ namespace Shashlik.EventBus.Tests
         {
         }
 
-        [Fact]
-        public void EventHandlerFindProviderAndNameRuleTests()
-        {
-            var eventHandlerFindProvider = GetService<IEventHandlerFindProvider>();
-            eventHandlerFindProvider.ShouldBeOfType<DefaultEventHandlerFindProvider>();
-
-            var handlers = eventHandlerFindProvider.LoadAll().ToList();
-
-            {
-                var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestEventHandler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventHandler)}.{Env}");
-                testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Env}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
-            }
-
-            {
-                var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestEventGroup2Handler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventGroup2Handler)}.{Env}");
-                testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Env}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
-            }
-
-            {
-                var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestDelayEventHandler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestDelayEventHandler)}.{Env}");
-                testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestDelayEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeTrue();
-            }
-
-            {
-                var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestCustomNameEventHandler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestCustomNameEventHandler)}_Test.{Env}");
-                testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestCustomNameEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Env}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
-            }
-        }
+        private EventBusSqlServerOptions SqlServerOptions => GetService<IOptions<EventBusSqlServerOptions>>().Value;
+        private EventBusOptions EventBusOptions => GetService<IOptions<EventBusOptions>>().Value;
+        private DemoDbContext DbContext => GetService<DemoDbContext>();
+        private IMessageStorage MessageStorage => GetService<IMessageStorage>();
 
         [Fact]
-        public void MessageSerializerTests()
+        public async Task SavePublishedNoTransactionTest()
         {
-            var messageSerializer = GetService<IMessageSerializer>();
+            // 正常的已发布消息写入，查询测试, 不带事务
             var @event = new TestEvent {Name = "张三"};
-            var json = messageSerializer.Serialize(@event);
-            messageSerializer.Deserialize<TestEvent>(json).Name.ShouldBe(@event.Name);
-        }
-
-        [Fact]
-        public void EventHandlerInvokerTests()
-        {
-            var invoker = GetService<IEventHandlerInvoker>();
-            var eventHandlerFindProvider = GetService<IEventHandlerFindProvider>();
-            var testEventHandlerDescriptor = eventHandlerFindProvider.LoadAll().First(r => r.EventHandlerType == typeof(TestEventHandler));
-            var messageSerializer = GetService<IMessageSerializer>();
-            var @event = new TestEvent {Name = "张三"};
-            var json = messageSerializer.Serialize(@event);
-
-            {
-                Should.Throw<InvalidCastException>(() => invoker.Invoke(new MessageStorageModel
-                {
-                    MsgId = Guid.NewGuid().ToString("n"),
-                    Environment = Env,
-                    CreateTime = DateTimeOffset.Now,
-                    DelayAt = null,
-                    ExpireTime = DateTimeOffset.Now.AddDays(1),
-                    EventHandlerName = testEventHandlerDescriptor.EventHandlerName,
-                    EventName = testEventHandlerDescriptor.EventName,
-                    EventBody = null,
-                    EventItems = "{}",
-                    RetryCount = 0,
-                    Status = MessageStatus.Scheduled,
-                    IsLocking = false,
-                    LockEnd = null
-                }, new Dictionary<string, string>(), testEventHandlerDescriptor));
-            }
-
-            invoker.Invoke(new MessageStorageModel
+            var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Env,
                 CreateTime = DateTimeOffset.Now,
                 DelayAt = null,
-                ExpireTime = DateTimeOffset.Now.AddDays(1),
-                EventHandlerName = testEventHandlerDescriptor.EventHandlerName,
-                EventName = testEventHandlerDescriptor.EventName,
-                EventBody = json,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
                 EventItems = "{}",
                 RetryCount = 0,
                 Status = MessageStatus.Scheduled,
                 IsLocking = false,
                 LockEnd = null
-            }, new Dictionary<string, string>(), testEventHandlerDescriptor);
+            };
+            var id = await MessageStorage.SavePublished(msg, null, default);
+            msg.Id.ShouldBe(id);
 
-            TestEventHandler.Instance.Name.ShouldBe(@event.Name);
+            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            dbMsg!.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+            dbMsg.EventHandlerName.ShouldBeNullOrWhiteSpace();
+            dbMsg.Status.ShouldBe(msg.Status);
         }
 
         [Fact]
-        public void MsgIdTests()
+        public async Task SavePublishedWithTransactionCommitTest()
         {
-            var msgIdGenerator = GetService<IMsgIdGenerator>();
-            msgIdGenerator.GenerateId().Length.ShouldBe(32);
-            ConcurrentBag<string> list = new ConcurrentBag<string>();
-            Parallel.For(0, 100000, item => { list.Add(msgIdGenerator.GenerateId()); });
-            list.Distinct().Count().ShouldBe(100000);
-        }
-
-        [Fact]
-        public async Task TestEventTests()
-        {
-            var beginTime = DateTimeOffset.Now;
-
-            var eventPublisher = GetService<IEventPublisher>();
-            eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
+            var tran = await DbContext.Database.BeginTransactionAsync();
             var @event = new TestEvent {Name = "张三"};
-            await eventPublisher.PublishAsync(@event, null, new Dictionary<string, string>
+            var msg = new MessageStorageModel
             {
-                {"age", "18"}
-            });
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id = await MessageStorage.SavePublished(msg, new RelationDbStorageTransactionContext(tran.GetDbTransaction()), default);
+            await tran.CommitAsync();
 
-            // 1分钟之内必须被执行
-            while ((DateTimeOffset.Now - beginTime).TotalMinutes <= 1)
-            {
-                if (TestEventHandler.Instance is null || TestEventGroup2Handler.Instance is null)
-                    continue;
-                TestEventHandler.Instance.Name.ShouldBe(@event.Name);
-                TestEventHandler.Items["age"].ShouldBe("18");
-                TestEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestEvent)}.{Env}");
-
-                TestEventGroup2Handler.Instance.Name.ShouldBe(@event.Name);
-                TestEventGroup2Handler.Items["age"].ShouldBe("18");
-                TestEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestEvent)}.{Env}");
-
-                break;
-            }
-
-            TestEventHandler.Instance.ShouldNotBeNull();
-            TestEventGroup2Handler.Instance.ShouldNotBeNull();
+            msg.Id.ShouldBe(id);
+            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            dbMsg!.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+            dbMsg.EventHandlerName.ShouldBeNullOrWhiteSpace();
+            dbMsg.Status.ShouldBe(msg.Status);
         }
 
         [Fact]
-        public async Task TestDelayEventTests()
+        public async Task SavePublishedWithTransactionRollBackTest()
         {
-            var beginTime = DateTimeOffset.Now;
-
-            var eventPublisher = GetService<IEventPublisher>();
-            eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
-            var @event = new TestDelayEvent {Name = "李四"};
-            var delayAt = DateTimeOffset.Now.AddSeconds(10);
-            await eventPublisher.PublishAsync(@event, delayAt, null, new Dictionary<string, string>
+            var tran = await DbContext.Database.BeginTransactionAsync();
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
             {
-                {"age", "19"}
-            });
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id = await MessageStorage.SavePublished(msg, new RelationDbStorageTransactionContext(tran.GetDbTransaction()), default);
+            await tran.RollbackAsync();
 
-            // 时间没到，不能被执行
-            while (DateTimeOffset.Now < delayAt)
-            {
-                TestDelayEventHandler.Instance.ShouldBeNull();
-                TestDelayEventGroup2Handler.Instance.ShouldBeNull();
-                TestDelayEventGroup3Handler.Instance.ShouldBeNull();
-            }
-
-            // 1分钟之内必须被执行
-            while ((DateTimeOffset.Now - beginTime).TotalMinutes <= 1)
-            {
-                if (TestDelayEventHandler.Instance is null
-                    || TestDelayEventGroup2Handler.Instance is null
-                    || TestDelayEventGroup3Handler.Instance is null)
-                    continue;
-
-                TestDelayEventHandler.Instance.Name.ShouldBe(@event.Name);
-                TestDelayEventHandler.Items["age"].ShouldBe("19");
-                TestDelayEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestDelayEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
-                TestDelayEventHandler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
-                    .ShouldBe(delayAt.GetLongDate());
-
-                TestDelayEventGroup2Handler.Instance.Name.ShouldBe(@event.Name);
-                TestDelayEventGroup2Handler.Items["age"].ShouldBe("19");
-                TestDelayEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestDelayEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
-                TestDelayEventGroup2Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
-                    .ShouldBe(delayAt.GetLongDate());
-
-                TestDelayEventGroup3Handler.Instance.Name.ShouldBe(@event.Name);
-                TestDelayEventGroup3Handler.Items["age"].ShouldBe("19");
-                TestDelayEventGroup3Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestDelayEventGroup3Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
-                TestDelayEventGroup3Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
-                    .ShouldBe(delayAt.GetLongDate());
-                break;
-            }
-
-            TestDelayEventHandler.Instance.ShouldNotBeNull();
-            TestDelayEventGroup2Handler.Instance.ShouldNotBeNull();
-            TestDelayEventGroup3Handler.Instance.ShouldNotBeNull();
+            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            dbMsg.ShouldBeNull();
         }
 
         [Fact]
-        public async Task TestCustomNameEventTests()
+        public async Task SaveReceivedTest()
         {
-            var beginTime = DateTimeOffset.Now;
-
-            var eventPublisher = GetService<IEventPublisher>();
-            eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
-            var @event = new TestCustomNameEvent {Name = "王五"};
-            await eventPublisher.PublishAsync(@event, null, new Dictionary<string, string>
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
             {
-                {"age", "20"}
-            });
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id = await MessageStorage.SaveReceived(msg, default);
+            msg.Id.ShouldBe(id);
 
-            // 1分钟之内必须被执行
-            while ((DateTimeOffset.Now - beginTime).TotalMinutes <= 1)
+            (await MessageStorage.FindReceivedByMsgId(msg.MsgId, new EventHandlerDescriptor
             {
-                if (TestCustomNameEventHandler.Instance is null || TestCustomNameEventGroup2Handler.Instance is null)
-                    continue;
-                TestCustomNameEventHandler.Instance.Name.ShouldBe(@event.Name);
-                TestCustomNameEventHandler.Items["age"].ShouldBe("20");
-                TestCustomNameEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestCustomNameEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestCustomNameEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Env}");
-
-                TestCustomNameEventGroup2Handler.Instance.Name.ShouldBe(@event.Name);
-                TestCustomNameEventGroup2Handler.Items["age"].ShouldBe("20");
-                TestCustomNameEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestCustomNameEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestCustomNameEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Env}");
-
-                break;
-            }
-
-            TestCustomNameEventHandler.Instance.ShouldNotBeNull();
-            TestCustomNameEventGroup2Handler.Instance.ShouldNotBeNull();
+                EventHandlerName = "TestEventHandlerName1"
+            }, default))!.Id.ShouldBe(id);
         }
 
         [Fact]
-        public async Task TestExceptionEventTests()
+        public async Task TryLockReceivedTests()
         {
-            var beginTime = DateTimeOffset.Now;
-            var eventPublisher = GetService<IEventPublisher>();
-            eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
-            var options = GetService<IOptions<EventBusOptions>>().Value;
-            var @event = new TestExceptionEvent {Name = "王麻子"};
-            await eventPublisher.PublishAsync(@event, null, new Dictionary<string, string>
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
             {
-                {"age", "21"}
-            });
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id = await MessageStorage.SaveReceived(msg, default);
+            msg.Id.ShouldBe(id);
 
-            // 1分钟之内会全部异常,未执行
-            while ((DateTimeOffset.Now - beginTime).TotalSeconds < options.ConfirmTransactionSeconds)
+            // 锁5秒
+            (await MessageStorage.TryLockReceived(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeTrue();
+            // 再锁失败
+            (await MessageStorage.TryLockReceived(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeFalse();
+
+            // 6秒后再锁成功
+            await Task.Delay(6000);
+            (await MessageStorage.TryLockReceived(id, DateTimeOffset.Now.AddSeconds(6), default)).ShouldBeTrue();
+        }
+
+        [Fact]
+        public async Task UpdatePublishedTests()
+        {
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
             {
-                TestExceptionEventHandler.Instance.ShouldBeNull();
-                TestExceptionEventGroup2Handler.Instance.ShouldBeNull();
-            }
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id = await MessageStorage.SavePublished(msg, null, default);
+            msg.Id.ShouldBe(id);
 
-            // 应该被执行了5次
-            TestExceptionEventHandler.Counter.ShouldBe(5);
-            TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
+            var expireAt = DateTimeOffset.Now.AddHours(1);
+            await MessageStorage.UpdatePublished(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
 
-            // 再过1分钟
-            await Task.Delay((options.StartRetryAfterSeconds - options.ConfirmTransactionSeconds) * 1000);
-            // 再等20秒
-            await Task.Delay(20 * 1000);
+            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            dbMsg!.RetryCount.ShouldBe(1);
+            dbMsg!.Status.ShouldBe(MessageStatus.Succeeded);
+            dbMsg.ExpireTime!.Value.GetLongDate().ShouldBe(expireAt.GetLongDate());
+        }
 
-            // 错误次数达到最大
-            TestExceptionEventHandler.Counter.ShouldBe(options.RetryFailedMax);
-            TestExceptionEventHandler.Instance.ShouldBeNull();
-            TestExceptionEventHandler.Items.ShouldBeNull();
+        [Fact]
+        public async Task UpdateReceivedTests()
+        {
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id = await MessageStorage.SaveReceived(msg, default);
+            msg.Id.ShouldBe(id);
 
-            // 保持在5次
-            TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
-            TestExceptionEventGroup2Handler.Instance!.Name.ShouldBe(@event.Name);
-            TestExceptionEventGroup2Handler.Items["age"].ShouldBe("21");
-            TestExceptionEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-            TestExceptionEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-            TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestExceptionEvent)}.{Env}");
+            var expireAt = DateTimeOffset.Now.AddHours(1);
+            await MessageStorage.UpdateReceived(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
+
+            var dbMsg = await MessageStorage.FindReceivedByMsgId(msg.MsgId, new EventHandlerDescriptor
+            {
+                EventHandlerName = msg.EventHandlerName
+            }, default);
+            dbMsg!.RetryCount.ShouldBe(1);
+            dbMsg!.Status.ShouldBe(MessageStatus.Succeeded);
+            dbMsg.ExpireTime!.Value.GetLongDate().ShouldBe(expireAt.GetLongDate());
+        }
+
+        [Fact]
+        public async Task DeleteExpiresTests()
+        {
+            var @event = new TestEvent {Name = "张三"};
+            var msg1 = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = DateTimeOffset.Now.AddHours(-1),
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Succeeded,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var msg2 = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = DateTimeOffset.Now.AddHours(-1),
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Failed,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id1 = await MessageStorage.SavePublished(msg1, null, default);
+            var id2 = await MessageStorage.SaveReceived(msg2, default);
+
+            await MessageStorage.DeleteExpires(default);
+            var dbMsg1 = await MessageStorage.FindPublishedByMsgId(msg1.MsgId, default);
+            dbMsg1.ShouldBeNull();
+            var dbMsg2 = await MessageStorage.FindReceivedByMsgId(msg2.MsgId, new EventHandlerDescriptor
+            {
+                EventHandlerName = msg1.EventHandlerName
+            }, default);
+            dbMsg2.ShouldBeNull();
+        }
+
+        [Fact]
+        public async Task GetPublishedMessagesOfNeedRetryAndLockTests()
+        {
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 5,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+
+            var id1 = await MessageStorage.SavePublished(msg, null, default);
+            var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                .EventBusOptions
+                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+            list1.Any(r => r.Id == id1).ShouldBeTrue();
+
+            // 马上 再获取并锁定，必须不包含
+            var list2 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                .EventBusOptions
+                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+            list2.Any(r => r.Id == id1).ShouldBeFalse();
+
+            // 延迟6秒后，应该可以拿到数据了
+            await Task.Delay(6000);
+
+            // 马上 再获取并锁定，必须不包含
+            var list3 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                .EventBusOptions
+                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+            list3.Any(r => r.Id == id1).ShouldBeTrue();
+        }
+
+        [Fact]
+        public async Task GetReceivedMessagesOfNeedRetryAndLockTests()
+        {
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 5,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+
+            var id1 = await MessageStorage.SaveReceived(msg, default);
+            var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                .EventBusOptions
+                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+            list1.Any(r => r.Id == id1).ShouldBeTrue();
+
+            // 马上 再获取并锁定，必须不包含
+            var list2 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                .EventBusOptions
+                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+            list2.Any(r => r.Id == id1).ShouldBeFalse();
+
+            // 延迟6秒后，应该可以拿到数据了
+            await Task.Delay(6000);
+
+            // 马上 再获取并锁定，必须不包含
+            var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                .EventBusOptions
+                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+            list3.Any(r => r.Id == id1).ShouldBeTrue();
         }
     }
 }

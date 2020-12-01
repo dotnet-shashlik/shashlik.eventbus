@@ -133,7 +133,7 @@ SELECT SCOPE_IDENTITY();
             var sql = $@"
 INSERT INTO {Options.CurrentValue.FullReceivedTableName}
 ([msgId], [environment], [createTime], [isDelay], [delayAt], [expireTime], [eventName], [eventHandlerName], [eventBody], [eventItems], [retryCount], [status], [isLocking], [lockEnd])
-VALUES@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
+VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
 SELECT SCOPE_IDENTITY();
 ";
 
@@ -268,7 +268,7 @@ WHERE
             var updateSql = $@"
 UPDATE {Options.CurrentValue.FullPublishedTableName}
 SET [isLocking] = 1, [lockEnd] = {lockEnd}
-WHERE [msgId] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
+WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
 ";
             var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
@@ -332,7 +332,7 @@ WHERE
             var updateSql = $@"
 UPDATE {Options.CurrentValue.FullReceivedTableName}
 SET [isLocking] = 1, [lockEnd] = {lockEnd}
-WHERE [msgId] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
+WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
 ";
             var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;

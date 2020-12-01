@@ -29,7 +29,7 @@ IF OBJECT_ID(N'{Options.CurrentValue.FullPublishedTableName}',N'U') IS NULL
 BEGIN
 	CREATE TABLE {Options.CurrentValue.FullPublishedTableName}
 	(
-		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOTNULL,
+		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOT NULL,
 		[msgId] VARCHAR(32) NOT NULL,
 		[environment] VARCHAR(32),
 		[eventName] VARCHAR(255) NOT NULL,
@@ -42,7 +42,7 @@ BEGIN
 		[retryCount] INT NOT NULL,
 		[isLocking] BIT NOT NULL,
 		[lockEnd] BIGINT NOT NULL,
-		UNIQUE INDEX [IX_published_msgId] ([msgId])
+		UNIQUE ([msgId])
 	);
 END;
 
@@ -50,7 +50,7 @@ IF OBJECT_ID(N'{Options.CurrentValue.FullReceivedTableName}',N'U') IS NULL
 BEGIN
 	CREATE TABLE {Options.CurrentValue.FullReceivedTableName}
 	(
-		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOTNULL,
+		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOT NULL,
 		[msgId] VARCHAR(32) NOT NULL,
 		[environment] VARCHAR(32),
 		[eventName] VARCHAR(255) NOT NULL,
@@ -65,7 +65,7 @@ BEGIN
 		[retryCount] INT NOT NULL,
 		[isLocking] BIT NOT NULL,
 		[lockEnd] BIGINT NOT NULL,
-		UNIQUE INDEX [IX_received_msgId_eventHandlerName] ([msgId], [eventHandlerName])
+		UNIQUE ([msgId], [eventHandlerName])
 	);
 END;
 ";
