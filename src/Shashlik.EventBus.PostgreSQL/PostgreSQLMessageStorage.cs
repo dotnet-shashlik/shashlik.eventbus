@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.PostgreSQL
             {
                 if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
                     throw new InvalidCastException(
-                        $"[EventBus-SqlServer]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
+                        $"[EventBus-PostgreSql]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
                 // 事务的连接的信息未null了表示事务已回滚回已提交
                 if (relationDbStorageTransactionContext.DbTransaction.Connection != null)
                     return false;
