@@ -24,6 +24,7 @@ namespace Shashlik.EventBus.PostgreSQL
 {(Options.CurrentValue.Schema == "public" ? "CREATE SCHEMA IF NOT EXISTS " + Options.CurrentValue.Schema + ";" : "")}
 
 CREATE TABLE IF NOT EXISTS {Options.CurrentValue.FullPublishTableName}(
+    ""id"" SERIAL PRIMARY KEY,    
     ""msgId"" varchar(32) COLLATE ""pg_catalog"".""default"" NOT NULL,
     ""environment"" varchar(32) COLLATE ""pg_catalog"".""default"",
     ""eventName"" varchar(255) COLLATE ""pg_catalog"".""default"" NOT NULL,
@@ -35,11 +36,12 @@ CREATE TABLE IF NOT EXISTS {Options.CurrentValue.FullPublishTableName}(
     ""status"" varchar(32) COLLATE ""pg_catalog"".""default"" NOT NULL,
     ""retryCount"" int4 NOT NULL,
     ""isLocking"" bool NOT NULL,
-    ""lockEnd"" int8 NOT NULL,
-    CONSTRAINT ""eventbus_publish_pkey"" PRIMARY KEY (""msgId"")
+    ""lockEnd"" int8 NOT NULL
 );
+CREATE UNIQUE INDEX ""IX_published_msgId"" ON {Options.CurrentValue.FullPublishTableName} (""msgId"");
 
 CREATE TABLE IF NOT EXISTS {Options.CurrentValue.FullReceiveTableName}(
+    ""id"" SERIAL PRIMARY KEY,
     ""msgId"" varchar(32) COLLATE ""pg_catalog"".""default"" NOT NULL,
     ""environment"" varchar(32) COLLATE ""pg_catalog"".""default"",
     ""eventName"" varchar(255) COLLATE ""pg_catalog"".""default"" NOT NULL,
@@ -53,9 +55,9 @@ CREATE TABLE IF NOT EXISTS {Options.CurrentValue.FullReceiveTableName}(
     ""status"" varchar(32) COLLATE ""pg_catalog"".""default"" NOT NULL,
     ""retryCount"" int4 NOT NULL,
     ""isLocking"" bool NOT NULL,
-    ""lockEnd"" int8 NOT NULL,
-    CONSTRAINT ""eventbus_receive_pkey"" PRIMARY KEY (""msgId"")
+    ""lockEnd"" int8 NOT NULL
 );
+CREATE UNIQUE INDEX ""IX_received_msgId_eventHandlerName"" ON {Options.CurrentValue.FullReceiveTableName} (""msgId"", ""eventHandlerName"");
 ";
 
             await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);

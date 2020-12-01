@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Shashlik.Utils.Extensions;
 
 // ReSharper disable ConvertIfStatementToSwitchExpression
-
 // ReSharper disable ConvertIfStatementToSwitchStatement
 // ReSharper disable RedundantIfElseBlock
 
@@ -15,44 +13,57 @@ namespace Shashlik.EventBus.MemoryStorage
 {
     public class MemoryMessageStorage : IMessageStorage
     {
-        private readonly ConcurrentDictionary<string, MessageStorageModel> _published = new ConcurrentDictionary<string, MessageStorageModel>();
-        private readonly ConcurrentDictionary<string, MessageStorageModel> _received = new ConcurrentDictionary<string, MessageStorageModel>();
+        private readonly ConcurrentDictionary<long, MessageStorageModel> _published = new ConcurrentDictionary<long, MessageStorageModel>();
+        private readonly ConcurrentDictionary<long, MessageStorageModel> _received = new ConcurrentDictionary<long, MessageStorageModel>();
+        private static long _lastId;
+        private static readonly object Lck = new object();
 
-        public ValueTask<bool> ExistsPublishMessage(string msgId, CancellationToken cancellationToken)
+        private static long AutoIncrementId()
         {
-            return new ValueTask<bool>(_published.ContainsKey(msgId));
+            lock (Lck)
+            {
+                _lastId++;
+            }
+
+            return _lastId;
         }
 
-        public ValueTask<bool> ExistsReceiveMessage(string msgId, CancellationToken cancellationToken)
+        public ValueTask<bool> PublishedMessageIsCommitted(string msgId, CancellationToken cancellationToken)
         {
-            return new ValueTask<bool>(_received.ContainsKey(msgId));
+            return new ValueTask<bool>(_published.Any(r => r.Value.MsgId == msgId));
         }
 
-        public async Task<MessageStorageModel?> FindPublishedById(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByMsgId(string msgId, CancellationToken cancellationToken)
         {
-            return await Task.FromResult(_published.GetOrDefault(id));
+            return await Task.FromResult(_published.Values.FirstOrDefault(r => r.MsgId == msgId));
         }
 
-        public async Task<MessageStorageModel?> FindReceivedById(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedByMsgId(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
+            CancellationToken cancellationToken)
         {
-            return await Task.FromResult(_received.GetOrDefault(id));
+            return await Task.FromResult(_received.Values.FirstOrDefault(r =>
+                r.MsgId == msgId && r.EventHandlerName == eventHandlerDescriptor.EventHandlerName));
         }
 
-        public Task SavePublished(MessageStorageModel message, ITransactionContext? transactionContext, CancellationToken cancellationToken)
+        public Task<long> SavePublished(MessageStorageModel message, ITransactionContext? transactionContext, CancellationToken cancellationToken)
         {
-            _published.TryAdd(message.MsgId, message);
-            return Task.CompletedTask;
+            message.Id = AutoIncrementId();
+            if (_published.TryAdd(message.Id, message))
+                return Task.FromResult(message.Id);
+            throw new Exception($"save published message error, msgId: {message.MsgId}.");
         }
 
-        public Task SaveReceived(MessageStorageModel message, CancellationToken cancellationToken)
+        public Task<long> SaveReceived(MessageStorageModel message, CancellationToken cancellationToken)
         {
-            _received.TryAdd(message.MsgId, message);
-            return Task.CompletedTask;
+            message.Id = AutoIncrementId();
+            if (_received.TryAdd(message.Id, message))
+                return Task.FromResult(message.Id);
+            throw new Exception($"save received message error, msgId: {message.MsgId}.");
         }
 
-        public Task UpdatePublished(string msgId, string status, int retryCount, DateTimeOffset? expireTime, CancellationToken cancellationToken)
+        public Task UpdatePublished(long id, string status, int retryCount, DateTimeOffset? expireTime, CancellationToken cancellationToken)
         {
-            if (_published.TryGetValue(msgId, out var model))
+            if (_published.TryGetValue(id, out var model))
             {
                 model.Status = status;
                 model.RetryCount = retryCount;
@@ -64,9 +75,10 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.CompletedTask;
         }
 
-        public Task UpdateReceived(string msgId, string status, int retryCount, DateTimeOffset? expireTime, CancellationToken cancellationToken)
+        public Task UpdateReceived(long id, string status, int retryCount,
+            DateTimeOffset? expireTime, CancellationToken cancellationToken)
         {
-            if (_received.TryGetValue(msgId, out var model))
+            if (_received.TryGetValue(id, out var model))
             {
                 model.Status = status;
                 model.RetryCount = retryCount;
@@ -78,11 +90,12 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.CompletedTask;
         }
 
-        public Task<bool> TryLockReceived(string msgId, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        public Task<bool> TryLockReceived(long id, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            if (_received.TryGetValue(msgId, out var model))
+            if (_received.TryGetValue(id, out var model))
             {
                 if (!model.IsLocking || DateTimeOffset.Now > model.LockEnd)
                 {
@@ -110,13 +123,13 @@ namespace Shashlik.EventBus.MemoryStorage
 
         public Task DeleteExpires(CancellationToken cancellationToken)
         {
-            var items1 = _published.Where(r => r.Value.ExpireTime.HasValue && r.Value.ExpireTime < DateTimeOffset.Now).ToList();
+            var items1 = _published.Values.Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now).ToList();
             foreach (var item in items1)
-                _published.Remove(item.Key, out _);
+                _published.Remove(item.Id, out _);
 
-            var items2 = _received.Where(r => r.Value.ExpireTime.HasValue && r.Value.ExpireTime < DateTimeOffset.Now).ToList();
+            var items2 = _received.Values.Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now).ToList();
             foreach (var item in items2)
-                _received.Remove(item.Key, out _);
+                _received.Remove(item.Id, out _);
 
             return Task.CompletedTask;
         }

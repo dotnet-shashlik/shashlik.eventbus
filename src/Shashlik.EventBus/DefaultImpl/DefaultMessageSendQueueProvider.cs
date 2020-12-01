@@ -42,7 +42,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     try
                     {
                         // 确保消息已提交才进行消息发送
-                        if (!await MessageStorage.ExistsPublishMessage(messageStorageModel.MsgId, cancellationToken).ConfigureAwait(false))
+                        if (!await MessageStorage.PublishedMessageIsCommitted(messageStorageModel.MsgId, cancellationToken).ConfigureAwait(false))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交
                             await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
@@ -56,7 +56,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             try
                             {
                                 await MessageStorage.UpdatePublished(
-                                    messageStorageModel.MsgId,
+                                    messageStorageModel.Id,
                                     MessageStatus.Failed,
                                     failCount,
                                     null,
@@ -76,7 +76,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
                         // 消息发送没问题就更新数据库状态
                         await MessageStorage.UpdatePublished(
-                            messageStorageModel.MsgId,
+                            messageStorageModel.Id,
                             MessageStatus.Succeeded,
                             0,
                             DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),

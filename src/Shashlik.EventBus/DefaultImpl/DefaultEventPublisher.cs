@@ -14,19 +14,21 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageSerializer messageSerializer,
             IEventNameRuler eventNameRuler,
             IOptionsMonitor<EventBusOptions> options,
-            IMessageSendQueueProvider messageSendQueueProvider)
+            IMessageSendQueueProvider messageSendQueueProvider, IMsgIdGenerator msgIdGenerator)
         {
             MessageStorage = messageStorage;
             MessageSerializer = messageSerializer;
             EventNameRuler = eventNameRuler;
             Options = options;
             MessageSendQueueProvider = messageSendQueueProvider;
+            MsgIdGenerator = msgIdGenerator;
         }
 
         private IMessageStorage MessageStorage { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IMessageSendQueueProvider MessageSendQueueProvider { get; }
         private IEventNameRuler EventNameRuler { get; }
+        private IMsgIdGenerator MsgIdGenerator { get; }
         private IOptionsMonitor<EventBusOptions> Options { get; }
 
         public async Task PublishAsync<TEvent>(
@@ -61,7 +63,7 @@ namespace Shashlik.EventBus.DefaultImpl
             if (@event == null) throw new ArgumentNullException(nameof(@event));
             var now = DateTimeOffset.Now;
             var eventName = EventNameRuler.GetName(typeof(TEvent));
-            var msgId = Guid.NewGuid().ToString("n");
+            var msgId = MsgIdGenerator.GenerateId();
             items ??= new Dictionary<string, string>();
             items.Add(EventBusConsts.SendAtHeaderKey, now.ToString());
             items.Add(EventBusConsts.EventNameHeaderKey, eventName);

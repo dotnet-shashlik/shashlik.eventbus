@@ -29,7 +29,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageStorageModel message, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            if(cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
                 return;
             Task.Run(async () =>
             {
@@ -49,7 +49,7 @@ namespace Shashlik.EventBus.DefaultImpl
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
             if (await MessageStorage.TryLockReceived(
-                message.MsgId,
+                message.Id,
                 DateTimeOffset.Now.AddSeconds(Options.CurrentValue.RetryIntervalSeconds),
                 cancellationToken).ConfigureAwait(false))
                 MessageReceiveQueueProvider.Enqueue(message, items, descriptor, cancellationToken);

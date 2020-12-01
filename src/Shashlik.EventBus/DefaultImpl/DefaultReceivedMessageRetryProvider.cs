@@ -15,7 +15,7 @@ namespace Shashlik.EventBus.DefaultImpl
     /// </summary>
     public class DefaultReceivedMessageRetryProvider : IReceivedMessageRetryProvider
     {
-        public DefaultReceivedMessageRetryProvider(IMessageStorage messageStorage, IMessageSender messageSender,
+        public DefaultReceivedMessageRetryProvider(IMessageStorage messageStorage,
             IOptionsMonitor<EventBusOptions> options, ILogger<DefaultPublishedMessageRetryProvider> logger,
             IMessageSerializer messageSerializer, IEventHandlerFindProvider eventHandlerFindProvider,
             IEventHandlerInvoker eventHandlerInvoker)
@@ -77,7 +77,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
                         await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
                         await MessageStorage.UpdateReceived(
-                                item.MsgId,
+                                item.Id,
                                 MessageStatus.Succeeded,
                                 item.RetryCount + 1,
                                 DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
@@ -92,7 +92,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         {
                             // 失败的数据不过期
                             await MessageStorage.UpdateReceived(
-                                    item.MsgId,
+                                    item.Id,
                                     MessageStatus.Failed,
                                     item.RetryCount + 1,
                                     null,

@@ -19,22 +19,32 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventNameRuler EventNameRuler { get; }
         private IEventHandlerNameRuler EventHandlerNameRuler { get; }
 
+        private IEnumerable<EventHandlerDescriptor>? _cache;
+
         public IEnumerable<EventHandlerDescriptor> LoadAll()
         {
-            var types = ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>));
-
-            foreach (var typeInfo in types)
+            if (_cache is null)
             {
-                var eventType = GetEventType(typeInfo);
-                yield return new EventHandlerDescriptor
+                var types = ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>));
+
+                List<EventHandlerDescriptor> list = new List<EventHandlerDescriptor>();
+                foreach (var typeInfo in types)
                 {
-                    EventHandlerName = EventHandlerNameRuler.GetName(typeInfo),
-                    EventName = EventNameRuler.GetName(GetEventType(typeInfo)),
-                    IsDelay = eventType.IsSubTypeOrEqualsOf<IDelayEvent>(),
-                    EventType = eventType,
-                    EventHandlerType = typeInfo
-                };
+                    var eventType = GetEventType(typeInfo);
+                    list.Add(new EventHandlerDescriptor
+                    {
+                        EventHandlerName = EventHandlerNameRuler.GetName(typeInfo),
+                        EventName = EventNameRuler.GetName(GetEventType(typeInfo)),
+                        IsDelay = eventType.IsSubTypeOrEqualsOf<IDelayEvent>(),
+                        EventType = eventType,
+                        EventHandlerType = typeInfo
+                    });
+                }
+
+                _cache = list;
             }
+
+            return _cache;
         }
 
         private static Type GetEventType(Type type)

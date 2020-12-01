@@ -71,7 +71,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
                         await MessageStorage.UpdatePublished(
-                            item.MsgId,
+                            item.Id,
                             MessageStatus.Succeeded,
                             item.RetryCount + 1,
                             DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
@@ -86,7 +86,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         {
                             // 失败的数据不过期
                             await MessageStorage.UpdatePublished(
-                                item.MsgId,
+                                item.Id,
                                 MessageStatus.Failed,
                                 item.RetryCount + 1,
                                 null,

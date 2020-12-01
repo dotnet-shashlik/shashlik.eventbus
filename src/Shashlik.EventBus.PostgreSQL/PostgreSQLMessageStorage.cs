@@ -29,7 +29,7 @@ namespace Shashlik.EventBus.PostgreSQL
         private IConnectionString ConnectionString { get; }
         private ILogger<PostgreSQLMessageStorage> Logger { get; }
 
-        public async ValueTask<bool> ExistsPublishMessage(string msgId, CancellationToken cancellationToken = default)
+        public async ValueTask<bool> PublishedMessageIsCommitted(string msgId, CancellationToken cancellationToken = default)
         {
             var sql =
                 $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{msgId}';";
@@ -38,19 +38,10 @@ namespace Shashlik.EventBus.PostgreSQL
             return count > 0;
         }
 
-        public async ValueTask<bool> ExistsReceiveMessage(string msgId, CancellationToken cancellationToken = default)
-        {
-            var sql =
-                $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{msgId}';";
-
-            var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
-            return count > 0;
-        }
-
-        public async Task<MessageStorageModel?> FindPublishedById(string id,
+        public async Task<MessageStorageModel?> FindPublishedByMsgId(string msgId,
             CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{id}';";
+            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{msgId}';";
 
             var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -58,6 +49,7 @@ namespace Shashlik.EventBus.PostgreSQL
 
             return new MessageStorageModel
             {
+                Id = table.Rows[0].GetValue<long>("id"),
                 MsgId = table.Rows[0].GetValue<string>("msgId"),
                 Environment = table.Rows[0].GetValue<string>("environment"),
                 CreateTime = table.Rows[0].GetValue<long>("createTime").LongToDateTimeOffset(),
@@ -73,10 +65,11 @@ namespace Shashlik.EventBus.PostgreSQL
             };
         }
 
-        public async Task<MessageStorageModel?> FindReceivedById(string id,
+        public async Task<MessageStorageModel?> FindReceivedByMsgId(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken = default)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{id}';";
+            var sql =
+                $"SELECT * FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{msgId}' AND \"eventHandlerName\"='{eventHandlerDescriptor.EventHandlerName}';";
 
             var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -84,6 +77,7 @@ namespace Shashlik.EventBus.PostgreSQL
 
             return new MessageStorageModel
             {
+                Id = table.Rows[0].GetValue<long>("id"),
                 MsgId = table.Rows[0].GetValue<string>("msgId"),
                 Environment = table.Rows[0].GetValue<string>("environment"),
                 CreateTime = table.Rows[0].GetValue<long>("createTime").LongToDateTimeOffset(),
@@ -100,13 +94,13 @@ namespace Shashlik.EventBus.PostgreSQL
             };
         }
 
-        public async Task SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
+        public async Task<long> SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
 INSERT INTO {Options.CurrentValue.FullPublishTableName}
 (""msgId"", ""environment"", ""createTime"", ""delayAt"", ""expireTime"", ""eventName"", ""eventBody"", ""eventItems"", ""retryCount"", ""status"", ""isLocking"", ""lockEnd"")
-VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
+VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd) RETURNING id;
 ";
 
             var parameters = new[]
@@ -126,17 +120,20 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
                 new NpgsqlParameter("@lockEnd", NpgsqlDbType.Bigint) {Value = message.LockEnd?.GetLongDate() ?? 0},
             };
 
-            var row = await NonQuery(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
-            if (row == 0)
+            var id = await SqlScalar(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
+            if (id is null || !id.TryParse<long>(out var longId))
                 throw new DbUpdateException();
+
+            message.Id = longId;
+            return longId;
         }
 
-        public async Task SaveReceived(MessageStorageModel message, CancellationToken cancellationToken = default)
+        public async Task<long> SaveReceived(MessageStorageModel message, CancellationToken cancellationToken = default)
         {
             var sql = $@"
 INSERT INTO {Options.CurrentValue.FullReceiveTableName}
 (""msgId"", ""environment"", ""createTime"", ""isDelay"", ""delayAt"", ""expireTime"", ""eventName"", ""eventHandlerName"", ""eventBody"", ""eventItems"", ""retryCount"", ""status"", ""isLocking"", ""lockEnd"")
-VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd);
+VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd) RETURNING id;
 ";
 
             var parameters = new[]
@@ -158,35 +155,41 @@ VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @even
                 new NpgsqlParameter("@lockEnd", NpgsqlDbType.Bigint) {Value = message.LockEnd?.GetLongDate() ?? 0},
             };
 
-            var row = await NonQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
-            if (row == 0)
+            var id = await SqlScalar(sql, parameters, cancellationToken).ConfigureAwait(false);
+            if (id is null || !id.TryParse<long>(out var longId))
                 throw new DbUpdateException();
+
+            message.Id = longId;
+            return longId;
         }
 
-        public async Task UpdatePublished(string msgId, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdatePublished(long id, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
 UPDATE {Options.CurrentValue.FullPublishTableName}
 SET ""status"" = '{status}', ""retryCount"" = {retryCount}, ""expireTime"" = {expireTime?.GetLongDate() ?? 0}
-WHERE ""msgId"" = '{msgId}'
+WHERE ""id"" = {id}
+;
 ";
 
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task UpdateReceived(string msgId, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdateReceived(long id, string status, int retryCount,
+            DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
 UPDATE {Options.CurrentValue.FullReceiveTableName}
 SET ""status"" = '{status}', ""retryCount"" = {retryCount}, ""expireTime"" = {expireTime?.GetLongDate() ?? 0}
-WHERE ""msgId"" = '{msgId}'
+WHERE ""id"" = {id}
+;
 ";
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockReceived(string msgId, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockReceived(long id, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -196,7 +199,8 @@ WHERE ""msgId"" = '{msgId}'
             var sql = $@"
 UPDATE {Options.CurrentValue.FullReceiveTableName}
 SET ""isLocking"" = true, ""lockEnd"" = {lockEndAt.GetLongDate()}
-WHERE ""msgId"" = '{msgId}' AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
+WHERE ""id"" = {id} AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
+;
 ";
             try
             {
@@ -204,7 +208,7 @@ WHERE ""msgId"" = '{msgId}' AND (""isLocking"" = false OR ""lockEnd"" < {nowLong
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, $"[EventBus] TryLockReceived error.");
+                Logger.LogError(ex, $"[EventBus-PostgreSql] TryLockReceived error.");
                 return false;
             }
         }
@@ -244,16 +248,14 @@ LIMIT {count};
             var list = table.AsEnumerable()
                 .Select(row =>
                 {
-                    var msgId = row.GetValue<string>("msgId");
-
-                    idsBuilder.Append("'");
-                    idsBuilder.Append(msgId);
-                    idsBuilder.Append("'");
+                    var id = row.GetValue<long>("id");
+                    idsBuilder.Append(id.ToString());
                     idsBuilder.Append(",");
 
                     return new MessageStorageModel
                     {
-                        MsgId = msgId,
+                        Id = id,
+                        MsgId = row.GetValue<string>("msgId"),
                         Environment = row.GetValue<string>("environment"),
                         CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
                         DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
@@ -268,7 +270,7 @@ LIMIT {count};
                     };
                 }).ToList();
             var ids = idsBuilder.ToString();
-            ids = ids.AsSpan()[0..(ids.Length - 1)].ToString();
+            ids = ids.TrimEnd(',');
 
             var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
             var updateSql = $@"
@@ -305,16 +307,14 @@ LIMIT {count};
             var list = table.AsEnumerable()
                 .Select(row =>
                 {
-                    var msgId = row.GetValue<string>("msgId");
-
-                    idsBuilder.Append("'");
-                    idsBuilder.Append(msgId);
-                    idsBuilder.Append("'");
+                    var id = row.GetValue<long>("id");
+                    idsBuilder.Append(id.ToString());
                     idsBuilder.Append(",");
 
                     return new MessageStorageModel
                     {
-                        MsgId = msgId,
+                        Id = id,
+                        MsgId = row.GetValue<string>("msgId"),
                         Environment = row.GetValue<string>("environment"),
                         CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
                         DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
@@ -330,7 +330,7 @@ LIMIT {count};
                     };
                 }).ToList();
             var ids = idsBuilder.ToString();
-            ids = ids.AsSpan()[0..(ids.Length - 1)].ToString();
+            ids = ids.TrimEnd(',');
 
             var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
             var updateSql = $@"
@@ -345,20 +345,36 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
         private async Task<DataTable> SqlQuery(string sql, CancellationToken cancellationToken = default)
         {
             await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);
-            await connection.OpenAsync(cancellationToken);
+            if (connection.State == ConnectionState.Closed)
+                await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             var table = new DataTable();
             table.Load(reader);
             return table;
         }
 
-        private async Task<object> SqlScalar(string sql, CancellationToken cancellationToken = default)
+        private async Task<object?> SqlScalar(string sql, CancellationToken cancellationToken = default)
         {
             await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            if (connection.State == ConnectionState.Closed)
+                await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
+            cmd.CommandText = sql;
+            return await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task<object?> SqlScalar(string sql, NpgsqlParameter[]? parameter,
+            CancellationToken cancellationToken = default)
+        {
+            await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);
+            if (connection.State == ConnectionState.Closed)
+                await connection.OpenAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+            if (!parameter.IsNullOrEmpty())
+                foreach (var mySqlParameter in parameter!)
+                    cmd.Parameters.Add(mySqlParameter);
             cmd.CommandText = sql;
             return await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -368,7 +384,7 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
         {
             await using var connection = new NpgsqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             if (!parameter.IsNullOrEmpty())
                 foreach (var mySqlParameter in parameter!)
@@ -377,11 +393,11 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
             return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<int> NonQuery(ITransactionContext? transactionContext, string sql, NpgsqlParameter[] parameter,
+        private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql, NpgsqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
             if (transactionContext is null)
-                return await NonQuery(sql, parameter, cancellationToken).ConfigureAwait(false);
+                return await SqlScalar(sql, parameter, cancellationToken).ConfigureAwait(false);
 
             if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
                 throw new InvalidCastException(
@@ -390,7 +406,7 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
             if (relationDbStorageTransactionContext.DbTransaction is NpgsqlTransaction tran)
             {
                 var connection = tran.Connection;
-                await using var cmd = connection.CreateCommand();
+                await using var cmd = connection!.CreateCommand();
                 if (!parameter.IsNullOrEmpty())
                     foreach (var mySqlParameter in parameter)
                         cmd.Parameters.Add(mySqlParameter);
@@ -398,7 +414,7 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
                 cmd.CommandText = sql;
                 cmd.Transaction = tran;
 
-                return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                return await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
             }
             else
                 throw new InvalidCastException("Invalid mysql connection instance");

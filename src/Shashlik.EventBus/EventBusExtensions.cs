@@ -51,9 +51,9 @@ namespace Shashlik.EventBus
         {
             serviceCollection.AddOptions<EventBusOptions>();
 
+            serviceCollection.TryAddSingleton<IMsgIdGenerator, GuidMsgIdGenerator>();
             serviceCollection.TryAddSingleton<IEventPublisher, DefaultEventPublisher>();
             serviceCollection.TryAddSingleton<IMessageSerializer, DefaultJsonSerializer>();
-
             serviceCollection.TryAddSingleton<IReceivedMessageRetryProvider, DefaultReceivedMessageRetryProvider>();
             serviceCollection.TryAddSingleton<IPublishedMessageRetryProvider, DefaultPublishedMessageRetryProvider>();
             serviceCollection.TryAddSingleton<IMessageSendQueueProvider, DefaultMessageSendQueueProvider>();

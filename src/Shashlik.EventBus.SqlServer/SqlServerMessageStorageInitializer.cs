@@ -29,7 +29,8 @@ IF OBJECT_ID(N'{Options.CurrentValue.FullPublishTableName}',N'U') IS NULL
 BEGIN
 	CREATE TABLE {Options.CurrentValue.FullPublishTableName}
 	(
-		[msgId] VARCHAR(32) PRIMARY KEY,
+		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOTNULL,
+		[msgId] VARCHAR(32) NOT NULL,
 		[environment] VARCHAR(32),
 		[eventName] VARCHAR(255) NOT NULL,
 		[eventBody] NVARCHAR(MAX) NOT NULL,
@@ -43,12 +44,14 @@ BEGIN
 		[lockEnd] BIGINT NOT NULL
 	);
 END;
+CREATE UNIQUE INDEX [IX_published_msgId] ON {Options.CurrentValue.FullPublishTableName} ([msgId]);
 
 IF OBJECT_ID(N'{Options.CurrentValue.FullReceiveTableName}',N'U') IS NULL
 BEGIN
 	CREATE TABLE {Options.CurrentValue.FullReceiveTableName}
 	(
-		[msgId] VARCHAR(32) PRIMARY KEY,
+		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOTNULL,
+		[msgId] VARCHAR(32) NOT NULL,
 		[environment] VARCHAR(32),
 		[eventName] VARCHAR(255) NOT NULL,
 		[eventHandlerName] VARCHAR(255) NOT NULL,
@@ -64,6 +67,7 @@ BEGIN
 		[lockEnd] BIGINT NOT NULL
 	);
 END;
+CREATE UNIQUE INDEX [IX_received_msgId_eventHandlerName] ON {Options.CurrentValue.FullReceiveTableName} ([msgId], [eventHandlerName]);
 ";
             await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);

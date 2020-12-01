@@ -22,7 +22,8 @@ namespace Shashlik.EventBus.MySql
             var sql = $@"
 CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishTableName}`
 (
-	`msgId` VARCHAR(32) PRIMARY KEY,
+	`id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+	`msgId` VARCHAR(32) NOT NULL,
 	`environment` VARCHAR(32),
 	`eventName` VARCHAR(255) NOT NULL,
 	`eventBody` LONGTEXT NOT NULL,
@@ -36,9 +37,12 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishTableName}`
 	`lockEnd` BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE UNIQUE INDEX `IX_published_msgId` ON `{Options.CurrentValue.PublishTableName}` (`msgId`);
+
 CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 (
-	`msgId` VARCHAR(32) PRIMARY KEY,
+	`id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+	`msgId` VARCHAR(32) NOT NULL,
 	`environment` VARCHAR(32),
 	`eventName` VARCHAR(255) NOT NULL,
 	`eventHandlerName` VARCHAR(255) NOT NULL,
@@ -53,6 +57,8 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 	`isLocking` TINYINT NOT NULL,
 	`lockEnd` BIGINT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE UNIQUE INDEX `IX_received_msgId_eventHandlerName` ON `{Options.CurrentValue.ReceiveTableName}` (`msgId`, `eventHandlerName`);
 ";
 
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);

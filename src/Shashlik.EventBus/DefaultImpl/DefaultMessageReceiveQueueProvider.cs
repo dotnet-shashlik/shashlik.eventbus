@@ -29,7 +29,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public void Enqueue(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            if(cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
                 return;
             Task.Run(async () =>
             {
@@ -47,7 +47,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         try
                         {
                             await MessageStorage.UpdateReceived(
-                                    messageStorageModel.MsgId,
+                                    messageStorageModel.Id,
                                     MessageStatus.Failed,
                                     failCount,
                                     null,
@@ -56,7 +56,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError(ex, $"[EventBus] update received message error.");
+                            Logger.LogError(ex, "[EventBus] update received message error.");
                         }
 
                         return;
@@ -69,7 +69,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                         // 消息处理没问题就更新数据库状态
                         await MessageStorage.UpdateReceived(
-                                messageStorageModel.MsgId,
+                                messageStorageModel.Id,
                                 MessageStatus.Succeeded,
                                 0,
                                 DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
