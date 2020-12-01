@@ -27,12 +27,20 @@ namespace Shashlik.EventBus.Tests
         public static IDictionary<string, string> Items { get; private set; }
         public static int Counter { get; private set; }
         private ILogger<TestExceptionEventHandler> Logger { get; }
+        private static readonly object Lck = new object();
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
-            Counter++;
-            Logger.LogInformation($"executed, counter: {Counter}");
+            CounterAutoIncrement();
             throw new Exception("执行异常啦...");
+        }
+
+        private void CounterAutoIncrement()
+        {
+            lock (Lck)
+            {
+                Counter++;
+            }
         }
     }
 
@@ -49,11 +57,10 @@ namespace Shashlik.EventBus.Tests
         public static IDictionary<string, string> Items { get; private set; }
         public static int Counter { get; private set; }
         private ILogger<TestExceptionEventHandler> Logger { get; }
+        private static readonly object Lck = new object();
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
-            Logger.LogInformation($"executed, counter: {Counter}");
-
             // 模拟执行5次后，恢复正常
             if (Counter >= 5)
             {
@@ -62,11 +69,19 @@ namespace Shashlik.EventBus.Tests
             }
             else
             {
-                Counter++;
-                throw new Exception();
+                CounterAutoIncrement();
+                throw new Exception("...");
             }
 
             return Task.CompletedTask;
+        }
+
+        private void CounterAutoIncrement()
+        {
+            lock (Lck)
+            {
+                Counter++;
+            }
         }
     }
 }

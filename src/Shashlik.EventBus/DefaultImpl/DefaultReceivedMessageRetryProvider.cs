@@ -75,6 +75,9 @@ namespace Shashlik.EventBus.DefaultImpl
                         return;
                     }
 
+                    if (item.RetryCount >= Options.CurrentValue.RetryFailedMax)
+                        return;
+
                     try
                     {
                         var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
