@@ -18,9 +18,9 @@ namespace Shashlik.EventBus.SqlServer
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName!;
+                    options.PublishedTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName!;
+                    options.ReceivedTableName = receiveTableName!;
             });
 
             return service.AddSqlServer();
@@ -36,9 +36,9 @@ namespace Shashlik.EventBus.SqlServer
             {
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName!;
+                    options.PublishedTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName!;
+                    options.ReceivedTableName = receiveTableName!;
             });
 
             return service.AddSqlServer();

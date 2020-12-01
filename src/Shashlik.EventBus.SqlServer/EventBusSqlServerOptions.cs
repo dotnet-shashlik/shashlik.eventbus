@@ -13,12 +13,12 @@ namespace Shashlik.EventBus.SqlServer
         /// <summary>
         /// 已发布消息表名
         /// </summary>
-        public string PublishTableName { get; set; } = "publish";
+        public string PublishedTableName { get; set; } = "published";
 
         /// <summary>
         /// 已接收的消息表名
         /// </summary>
-        public string ReceiveTableName { get; set; } = "receive";
+        public string ReceivedTableName { get; set; } = "received";
 
         /// <summary>
         /// ef数据库上下文类型, 和<see cref="ConnectionString"/>配其中一个，优先使用<see cref="DbContextType"/>
@@ -33,11 +33,11 @@ namespace Shashlik.EventBus.SqlServer
         /// <summary>
         /// 已发布消息表全名
         /// </summary>
-        public string FullPublishTableName => $@"[{Schema}].[{PublishTableName}]";
+        public string FullPublishedTableName => $@"[{Schema}].[{PublishedTableName}]";
 
         /// <summary>
         /// 已接收的消息表全名
         /// </summary>
-        public string FullReceiveTableName => $@"[{Schema}].[{ReceiveTableName}]";
+        public string FullReceivedTableName => $@"[{Schema}].[{ReceivedTableName}]";
     }
 }

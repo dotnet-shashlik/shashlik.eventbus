@@ -20,7 +20,7 @@ namespace Shashlik.EventBus.MySql
         public async Task Initialize(CancellationToken cancellationToken = default)
         {
             var sql = $@"
-CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishTableName}`
+CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishedTableName}`
 (
 	`id` BIGINT AUTO_INCREMENT PRIMARY KEY,
 	`msgId` VARCHAR(32) NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishTableName}`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
-CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
+CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceivedTableName}`
 (
 	`id` BIGINT AUTO_INCREMENT PRIMARY KEY,
 	`msgId` VARCHAR(32) NOT NULL,

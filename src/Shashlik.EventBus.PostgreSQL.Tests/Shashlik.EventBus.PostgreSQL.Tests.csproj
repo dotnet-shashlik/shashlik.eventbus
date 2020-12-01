@@ -14,6 +14,8 @@
         <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.0.1" />
 
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
+
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
         <PackageReference Include="Shouldly" Version="3.0.2" />
         <PackageReference Include="xunit" Version="2.4.1" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -30,7 +32,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
-        <ProjectReference Include="..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
+        <ProjectReference Include="..\Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj" />
         <ProjectReference Include="..\Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj" />
     </ItemGroup>
 

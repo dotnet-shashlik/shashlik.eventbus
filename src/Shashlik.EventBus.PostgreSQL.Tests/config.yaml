@@ -1,2 +1,2 @@
-﻿EventBus:
-  a: 1
+﻿ConnectionStrings:
+  Default: server=192.168.50.178;database=eventbustest;user id=testuser;password=123123;

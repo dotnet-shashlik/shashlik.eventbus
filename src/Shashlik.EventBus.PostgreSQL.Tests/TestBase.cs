@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests
+namespace Shashlik.EventBus.PostgreSQL.Tests
 {
     public class TestBase : IClassFixture<TestWebApplicationFactory<TestStartup>>, IDisposable
     {

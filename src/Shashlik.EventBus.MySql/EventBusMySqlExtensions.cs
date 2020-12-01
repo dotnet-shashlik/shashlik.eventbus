@@ -16,9 +16,9 @@ namespace Shashlik.EventBus.MySql
             {
                 options.ConnectionString = connectionString;
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName!;
+                    options.PublishedTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName!;
+                    options.ReceivedTableName = receiveTableName!;
             });
 
             return service.AddMySql();
@@ -34,9 +34,9 @@ namespace Shashlik.EventBus.MySql
             {
                 options.DbContextType = typeof(TDbContext);
                 if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishTableName = publishTableName!;
+                    options.PublishedTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceiveTableName = receiveTableName!;
+                    options.ReceivedTableName = receiveTableName!;
             });
 
             return service.AddMySql();

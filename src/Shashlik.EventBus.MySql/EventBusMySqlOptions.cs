@@ -8,12 +8,12 @@ namespace Shashlik.EventBus.MySql
         /// <summary>
         /// 已发布消息表名
         /// </summary>
-        public string PublishTableName { get; set; } = "eventbus_publish";
+        public string PublishedTableName { get; set; } = "eventbus_published";
 
         /// <summary>
         /// 已接收的消息表名
         /// </summary>
-        public string ReceiveTableName { get; set; } = "eventbus_receive";
+        public string ReceivedTableName { get; set; } = "eventbus_received";
 
         /// <summary>
         /// ef数据库上下文类型, 和<see cref="ConnectionString"/>配其中一个，优先使用<see cref="DbContextType"/>

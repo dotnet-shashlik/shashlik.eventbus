@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MemoryQueue;
-using Shashlik.EventBus.MemoryStorage;
+using Shashlik.EventBus.PostgreSQL.Tests.Efcore;
 using Shashlik.Kernel;
 
-namespace Shashlik.EventBus.Tests
+namespace Shashlik.EventBus.PostgreSQL.Tests
 {
     public class TestStartup
     {
@@ -25,6 +26,12 @@ namespace Shashlik.EventBus.Tests
             services.AddAuthentication();
             services.AddAuthorization();
 
+            services.AddDbContextPool<DemoDbContext>(r =>
+            {
+                r.UseNpgsql(Configuration.GetConnectionString("Default"),
+                    db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
+            }, 5);
+
             services.AddEventBus(r =>
                 {
                     r.Environment = TestBase.Env;
@@ -38,7 +45,7 @@ namespace Shashlik.EventBus.Tests
                     r.RetryIntervalSeconds = 5;
                 })
                 .AddMemoryQueue()
-                .AddMemoryStorage();
+                .AddNpgsql<DemoDbContext>();
 
             services.AddShashlik(Configuration);
         }

@@ -25,9 +25,9 @@ BEGIN
 	EXEC('CREATE SCHEMA [{Options.CurrentValue.Schema}]')
 END;
 
-IF OBJECT_ID(N'{Options.CurrentValue.FullPublishTableName}',N'U') IS NULL
+IF OBJECT_ID(N'{Options.CurrentValue.FullPublishedTableName}',N'U') IS NULL
 BEGIN
-	CREATE TABLE {Options.CurrentValue.FullPublishTableName}
+	CREATE TABLE {Options.CurrentValue.FullPublishedTableName}
 	(
 		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOTNULL,
 		[msgId] VARCHAR(32) NOT NULL,
@@ -41,14 +41,14 @@ BEGIN
 		[status] VARCHAR(32) NOT NULL,
 		[retryCount] INT NOT NULL,
 		[isLocking] BIT NOT NULL,
-		[lockEnd] BIGINT NOT NULL
+		[lockEnd] BIGINT NOT NULL,
+		UNIQUE INDEX [IX_published_msgId] ([msgId])
 	);
 END;
-CREATE UNIQUE INDEX [IX_published_msgId] ON {Options.CurrentValue.FullPublishTableName} ([msgId]);
 
-IF OBJECT_ID(N'{Options.CurrentValue.FullReceiveTableName}',N'U') IS NULL
+IF OBJECT_ID(N'{Options.CurrentValue.FullReceivedTableName}',N'U') IS NULL
 BEGIN
-	CREATE TABLE {Options.CurrentValue.FullReceiveTableName}
+	CREATE TABLE {Options.CurrentValue.FullReceivedTableName}
 	(
 		[id] BIGINT IDENTITY(1,1) PRIMARY KEY NOTNULL,
 		[msgId] VARCHAR(32) NOT NULL,
@@ -64,10 +64,10 @@ BEGIN
 		[status] VARCHAR(32) NOT NULL,
 		[retryCount] INT NOT NULL,
 		[isLocking] BIT NOT NULL,
-		[lockEnd] BIGINT NOT NULL
+		[lockEnd] BIGINT NOT NULL,
+		UNIQUE INDEX [IX_received_msgId_eventHandlerName] ([msgId], [eventHandlerName])
 	);
 END;
-CREATE UNIQUE INDEX [IX_received_msgId_eventHandlerName] ON {Options.CurrentValue.FullReceiveTableName} ([msgId], [eventHandlerName]);
 ";
             await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);

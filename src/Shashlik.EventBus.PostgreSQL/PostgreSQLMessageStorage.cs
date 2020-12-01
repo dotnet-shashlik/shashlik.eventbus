@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async ValueTask<bool> PublishedMessageIsCommitted(string msgId, CancellationToken cancellationToken = default)
         {
             var sql =
-                $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{msgId}';";
+                $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\"='{msgId}';";
 
             var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
@@ -41,7 +41,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async Task<MessageStorageModel?> FindPublishedByMsgId(string msgId,
             CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishTableName} WHERE \"msgId\"='{msgId}';";
+            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\"='{msgId}';";
 
             var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -69,7 +69,7 @@ namespace Shashlik.EventBus.PostgreSQL
             CancellationToken cancellationToken = default)
         {
             var sql =
-                $"SELECT * FROM {Options.CurrentValue.FullReceiveTableName} WHERE \"msgId\"='{msgId}' AND \"eventHandlerName\"='{eventHandlerDescriptor.EventHandlerName}';";
+                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE \"msgId\"='{msgId}' AND \"eventHandlerName\"='{eventHandlerDescriptor.EventHandlerName}';";
 
             var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -98,7 +98,7 @@ namespace Shashlik.EventBus.PostgreSQL
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-INSERT INTO {Options.CurrentValue.FullPublishTableName}
+INSERT INTO {Options.CurrentValue.FullPublishedTableName}
 (""msgId"", ""environment"", ""createTime"", ""delayAt"", ""expireTime"", ""eventName"", ""eventBody"", ""eventItems"", ""retryCount"", ""status"", ""isLocking"", ""lockEnd"")
 VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd) RETURNING id;
 ";
@@ -131,7 +131,7 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
         public async Task<long> SaveReceived(MessageStorageModel message, CancellationToken cancellationToken = default)
         {
             var sql = $@"
-INSERT INTO {Options.CurrentValue.FullReceiveTableName}
+INSERT INTO {Options.CurrentValue.FullReceivedTableName}
 (""msgId"", ""environment"", ""createTime"", ""isDelay"", ""delayAt"", ""expireTime"", ""eventName"", ""eventHandlerName"", ""eventBody"", ""eventItems"", ""retryCount"", ""status"", ""isLocking"", ""lockEnd"")
 VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @eventName, @eventHandlerName, @eventBody, @eventItems, @retryCount, @status, @isLocking, @lockEnd) RETURNING id;
 ";
@@ -167,7 +167,7 @@ VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @even
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-UPDATE {Options.CurrentValue.FullPublishTableName}
+UPDATE {Options.CurrentValue.FullPublishedTableName}
 SET ""status"" = '{status}', ""retryCount"" = {retryCount}, ""expireTime"" = {expireTime?.GetLongDate() ?? 0}
 WHERE ""id"" = {id}
 ;
@@ -181,7 +181,7 @@ WHERE ""id"" = {id}
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-UPDATE {Options.CurrentValue.FullReceiveTableName}
+UPDATE {Options.CurrentValue.FullReceivedTableName}
 SET ""status"" = '{status}', ""retryCount"" = {retryCount}, ""expireTime"" = {expireTime?.GetLongDate() ?? 0}
 WHERE ""id"" = {id}
 ;
@@ -197,7 +197,7 @@ WHERE ""id"" = {id}
             var nowLong = DateTime.Now.GetLongDate();
 
             var sql = $@"
-UPDATE {Options.CurrentValue.FullReceiveTableName}
+UPDATE {Options.CurrentValue.FullReceivedTableName}
 SET ""isLocking"" = true, ""lockEnd"" = {lockEndAt.GetLongDate()}
 WHERE ""id"" = {id} AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
 ;
@@ -217,8 +217,8 @@ WHERE ""id"" = {id} AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
         {
             var now = DateTime.Now.GetLongDate();
             var sql = $@"
-DELETE FROM {Options.CurrentValue.FullPublishTableName} WHERE ""expireTime"" != 0 AND ""expireTime"" < {now} AND ""status"" != '{MessageStatus.Scheduled}';
-DELETE FROM {Options.CurrentValue.FullReceiveTableName} WHERE ""expireTime"" != 0 AND ""expireTime"" < {now} AND ""status"" != '{MessageStatus.Scheduled}';
+DELETE FROM {Options.CurrentValue.FullPublishedTableName} WHERE ""expireTime"" > 0 AND ""expireTime"" < {now} AND ""status"" != '{MessageStatus.Scheduled}';
+DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE ""expireTime"" > 0 AND ""expireTime"" < {now} AND ""status"" != '{MessageStatus.Scheduled}';
 ";
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
@@ -232,7 +232,7 @@ DELETE FROM {Options.CurrentValue.FullReceiveTableName} WHERE ""expireTime"" != 
             var nowLong = now.GetLongDate();
 
             var sql = $@"
-SELECT * FROM {Options.CurrentValue.FullPublishTableName}
+SELECT * FROM {Options.CurrentValue.FullPublishedTableName}
 WHERE
     ""environment"" = '{environment}'
     AND ""createTime"" < {createTimeLimit}
@@ -274,9 +274,9 @@ LIMIT {count};
 
             var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
             var updateSql = $@"
-UPDATE {Options.CurrentValue.FullPublishTableName}
+UPDATE {Options.CurrentValue.FullPublishedTableName}
 SET ""isLocking"" = true, ""lockEnd"" = {lockEnd}
-WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong});
+WHERE ""id"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong});
 ";
             var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
@@ -291,7 +291,7 @@ WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong}
             var nowLong = now.GetLongDate();
 
             var sql = $@"
-SELECT * FROM {Options.CurrentValue.FullReceiveTableName}
+SELECT * FROM {Options.CurrentValue.FullReceivedTableName}
 WHERE
     ""environment"" = '{environment}'
     AND ((""isDelay"" = false AND ""createTime"" < {createTimeLimit}) OR (""isDelay"" = true AND ""delayAt"" <= {nowLong} ))
@@ -334,9 +334,9 @@ LIMIT {count};
 
             var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
             var updateSql = $@"
-UPDATE {Options.CurrentValue.FullReceiveTableName}
+UPDATE {Options.CurrentValue.FullReceivedTableName}
 SET ""isLocking"" = true, ""lockEnd"" = {lockEnd}
-WHERE ""msgId"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong});
+WHERE ""id"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong});
 ";
             var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
             return rows != list.Count ? new List<MessageStorageModel>() : list;
