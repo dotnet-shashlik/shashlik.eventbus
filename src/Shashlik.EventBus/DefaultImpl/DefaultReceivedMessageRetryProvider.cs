@@ -61,6 +61,9 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
+            Logger.LogDebug(
+                $"[EventBus] find need retry received {messages.Count()} message, will do retry.");
+
             // 并行重试
             Parallel.ForEach(messages, new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
                 async (item) =>
@@ -75,6 +78,8 @@ namespace Shashlik.EventBus.DefaultImpl
                     try
                     {
                         var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
+                        Logger.LogDebug(
+                            $"[EventBus] begin execute event handler, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
                         await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
                         await MessageStorage.UpdateReceived(
                                 item.Id,
@@ -83,11 +88,14 @@ namespace Shashlik.EventBus.DefaultImpl
                                 DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
                                 cancellationToken)
                             .ConfigureAwait(false);
+
+                        Logger.LogDebug(
+                            $"[EventBus] execute event handler success, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
                     }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex,
-                            $"[EventBus] received event retry fail, event: {item.EventName}, msgId: {item.MsgId}.");
+                            $"[EventBus] received event retry fail, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
                         try
                         {
                             // 失败的数据不过期

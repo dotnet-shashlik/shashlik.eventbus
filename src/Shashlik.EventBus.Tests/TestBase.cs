@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests
 {
-    public abstract class TestBase : IClassFixture<TestWebApplicationFactory<TestStartup>>, IDisposable
+    public class TestBase : IClassFixture<TestWebApplicationFactory<TestStartup>>, IDisposable
     {
         protected TestWebApplicationFactory<TestStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
@@ -14,9 +15,10 @@ namespace Shashlik.EventBus.Tests
 
         public static string Env { get; } = "UnitTest";
 
-        public TestBase(TestWebApplicationFactory<TestStartup> factory)
+        public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)
         {
             Factory = factory;
+            factory.Output = testOutputHelper;
             HttpClient = factory.CreateClient();
             ServiceScope = factory.Services.CreateScope();
         }

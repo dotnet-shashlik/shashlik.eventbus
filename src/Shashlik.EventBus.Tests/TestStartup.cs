@@ -25,7 +25,18 @@ namespace Shashlik.EventBus.Tests
             services.AddAuthentication();
             services.AddAuthorization();
 
-            services.AddEventBus(r => { r.Environment = TestBase.Env; })
+            services.AddEventBus(r =>
+                {
+                    r.Environment = TestBase.Env;
+                    // 为了便于测试，最大重试设置为7次
+                    r.RetryFailedMax = 7;
+                    // 重试开始工作的时间为2分钟后
+                    r.StartRetryAfterSeconds = 2 * 60;
+                    // 确认是否是否已提交时间为1分钟
+                    r.ConfirmTransactionSeconds = 60;
+                    // 失败重试间隔5秒
+                    r.RetryIntervalSeconds = 5;
+                })
                 .AddMemoryQueue()
                 .AddMemoryStorage();
 

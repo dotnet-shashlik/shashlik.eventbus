@@ -1,15 +1,19 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests
 {
     public class TestWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
     {
+        public ITestOutputHelper Output { get; set; }
+
         protected override IHostBuilder CreateHostBuilder()
         {
             var builder = Host.CreateDefaultBuilder();
@@ -17,7 +21,8 @@ namespace Shashlik.EventBus.Tests
             return builder.UseEnvironment("EventBusUnitTest")
                 .ConfigureLogging(r =>
                 {
-                    r.AddConsole().SetMinimumLevel(LogLevel.Debug);
+                    r.ClearProviders();
+                    r.AddXUnit(Output).SetMinimumLevel(LogLevel.Debug);
                 })
                 .ConfigureAppConfiguration((host, config) =>
                 {
