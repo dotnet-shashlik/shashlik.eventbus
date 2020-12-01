@@ -34,10 +34,10 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishTableName}`
 	`status` VARCHAR(32) NOT NULL,
 	`retryCount` INT NOT NULL,
 	`isLocking` TINYINT NOT NULL,
-	`lockEnd` BIGINT NOT NULL
+	`lockEnd` BIGINT NOT NULL,
+	UNIQUE INDEX `IX_published_msgId` (`msgId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE UNIQUE INDEX `IX_published_msgId` ON `{Options.CurrentValue.PublishTableName}` (`msgId`);
 
 CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 (
@@ -55,10 +55,9 @@ CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceiveTableName}`
 	`status` VARCHAR(32) NOT NULL,
 	`retryCount` INT NOT NULL,
 	`isLocking` TINYINT NOT NULL,
-	`lockEnd` BIGINT NOT NULL
+	`lockEnd` BIGINT NOT NULL,
+	 UNIQUE INDEX `IX_received_msgId_eventHandlerName` (`msgId`, `eventHandlerName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE UNIQUE INDEX `IX_received_msgId_eventHandlerName` ON `{Options.CurrentValue.ReceiveTableName}` (`msgId`, `eventHandlerName`);
 ";
 
             await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
