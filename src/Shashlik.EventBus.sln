@@ -63,6 +63,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.SqlServer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.PostgreSQL.Tests", "Shashlik.EventBus.PostgreSQL.Tests\Shashlik.EventBus.PostgreSQL.Tests.csproj", "{7F528759-7244-4305-AD4E-2186DADE56E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MemoryStorage.Tests", "Shashlik.EventBus.MemoryStorage.Tests\Shashlik.EventBus.MemoryStorage.Tests.csproj", "{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,6 +171,10 @@ Global
 		{7F528759-7244-4305-AD4E-2186DADE56E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F528759-7244-4305-AD4E-2186DADE56E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F528759-7244-4305-AD4E-2186DADE56E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -187,6 +193,7 @@ Global
 		{ABC5C08D-1CB6-442B-976C-9AB3699C37AA} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{DDD1889A-5984-45EC-8928-9096E0C01EFC} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{7F528759-7244-4305-AD4E-2186DADE56E0} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

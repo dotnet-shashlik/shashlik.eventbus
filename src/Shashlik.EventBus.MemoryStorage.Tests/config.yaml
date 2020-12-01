@@ -1,0 +1,2 @@
+﻿ConnectionStrings:
+  Default: server=192.168.50.178;database=eventbustest;user id=sa;password=Shashlik123123;

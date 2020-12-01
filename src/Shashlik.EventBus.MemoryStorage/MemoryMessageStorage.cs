@@ -16,11 +16,13 @@ namespace Shashlik.EventBus.MemoryStorage
         private readonly ConcurrentDictionary<long, MessageStorageModel> _published = new ConcurrentDictionary<long, MessageStorageModel>();
         private readonly ConcurrentDictionary<long, MessageStorageModel> _received = new ConcurrentDictionary<long, MessageStorageModel>();
         private static long _lastId;
-        private static readonly object Lck = new object();
+        private static readonly object IdLck = new object();
+        private static readonly object PublishedRetryLck = new object();
+        private static readonly object ReceivedRetryLck = new object();
 
         private static long AutoIncrementId()
         {
-            lock (Lck)
+            lock (IdLck)
             {
                 _lastId++;
             }
@@ -35,7 +37,10 @@ namespace Shashlik.EventBus.MemoryStorage
 
         public async Task<MessageStorageModel?> FindPublishedByMsgId(string msgId, CancellationToken cancellationToken)
         {
-            return await Task.FromResult(_published.Values.FirstOrDefault(r => r.MsgId == msgId));
+            var res = _published.Values.FirstOrDefault(r => r.MsgId == msgId);
+            if (res != null)
+                res.EventHandlerName = null;
+            return await Task.FromResult(res);
         }
 
         public async Task<MessageStorageModel?> FindReceivedByMsgId(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
@@ -138,38 +143,66 @@ namespace Shashlik.EventBus.MemoryStorage
             string environment, int lockSecond,
             CancellationToken cancellationToken)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
-            var now = DateTime.Now;
+            return Task.FromResult(GetPublishedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment, lockSecond));
+        }
 
-            var list = _published.Values.Where(r =>
-                    r.Environment == environment
-                    && r.CreateTime < createTimeLimit
-                    && r.RetryCount < maxFailedRetryCount
-                    && !r.IsLocking || r.LockEnd < now
-                    && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed)
-                )
-                .ToList();
+        public List<MessageStorageModel> GetPublishedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
+            string environment, int lockSecond)
+        {
+            lock (PublishedRetryLck)
+            {
+                var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
+                var now = DateTime.Now;
+                var res = new List<MessageStorageModel>();
+                foreach (var r in _published.Values)
+                {
+                    if (r.Environment == environment
+                        && r.CreateTime < createTimeLimit
+                        && r.RetryCount < maxFailedRetryCount
+                        && !r.IsLocking || r.LockEnd < now
+                        && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
+                    {
+                        r.IsLocking = true;
+                        r.LockEnd = DateTimeOffset.Now.AddSeconds(lockSecond);
+                        res.Add(r);
+                    }
+                }
 
-            return Task.FromResult(list);
+                return res;
+            }
         }
 
         public Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
             string environment, int lockSecond,
             CancellationToken cancellationToken)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
-            var now = DateTime.Now;
+            return Task.FromResult(GetReceivedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment, lockSecond));
+        }
 
-            var list = _received.Values.Where(r =>
-                    r.Environment == environment
-                    && r.CreateTime < createTimeLimit
-                    && r.RetryCount < maxFailedRetryCount
-                    && !r.IsLocking || r.LockEnd < now
-                    && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed)
-                )
-                .ToList();
+        public List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
+            string environment, int lockSecond)
+        {
+            lock (PublishedRetryLck)
+            {
+                var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
+                var now = DateTime.Now;
+                var res = new List<MessageStorageModel>();
+                foreach (var r in _received.Values)
+                {
+                    if (r.Environment == environment
+                        && r.CreateTime < createTimeLimit
+                        && r.RetryCount < maxFailedRetryCount
+                        && !r.IsLocking || r.LockEnd < now
+                        && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
+                    {
+                        r.IsLocking = true;
+                        r.LockEnd = DateTimeOffset.Now.AddSeconds(lockSecond);
+                        res.Add(r);
+                    }
+                }
 
-            return Task.FromResult(list);
+                return res;
+            }
         }
     }
 }
