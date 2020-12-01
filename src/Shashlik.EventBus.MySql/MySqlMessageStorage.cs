@@ -28,8 +28,19 @@ namespace Shashlik.EventBus.MySql
         private IOptionsMonitor<EventBusMySqlOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
 
-        public async ValueTask<bool> PublishedMessageIsCommitted(string msgId, CancellationToken cancellationToken = default)
+        public async ValueTask<bool> PublishedMessageIsCommitted(string msgId, ITransactionContext? transactionContext,
+            CancellationToken cancellationToken = default)
         {
+            if (transactionContext != null)
+            {
+                if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
+                    throw new InvalidCastException(
+                        $"[EventBus-SqlServer]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
+                // 事务的连接的信息未null了表示事务已回滚回已提交
+                if (relationDbStorageTransactionContext.DbTransaction.Connection != null)
+                    return false;
+            }
+
             var sql = $@"
 SELECT COUNT(`msgId`) FROM `{Options.CurrentValue.PublishedTableName}` WHERE `msgId`='{msgId}';";
 
@@ -396,7 +407,7 @@ WHERE `id` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
 
             if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
                 throw new InvalidCastException(
-                    $"Event bus mysql storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
+                    $"[EventBus-MySql]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
 
             if (relationDbStorageTransactionContext.DbTransaction is MySqlTransaction tran)
             {
@@ -412,7 +423,7 @@ WHERE `id` IN ({ids}) AND (`isLocking` = 0 OR `lockEnd` < {nowLong});
                 return await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
             }
             else
-                throw new InvalidCastException("Invalid mysql connection instance");
+                throw new InvalidCastException("[EventBus-Mysql]Invalid mysql connection instance");
         }
     }
 }

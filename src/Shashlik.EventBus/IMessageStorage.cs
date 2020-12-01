@@ -13,10 +13,11 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 已发布消息是否已提交
         /// </summary>
-        /// <param name="msgId"></param>
+        /// <param name="msgId">消息id</param>
+        /// <param name="transactionContext">事务上下文</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        ValueTask<bool> PublishedMessageIsCommitted(string msgId, CancellationToken cancellationToken);
+        ValueTask<bool> PublishedMessageIsCommitted(string msgId, ITransactionContext? transactionContext, CancellationToken cancellationToken);
 
         /// <summary>
         /// 根据msgId查找发布的消息

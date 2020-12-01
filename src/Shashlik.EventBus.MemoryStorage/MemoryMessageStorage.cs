@@ -30,7 +30,7 @@ namespace Shashlik.EventBus.MemoryStorage
             return _lastId;
         }
 
-        public ValueTask<bool> PublishedMessageIsCommitted(string msgId, CancellationToken cancellationToken)
+        public ValueTask<bool> PublishedMessageIsCommitted(string msgId, ITransactionContext? transactionContext, CancellationToken cancellationToken)
         {
             return new ValueTask<bool>(_published.Any(r => r.Value.MsgId == msgId));
         }

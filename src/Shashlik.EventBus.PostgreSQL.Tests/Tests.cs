@@ -54,10 +54,14 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
             dbMsg.Status.ShouldBe(msg.Status);
         }
 
+
         [Fact]
         public async Task SavePublishedWithTransactionCommitTest()
         {
-            var tran = await DbContext.Database.BeginTransactionAsync();
+            await using var tran = await DbContext.Database.BeginTransactionAsync();
+            DbContext.Add(new Users {Name = "张三"});
+            await DbContext.SaveChangesAsync();
+
             var @event = new TestEvent {Name = "张三"};
             var msg = new MessageStorageModel
             {
@@ -75,8 +79,21 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SavePublished(msg, DbContext.GetTransactionContext(), default);
+
+            var transactionContext = DbContext.GetTransactionContext();
+            var id = await MessageStorage.SavePublished(msg, transactionContext, default);
+            await DbContext.SaveChangesAsync();
+
+            var begin = DateTimeOffset.Now;
+            while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
+            {
+                // 20秒内不提交事务， 消息就应该是未提交
+                (await MessageStorage.PublishedMessageIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                await Task.Delay(300);
+            }
+
             await tran.CommitAsync();
+            (await MessageStorage.PublishedMessageIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeTrue();
 
             msg.Id.ShouldBe(id);
             var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
@@ -89,7 +106,9 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
         [Fact]
         public async Task SavePublishedWithTransactionRollBackTest()
         {
-            var tran = await DbContext.Database.BeginTransactionAsync();
+            await using var tran = await DbContext.Database.BeginTransactionAsync();
+            DbContext.Add(new Users {Name = "张三"});
+            await DbContext.SaveChangesAsync();
             var @event = new TestEvent {Name = "张三"};
             var msg = new MessageStorageModel
             {
@@ -107,8 +126,60 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SavePublished(msg, new RelationDbStorageTransactionContext(tran.GetDbTransaction()), default);
+            var transactionContext = new RelationDbStorageTransactionContext(tran.GetDbTransaction());
+            var id = await MessageStorage.SavePublished(msg, transactionContext, default);
+
+            var begin = DateTimeOffset.Now;
+            while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
+            {
+                // 20秒内不提交事务， 消息就应该是未提交
+                (await MessageStorage.PublishedMessageIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                await Task.Delay(300);
+            }
+
             await tran.RollbackAsync();
+            (await MessageStorage.PublishedMessageIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+
+            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            dbMsg.ShouldBeNull();
+        }
+
+        [Fact]
+        public async Task SavePublishedWithTransactionDisposeTest()
+        {
+            var tran = await DbContext.Database.BeginTransactionAsync();
+            DbContext.Add(new Users {Name = "张三"});
+            await DbContext.SaveChangesAsync();
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var transactionContext = new RelationDbStorageTransactionContext(tran.GetDbTransaction());
+            var id = await MessageStorage.SavePublished(msg, transactionContext, default);
+
+            var begin = DateTimeOffset.Now;
+            while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
+            {
+                // 20秒内不提交事务， 消息就应该是未提交
+                (await MessageStorage.PublishedMessageIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                await Task.Delay(300);
+            }
+
+            await tran.DisposeAsync();
+            (await MessageStorage.PublishedMessageIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
 
             var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
             dbMsg.ShouldBeNull();

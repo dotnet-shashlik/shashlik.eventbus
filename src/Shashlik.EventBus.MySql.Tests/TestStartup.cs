@@ -32,6 +32,11 @@ namespace Shashlik.EventBus.MySql.Tests
                     db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
             }, 5);
 
+            using var serviceProvider = services.BuildServiceProvider();
+            using var scope = serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetService<DemoDbContext>();
+            dbContext.Database.Migrate();
+
             services.AddEventBus(r =>
                 {
                     r.Environment = TestBase.Env;

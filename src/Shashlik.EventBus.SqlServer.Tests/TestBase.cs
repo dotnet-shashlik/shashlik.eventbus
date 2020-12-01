@@ -12,11 +12,12 @@ namespace Shashlik.EventBus.SqlServer.Tests
         protected TestWebApplicationFactory<TestStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
-
         public static string Env { get; } = "UnitTest";
+        protected ITestOutputHelper TestOutputHelper { get; }
 
         public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)
         {
+            TestOutputHelper = testOutputHelper;
             Factory = factory;
             factory.Output = testOutputHelper;
             HttpClient = factory.CreateClient();

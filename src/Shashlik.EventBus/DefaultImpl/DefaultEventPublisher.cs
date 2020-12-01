@@ -110,7 +110,7 @@ namespace Shashlik.EventBus.DefaultImpl
             // 消息持久化
             await MessageStorage.SavePublished(messageStorageModel, transactionContext, cancellationToken).ConfigureAwait(false);
             // 进入消息发送队列
-            MessageSendQueueProvider.Enqueue(messageTransferModel, messageStorageModel, cancellationToken);
+            MessageSendQueueProvider.Enqueue(transactionContext, messageTransferModel, messageStorageModel, cancellationToken);
         }
     }
 }

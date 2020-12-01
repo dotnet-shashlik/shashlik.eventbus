@@ -22,10 +22,11 @@ namespace Shashlik.EventBus.DefaultImpl
         private IOptionsMonitor<EventBusOptions> Options { get; }
         private ILogger<DefaultMessageSendQueueProvider> Logger { get; }
 
-        public void Enqueue(MessageTransferModel messageTransferModel, MessageStorageModel messageStorageModel,
+        public void Enqueue(ITransactionContext? transactionContext, MessageTransferModel messageTransferModel,
+            MessageStorageModel messageStorageModel,
             CancellationToken cancellationToken)
         {
-            if(cancellationToken.IsCancellationRequested)
+            if (cancellationToken.IsCancellationRequested)
                 return;
             Task.Delay(100, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -42,7 +43,9 @@ namespace Shashlik.EventBus.DefaultImpl
                     try
                     {
                         // 确保消息已提交才进行消息发送
-                        if (!await MessageStorage.PublishedMessageIsCommitted(messageStorageModel.MsgId, cancellationToken).ConfigureAwait(false))
+                        if (!await MessageStorage
+                            .PublishedMessageIsCommitted(messageStorageModel.MsgId, transactionContext, cancellationToken)
+                            .ConfigureAwait(false))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交
                             await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
@@ -50,18 +53,18 @@ namespace Shashlik.EventBus.DefaultImpl
                         }
 
                         if (failCount > 4)
-                        // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
+                            // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
                         {
                             // 消息发送没问题就更新数据库状态
                             try
                             {
                                 await MessageStorage.UpdatePublished(
-                                    messageStorageModel.Id,
-                                    MessageStatus.Failed,
-                                    failCount,
-                                    null,
-                                    cancellationToken)
-                                .ConfigureAwait(false);
+                                        messageStorageModel.Id,
+                                        MessageStatus.Failed,
+                                        failCount,
+                                        null,
+                                        cancellationToken)
+                                    .ConfigureAwait(false);
                             }
                             catch (Exception ex)
                             {
@@ -76,12 +79,12 @@ namespace Shashlik.EventBus.DefaultImpl
                         await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
                         // 消息发送没问题就更新数据库状态
                         await MessageStorage.UpdatePublished(
-                            messageStorageModel.Id,
-                            MessageStatus.Succeeded,
-                            0,
-                            DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
-                            cancellationToken)
-                        .ConfigureAwait(false);
+                                messageStorageModel.Id,
+                                MessageStatus.Succeeded,
+                                0,
+                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                                cancellationToken)
+                            .ConfigureAwait(false);
 
                         return;
                     }
