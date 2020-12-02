@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -8,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests
+namespace Shashlik.EventBus.RabbitMQ.Tests
 {
     public class TestWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
     {
@@ -18,7 +17,7 @@ namespace Shashlik.EventBus.Tests
         {
             var builder = Host.CreateDefaultBuilder();
 
-            return builder.UseEnvironment("EventBusUnitTest")
+            return builder.UseEnvironment("RabbitTest")
                 .ConfigureLogging(r =>
                 {
                     r.ClearProviders();

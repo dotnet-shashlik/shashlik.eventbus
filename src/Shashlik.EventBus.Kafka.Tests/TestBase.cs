@@ -12,7 +12,7 @@ namespace Shashlik.EventBus.Kafka.Tests
         protected TestWebApplicationFactory<TestStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
-        public static string Env { get; } = "UnitTest";
+        public static string Env { get; } = "KafkaTest";
         protected ITestOutputHelper TestOutputHelper { get; }
 
         public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)

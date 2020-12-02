@@ -12,7 +12,7 @@
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.1.9" />
         <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.9" />
         <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.0.1" />
-
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.4" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
         <PackageReference Include="Shouldly" Version="3.0.2" />
         <PackageReference Include="xunit" Version="2.4.1" />
@@ -23,15 +23,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="config.yaml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+        <ProjectReference Include="..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
+        <ProjectReference Include="..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
+        <ProjectReference Include="..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
+        <ProjectReference Include="..\Shashlik.EventBus.RabbitMQ\Shashlik.EventBus.RabbitMQ.csproj" />
+        <ProjectReference Include="..\Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
-        <ProjectReference Include="..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
-        <ProjectReference Include="..\Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj" />
+      <None Update="config.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
