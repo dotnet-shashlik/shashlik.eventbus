@@ -48,9 +48,63 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public Task Retry(string msgId, CancellationToken cancellationToken)
+        public async Task Retry(long id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var item = await MessageStorage.FindReceivedById(id, cancellationToken).ConfigureAwait(false);
+            if (item is null)
+                throw new ArgumentException($"[EventBus]Not found published message of id: {id}", nameof(id));
+            await Retry(item, cancellationToken, false).ConfigureAwait(false);
+        }
+
+        private async Task Retry(MessageStorageModel item, CancellationToken cancellationToken, bool checkRetryFailedMax)
+        {
+            if (!EventHandlerDescriptors.TryGetValue(item.EventHandlerName, out var descriptor))
+            {
+                Logger.LogWarning(
+                    $"[EventBus] can not find event handler: {item.EventHandlerName}, event: {item.EventName}, msgId: {item.MsgId}.");
+                return;
+            }
+
+            if (checkRetryFailedMax && item.RetryCount >= Options.CurrentValue.RetryFailedMax)
+                return;
+
+            try
+            {
+                var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
+                Logger.LogDebug(
+                    $"[EventBus] begin execute event handler, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
+                await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
+                await MessageStorage.UpdateReceived(
+                        item.Id,
+                        MessageStatus.Succeeded,
+                        item.RetryCount + 1,
+                        DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                Logger.LogDebug(
+                    $"[EventBus] execute event handler success, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex,
+                    $"[EventBus] received event retry fail, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
+                try
+                {
+                    // 失败的数据不过期
+                    await MessageStorage.UpdateReceived(
+                            item.Id,
+                            MessageStatus.Failed,
+                            item.RetryCount + 1,
+                            null,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception exInner)
+                {
+                    Logger.LogError(exInner, $"[EventBus] update received message error.");
+                }
+            }
         }
 
         private async Task Retry(CancellationToken cancellationToken)
@@ -66,61 +120,12 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
-            Logger.LogDebug(
-                $"[EventBus] find need retry received {messages.Count()} message, will do retry.");
-
             // 并行重试
-            Parallel.ForEach(messages, new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
-                async (item) =>
-                {
-                    if (!EventHandlerDescriptors.TryGetValue(item.EventHandlerName, out var descriptor))
-                    {
-                        Logger.LogWarning(
-                            $"[EventBus] can not find event handler: {item.EventHandlerName}, event: {item.EventName}, msgId: {item.MsgId}.");
-                        return;
-                    }
-
-                    if (item.RetryCount >= Options.CurrentValue.RetryFailedMax)
-                        return;
-
-                    try
-                    {
-                        var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
-                        Logger.LogDebug(
-                            $"[EventBus] begin execute event handler, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
-                        await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
-                        await MessageStorage.UpdateReceived(
-                                item.Id,
-                                MessageStatus.Succeeded,
-                                item.RetryCount + 1,
-                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
-                                cancellationToken)
-                            .ConfigureAwait(false);
-
-                        Logger.LogDebug(
-                            $"[EventBus] execute event handler success, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex,
-                            $"[EventBus] received event retry fail, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
-                        try
-                        {
-                            // 失败的数据不过期
-                            await MessageStorage.UpdateReceived(
-                                    item.Id,
-                                    MessageStatus.Failed,
-                                    item.RetryCount + 1,
-                                    null,
-                                    cancellationToken)
-                                .ConfigureAwait(false);
-                        }
-                        catch (Exception exInner)
-                        {
-                            Logger.LogError(exInner, $"[EventBus] update received message error.");
-                        }
-                    }
-                });
+            Parallel.ForEach(
+                messages,
+                new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
+                async item => await Retry(item, cancellationToken, true).ConfigureAwait(false)
+            );
         }
     }
 }

@@ -41,10 +41,62 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public Task Retry(string msgId, CancellationToken cancellationToken)
+        public async Task Retry(long id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var item = await MessageStorage.FindReceivedById(id, cancellationToken).ConfigureAwait(false);
+            if (item is null)
+                throw new ArgumentException($"[EventBus]Not found received message of id: {id}", nameof(id));
+
+            await Retry(item, cancellationToken, false).ConfigureAwait(false);
         }
+
+        private async Task Retry(MessageStorageModel item, CancellationToken cancellationToken, bool checkRetryFailedMax)
+        {
+            if (checkRetryFailedMax && item.RetryCount >= Options.CurrentValue.RetryFailedMax)
+                return;
+
+            var messageTransferModel = new MessageTransferModel
+            {
+                EventName = item.EventName,
+                MsgId = item.MsgId,
+                MsgBody = MessageSerializer.Serialize(item),
+                SendAt = DateTimeOffset.Now,
+                DelayAt = item.DelayAt
+            };
+
+            try
+            {
+                await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
+                await MessageStorage.UpdatePublished(
+                        item.Id,
+                        MessageStatus.Succeeded,
+                        item.RetryCount + 1,
+                        DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex,
+                    $"[EventBus] published event retry fail, event: {item.EventName}, msgId: {item.MsgId}");
+                try
+                {
+                    // 失败的数据不过期
+                    await MessageStorage.UpdatePublished(
+                            item.Id,
+                            MessageStatus.Failed,
+                            item.RetryCount + 1,
+                            null,
+                            cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception exInner)
+                {
+                    Logger.LogError(exInner, $"[EventBus] update published message error.");
+                }
+            }
+        }
+
 
         private async Task Retry(CancellationToken cancellationToken)
         {
@@ -60,53 +112,11 @@ namespace Shashlik.EventBus.DefaultImpl
                 return;
 
             // 并行重试
-            Parallel.ForEach(messages, new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
-                async (item) =>
-                {
-                    if (item.RetryCount >= Options.CurrentValue.RetryFailedMax)
-                        return;
-
-                    var messageTransferModel = new MessageTransferModel
-                    {
-                        EventName = item.EventName,
-                        MsgId = item.MsgId,
-                        MsgBody = MessageSerializer.Serialize(item),
-                        SendAt = DateTimeOffset.Now,
-                        DelayAt = item.DelayAt
-                    };
-
-                    try
-                    {
-                        await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
-                        await MessageStorage.UpdatePublished(
-                                item.Id,
-                                MessageStatus.Succeeded,
-                                item.RetryCount + 1,
-                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
-                                cancellationToken)
-                            .ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex,
-                            $"[EventBus] published event retry fail, event: {item.EventName}, msgId: {item.MsgId}");
-                        try
-                        {
-                            // 失败的数据不过期
-                            await MessageStorage.UpdatePublished(
-                                    item.Id,
-                                    MessageStatus.Failed,
-                                    item.RetryCount + 1,
-                                    null,
-                                    cancellationToken)
-                                .ConfigureAwait(false);
-                        }
-                        catch (Exception exInner)
-                        {
-                            Logger.LogError(exInner, $"[EventBus] update published message error.");
-                        }
-                    }
-                });
+            Parallel.ForEach(
+                messages,
+                new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
+                async item => await Retry(item, cancellationToken, true).ConfigureAwait(false)
+            );
         }
     }
 }

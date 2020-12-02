@@ -18,9 +18,9 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 重试消息发送
         /// </summary>
-        /// <param name="msgId">消息id</param>
+        /// <param name="id">存储id</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task Retry(string msgId, CancellationToken cancellationToken);
+        Task Retry(long id, CancellationToken cancellationToken);
     }
 }
