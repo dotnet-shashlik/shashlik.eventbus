@@ -6,8 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MySql.Data.MySqlClient;
 using Shashlik.EventBus.Kafka.Tests.Efcore;
-using Shashlik.EventBus.MemoryQueue;
-using Shashlik.EventBus.MemoryStorage;
 using Shashlik.EventBus.MySql;
 using Shashlik.Kernel;
 
