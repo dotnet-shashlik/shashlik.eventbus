@@ -4,13 +4,14 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shashlik.Kernel.Dependency;
 
-namespace Shashlik.EventBus.Tests
+namespace Shashlik.EventBus.Kafka.Tests
 {
     /// <summary>
     /// 异常事件测试
     /// </summary>
     public class TestExceptionEvent : IEvent
     {
+        public string TestId { get; set; } = TestIdClass.TestIdNo;
         public string Name { get; set; }
     }
 
@@ -30,9 +31,10 @@ namespace Shashlik.EventBus.Tests
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
+            if (@event.TestId != TestIdClass.TestIdNo)
+                return Task.CompletedTask;
             Counter++;
-            Logger.LogInformation($"executed, counter: {Counter}");
-            throw new Exception("执行异常啦...");
+            throw new Exception("...111");
         }
     }
 
@@ -52,7 +54,8 @@ namespace Shashlik.EventBus.Tests
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
-            Logger.LogInformation($"executed, counter: {Counter}");
+            if (@event.TestId != TestIdClass.TestIdNo)
+                return Task.CompletedTask;
 
             // 模拟执行5次后，恢复正常
             if (Counter >= 5)
@@ -63,7 +66,7 @@ namespace Shashlik.EventBus.Tests
             else
             {
                 Counter++;
-                throw new Exception();
+                throw new Exception("...2222");
             }
 
             return Task.CompletedTask;

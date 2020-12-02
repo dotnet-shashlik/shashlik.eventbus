@@ -29,7 +29,7 @@ namespace Shashlik.EventBus.SqlServer
         private IOptionsMonitor<EventBusSqlServerOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
 
-        public async ValueTask<bool> PublishedMessageIsCommitted(string msgId, ITransactionContext? transactionContext,
+        public async ValueTask<bool> TransactionIsCommitted(string msgId, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             if (transactionContext != null)

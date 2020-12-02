@@ -44,7 +44,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         // 确保消息已提交才进行消息发送
                         if (!await MessageStorage
-                            .PublishedMessageIsCommitted(messageStorageModel.MsgId, transactionContext, cancellationToken)
+                            .TransactionIsCommitted(messageStorageModel.MsgId, transactionContext, cancellationToken)
                             .ConfigureAwait(false))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交

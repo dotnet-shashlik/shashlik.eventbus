@@ -1,2 +1,6 @@
-﻿EventBus:
-  a: 1
+﻿ConnectionStrings:
+  Default: server=192.168.50.178;database=eventbustest;user=testuser;password=123123;Pooling=True;Min Pool Size=5;Max Pool Size=10;
+EventBus:
+  Kafka:
+    Properties:
+      - ["bootstrap.servers", "192.168.50.178:9092"]

@@ -5,19 +5,20 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests
+namespace Shashlik.EventBus.Kafka.Tests
 {
     public class TestBase : IClassFixture<TestWebApplicationFactory<TestStartup>>, IDisposable
     {
         protected TestWebApplicationFactory<TestStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
-
         public static string Env { get; } = "UnitTest";
+        protected ITestOutputHelper TestOutputHelper { get; }
 
         public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)
         {
             Factory = factory;
+            TestOutputHelper = testOutputHelper;
             factory.Output = testOutputHelper;
             HttpClient = factory.CreateClient();
             ServiceScope = factory.Services.CreateScope();

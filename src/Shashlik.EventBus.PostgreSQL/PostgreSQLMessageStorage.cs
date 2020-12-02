@@ -29,7 +29,7 @@ namespace Shashlik.EventBus.PostgreSQL
         private IConnectionString ConnectionString { get; }
         private ILogger<PostgreSQLMessageStorage> Logger { get; }
 
-        public async ValueTask<bool> PublishedMessageIsCommitted(string msgId, ITransactionContext? transactionContext,
+        public async ValueTask<bool> TransactionIsCommitted(string msgId, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             if (transactionContext != null)

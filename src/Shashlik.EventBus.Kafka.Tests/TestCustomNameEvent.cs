@@ -2,11 +2,12 @@
 using System.Threading.Tasks;
 using Shashlik.Kernel.Dependency;
 
-namespace Shashlik.EventBus.Tests
+namespace Shashlik.EventBus.Kafka.Tests
 {
     [EventBusName(nameof(TestCustomNameEvent) + "_Test")]
     public class TestCustomNameEvent : IEvent
     {
+        public string TestId { get; set; } = TestIdClass.TestIdNo;
         public string Name { get; set; }
     }
 
@@ -20,6 +21,8 @@ namespace Shashlik.EventBus.Tests
 
         public Task Execute(TestCustomNameEvent @event, IDictionary<string, string> items)
         {
+            if (@event.TestId != TestIdClass.TestIdNo)
+                return Task.CompletedTask;
             Instance = @event;
             Items = items;
 
@@ -37,6 +40,8 @@ namespace Shashlik.EventBus.Tests
 
         public Task Execute(TestCustomNameEvent @event, IDictionary<string, string> items)
         {
+            if (@event.TestId != TestIdClass.TestIdNo)
+                return Task.CompletedTask;
             Instance = @event;
             Items = items;
 
