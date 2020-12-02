@@ -37,7 +37,7 @@ namespace Shashlik.Sms.EventBus
             }
             catch (SmsArgException e)
             {
-                Logger.LogError(e, $"Sms send failed, arguments error: {items.ToJson()}");
+                Logger.LogError(e, $"Sms send failed, arguments error: {@event.ToJson()}");
             }
 
             await Task.CompletedTask;
