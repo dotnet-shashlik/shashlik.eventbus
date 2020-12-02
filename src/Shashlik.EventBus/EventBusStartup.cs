@@ -51,9 +51,9 @@ namespace Shashlik.EventBus
             }
 
             // 启动重试器
-            await PublishedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token).ConfigureAwait(false);
+            await PublishedMessageRetryProvider.Startup(StopCancellationTokenSource.Token).ConfigureAwait(false);
             // 启动重试器
-            await ReceivedMessageRetryProvider.DoRetry(StopCancellationTokenSource.Token).ConfigureAwait(false);
+            await ReceivedMessageRetryProvider.Startup(StopCancellationTokenSource.Token).ConfigureAwait(false);
             // 启动过期消息删除
             ExpiredMessageProvider.DoDelete(StopCancellationTokenSource.Token);
         }

@@ -37,7 +37,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventHandlerInvoker EventHandlerInvoker { get; }
         private IDictionary<string, EventHandlerDescriptor> EventHandlerDescriptors { get; }
 
-        public async Task DoRetry(CancellationToken cancellationToken)
+        public async Task Startup(CancellationToken cancellationToken)
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
@@ -46,6 +46,11 @@ namespace Shashlik.EventBus.DefaultImpl
                 async () => await Retry(cancellationToken).ConfigureAwait(false),
                 TimeSpan.FromSeconds(Options.CurrentValue.RetryWorkingIntervalSeconds),
                 cancellationToken);
+        }
+
+        public Task Retry(string msgId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         private async Task Retry(CancellationToken cancellationToken)

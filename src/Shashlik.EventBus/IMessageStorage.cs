@@ -28,6 +28,14 @@ namespace Shashlik.EventBus
         Task<MessageStorageModel?> FindPublishedByMsgId(string msgId, CancellationToken cancellationToken);
 
         /// <summary>
+        /// 根据id查找发布的消息
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<MessageStorageModel?> FindPublishedById(long id, CancellationToken cancellationToken);
+
+        /// <summary>
         /// 根据msgId查找接收的消息
         /// </summary>
         /// <param name="msgId"></param>
@@ -38,7 +46,39 @@ namespace Shashlik.EventBus
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// 保存发布消息,需要写入存储id到message
+        /// 根据id查找已接收的消息
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<MessageStorageModel?> FindReceivedById(long id, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// 查询已发布的消息数据
+        /// </summary>
+        /// <param name="eventName">事件名称</param>
+        /// <param name="status">状态</param>
+        /// <param name="skip"></param>
+        /// <param name="take"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<List<MessageStorageModel>> SearchPublished(string eventName, string status, int skip, int take, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// 查询已接收的消息数据
+        /// </summary>
+        /// <param name="eventName">事件名称</param>
+        /// <param name="eventHandlerName">事件处理类名称</param>
+        /// <param name="status">状态</param>
+        /// <param name="skip"></param>
+        /// <param name="take"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<List<MessageStorageModel>> SearchReceived(string eventName, string eventHandlerName, string status, int skip, int take,
+            CancellationToken cancellationToken);
+
+        /// <summary>
+        /// 保存发布消息, 自动写入id到message
         /// </summary>
         /// <param name="message"></param>
         /// <param name="transactionContext"></param>
@@ -48,7 +88,7 @@ namespace Shashlik.EventBus
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// 保存发布消息,需要写入存储id到message
+        /// 保存发布消息, 自动写入id到message
         /// </summary>
         /// <param name="message"></param>
         /// <param name="cancellationToken"></param>

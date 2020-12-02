@@ -54,26 +54,21 @@ SELECT COUNT([msgId]) FROM {Options.CurrentValue.FullPublishedTableName} WHERE [
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]='{msgId}';";
 
-            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return null;
 
-            return new MessageStorageModel
-            {
-                Id = table.Rows[0].GetValue<long>("id"),
-                MsgId = table.Rows[0].GetValue<string>("msgId"),
-                Environment = table.Rows[0].GetValue<string>("environment"),
-                CreateTime = table.Rows[0].GetValue<long>("createTime").LongToDateTimeOffset(),
-                DelayAt = table.Rows[0].GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
-                ExpireTime = table.Rows[0].GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
-                EventName = table.Rows[0].GetValue<string>("eventName"),
-                EventBody = table.Rows[0].GetValue<string>("eventBody"),
-                EventItems = table.Rows[0].GetValue<string>("eventItems"),
-                RetryCount = table.Rows[0].GetValue<int>("retryCount"),
-                Status = table.Rows[0].GetValue<string>("status"),
-                IsLocking = table.Rows[0].GetValue<bool>("isLocking"),
-                LockEnd = table.Rows[0].GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
-            };
+            return RowToPublishedModel(table.Rows[0]);
+        }
+
+        public async Task<MessageStorageModel?> FindPublishedById(long id, CancellationToken cancellationToken)
+        {
+            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE [id]={id};";
+
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
+            if (table.Rows.Count == 0)
+                return null;
+            return RowToPublishedModel(table.Rows[0]);
         }
 
         public async Task<MessageStorageModel?> FindReceivedByMsgId(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
@@ -82,27 +77,93 @@ SELECT COUNT([msgId]) FROM {Options.CurrentValue.FullPublishedTableName} WHERE [
             var sql =
                 $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE [msgId]='{msgId}' AND [eventHandlerName]='{eventHandlerDescriptor.EventHandlerName}';";
 
-            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return null;
 
-            return new MessageStorageModel
+            return RowToReceivedModel(table.Rows[0]);
+        }
+
+        public async Task<MessageStorageModel?> FindReceivedById(long id, CancellationToken cancellationToken)
+        {
+            var sql =
+                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE [id]={id};";
+
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
+            if (table.Rows.Count == 0)
+                return null;
+
+            return RowToReceivedModel(table.Rows[0]);
+        }
+
+        public async Task<List<MessageStorageModel>> SearchPublished(string eventName, string status, int skip, int take,
+            CancellationToken cancellationToken)
+        {
+            var where = new StringBuilder();
+            if (!eventName.IsNullOrWhiteSpace())
+                where.Append(" AND [eventName]=@eventName");
+            if (!status.IsNullOrWhiteSpace())
+                where.Append(" AND [status]=@status");
+
+            var sql = $@"
+SELECT * FROM 
+(
+    SELECT *,ROW_NUMBER() OVER(ORDER BY [createTime] DESC) AS rowNumber FROM {Options.CurrentValue.FullPublishedTableName}
+    WHERE 
+        1=1{where}
+) AS A
+WHERE A.rowNumber BETWEEN {skip} and {skip + take}
+ORDER BY A.createTime DESC;
+";
+
+            var parameters = new[]
             {
-                Id = table.Rows[0].GetValue<long>("id"),
-                MsgId = table.Rows[0].GetValue<string>("msgId"),
-                Environment = table.Rows[0].GetValue<string>("environment"),
-                CreateTime = table.Rows[0].GetValue<long>("createTime").LongToDateTimeOffset(),
-                DelayAt = table.Rows[0].GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
-                ExpireTime = table.Rows[0].GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
-                EventName = table.Rows[0].GetValue<string>("eventName"),
-                EventHandlerName = table.Rows[0].GetValue<string>("eventHandlerName"),
-                EventBody = table.Rows[0].GetValue<string>("eventBody"),
-                EventItems = table.Rows[0].GetValue<string>("eventItems"),
-                RetryCount = table.Rows[0].GetValue<int>("retryCount"),
-                Status = table.Rows[0].GetValue<string>("status"),
-                IsLocking = table.Rows[0].GetValue<bool>("isLocking"),
-                LockEnd = table.Rows[0].GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
+                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = eventName},
+                new SqlParameter("@status", SqlDbType.VarChar) {Value = status},
             };
+
+            var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
+            if (table.Rows.Count == 0)
+                return new List<MessageStorageModel>();
+            return table.AsEnumerable()
+                .Select(RowToPublishedModel)
+                .ToList();
+        }
+
+        public async Task<List<MessageStorageModel>> SearchReceived(string eventName, string eventHandlerName, string status, int skip, int take,
+            CancellationToken cancellationToken)
+        {
+            var where = new StringBuilder();
+            if (!eventName.IsNullOrWhiteSpace())
+                where.Append(" AND [eventName]=@eventName");
+            if (!eventHandlerName.IsNullOrWhiteSpace())
+                where.Append(" AND [eventHandlerName]=@eventHandlerName");
+            if (!status.IsNullOrWhiteSpace())
+                where.Append(" AND [status]=@status");
+
+            var sql = $@"
+SELECT * FROM 
+(
+    SELECT *,ROW_NUMBER() OVER(ORDER BY [createTime] DESC) AS rowNumber FROM {Options.CurrentValue.FullReceivedTableName}
+    WHERE 
+        1=1{where}
+) AS A
+WHERE A.rowNumber BETWEEN {skip} and {skip + take}
+ORDER BY A.createTime DESC;
+";
+            var parameters = new[]
+            {
+                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = eventName},
+                new SqlParameter("@eventHandlerName", SqlDbType.VarChar) {Value = eventHandlerName},
+                new SqlParameter("@status", SqlDbType.VarChar) {Value = status},
+            };
+
+            var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
+            if (table.Rows.Count == 0)
+                return new List<MessageStorageModel>();
+            return table.AsEnumerable()
+                .Select(RowToPublishedModel)
+                .ToList();
         }
 
         public async Task<long> SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
@@ -245,7 +306,7 @@ WHERE
 ;
 ";
 
-            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0) return new List<MessageStorageModel>();
             var idsBuilder = new StringBuilder();
             var list = table.AsEnumerable()
@@ -255,22 +316,7 @@ WHERE
                     idsBuilder.Append(id.ToString());
                     idsBuilder.Append(",");
 
-                    return new MessageStorageModel
-                    {
-                        Id = id,
-                        MsgId = row.GetValue<string>("msgId"),
-                        Environment = row.GetValue<string>("environment"),
-                        CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
-                        DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
-                        ExpireTime = row.GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
-                        EventName = row.GetValue<string>("eventName"),
-                        EventBody = row.GetValue<string>("eventBody"),
-                        EventItems = row.GetValue<string>("eventItems"),
-                        RetryCount = row.GetValue<int>("retryCount"),
-                        Status = row.GetValue<string>("status"),
-                        IsLocking = row.GetValue<bool>("isLocking"),
-                        LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
-                    };
+                    return RowToPublishedModel(row);
                 }).ToList();
             var ids = idsBuilder.ToString();
             ids = ids.TrimEnd(',');
@@ -308,7 +354,7 @@ WHERE
 ;
 ";
 
-            var table = await SqlQuery(sql, cancellationToken).ConfigureAwait(false);
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0) return new List<MessageStorageModel>();
             var idsBuilder = new StringBuilder();
             var list = table.AsEnumerable()
@@ -318,23 +364,7 @@ WHERE
                     idsBuilder.Append(id.ToString());
                     idsBuilder.Append(",");
 
-                    return new MessageStorageModel
-                    {
-                        Id = id,
-                        MsgId = row.GetValue<string>("msgId"),
-                        Environment = row.GetValue<string>("environment"),
-                        CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
-                        DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
-                        ExpireTime = row.GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
-                        EventName = row.GetValue<string>("eventName"),
-                        EventHandlerName = row.GetValue<string>("eventHandlerName"),
-                        EventBody = row.GetValue<string>("eventBody"),
-                        EventItems = row.GetValue<string>("eventItems"),
-                        RetryCount = row.GetValue<int>("retryCount"),
-                        Status = row.GetValue<string>("status"),
-                        IsLocking = row.GetValue<bool>("isLocking"),
-                        LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
-                    };
+                    return RowToReceivedModel(row);
                 }).ToList();
             var ids = idsBuilder.ToString();
             ids = ids.TrimEnd(',');
@@ -349,13 +379,16 @@ WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
 
-        private async Task<DataTable> SqlQuery(string sql, CancellationToken cancellationToken = default)
+        private async Task<DataTable> SqlQuery(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default)
         {
             await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
+            if (!parameters.IsNullOrEmpty())
+                foreach (var mySqlParameter in parameters!)
+                    cmd.Parameters.Add(mySqlParameter);
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             var table = new DataTable();
             table.Load(reader);
@@ -425,6 +458,47 @@ WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
             }
             else
                 throw new InvalidCastException("[EventBus-SqlServer]Invalid mysql connection instance");
+        }
+
+        private MessageStorageModel RowToPublishedModel(DataRow row)
+        {
+            return new MessageStorageModel
+            {
+                Id = row.GetValue<long>("id"),
+                MsgId = row.GetValue<string>("msgId"),
+                Environment = row.GetValue<string>("environment"),
+                CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
+                DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
+                ExpireTime = row.GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
+                EventName = row.GetValue<string>("eventName"),
+                EventBody = row.GetValue<string>("eventBody"),
+                EventItems = row.GetValue<string>("eventItems"),
+                RetryCount = row.GetValue<int>("retryCount"),
+                Status = row.GetValue<string>("status"),
+                IsLocking = row.GetValue<bool>("isLocking"),
+                LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
+            };
+        }
+
+        private MessageStorageModel RowToReceivedModel(DataRow row)
+        {
+            return new MessageStorageModel
+            {
+                Id = row.GetValue<long>("id"),
+                MsgId = row.GetValue<string>("msgId"),
+                Environment = row.GetValue<string>("environment"),
+                CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
+                DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
+                ExpireTime = row.GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
+                EventName = row.GetValue<string>("eventName"),
+                EventHandlerName = row.GetValue<string>("eventHandlerName"),
+                EventBody = row.GetValue<string>("eventBody"),
+                EventItems = row.GetValue<string>("eventItems"),
+                RetryCount = row.GetValue<int>("retryCount"),
+                Status = row.GetValue<string>("status"),
+                IsLocking = row.GetValue<bool>("isLocking"),
+                LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
+            };
         }
     }
 }

@@ -8,6 +8,19 @@ namespace Shashlik.EventBus
     /// </summary>
     public interface IPublishedMessageRetryProvider
     {
-        Task DoRetry(CancellationToken cancellationToken);
+        /// <summary>
+        /// 启动重试器
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task Startup(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// 重试消息发送
+        /// </summary>
+        /// <param name="msgId">消息id</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task Retry(string msgId, CancellationToken cancellationToken);
     }
 }

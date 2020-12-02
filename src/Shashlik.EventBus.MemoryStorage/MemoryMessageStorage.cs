@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Shashlik.Utils.Extensions;
 
 // ReSharper disable ConvertIfStatementToSwitchExpression
 // ReSharper disable ConvertIfStatementToSwitchStatement
@@ -15,7 +16,7 @@ namespace Shashlik.EventBus.MemoryStorage
     {
         private readonly ConcurrentDictionary<long, MessageStorageModel> _published = new ConcurrentDictionary<long, MessageStorageModel>();
         private readonly ConcurrentDictionary<long, MessageStorageModel> _received = new ConcurrentDictionary<long, MessageStorageModel>();
-        private static long _lastId;
+        private static int _lastId;
         private static readonly object IdLck = new object();
         private static readonly object PublishedRetryLck = new object();
         private static readonly object ReceivedRetryLck = new object();
@@ -43,11 +44,43 @@ namespace Shashlik.EventBus.MemoryStorage
             return await Task.FromResult(res);
         }
 
+        public Task<MessageStorageModel?> FindPublishedById(long id, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<MessageStorageModel?>(_published.GetOrDefault(id));
+        }
+
         public async Task<MessageStorageModel?> FindReceivedByMsgId(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken)
         {
             return await Task.FromResult(_received.Values.FirstOrDefault(r =>
                 r.MsgId == msgId && r.EventHandlerName == eventHandlerDescriptor.EventHandlerName));
+        }
+
+        public Task<MessageStorageModel?> FindReceivedById(long id, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<MessageStorageModel?>(_received.GetOrDefault(id));
+        }
+
+        public Task<List<MessageStorageModel>> SearchPublished(string eventName, string status, int skip, int take,
+            CancellationToken cancellationToken)
+        {
+            var list = _published.Values
+                .Where(r => r.EventName == eventName && r.Status == status)
+                .Skip(skip)
+                .Take(take)
+                .ToList();
+            return Task.FromResult(list);
+        }
+
+        public Task<List<MessageStorageModel>> SearchReceived(string eventName, string eventHandlerName, string status, int skip, int take,
+            CancellationToken cancellationToken)
+        {
+            var list = _received.Values
+                .Where(r => r.EventName == eventName && r.Status == status)
+                .Skip(skip)
+                .Take(take)
+                .ToList();
+            return Task.FromResult(list);
         }
 
         public Task<long> SavePublished(MessageStorageModel message, ITransactionContext? transactionContext, CancellationToken cancellationToken)
@@ -182,7 +215,7 @@ namespace Shashlik.EventBus.MemoryStorage
         public List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
             string environment, int lockSecond)
         {
-            lock (PublishedRetryLck)
+            lock (ReceivedRetryLck)
             {
                 var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
                 var now = DateTime.Now;
