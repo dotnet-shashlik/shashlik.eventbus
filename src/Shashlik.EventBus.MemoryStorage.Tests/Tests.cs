@@ -312,5 +312,146 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
                 .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
             list3.Any(r => r.Id == id1).ShouldBeTrue();
         }
+
+        [Fact]
+        public async Task QueryPublishedTests()
+        {
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = DateTimeOffset.Now.AddHours(-1),
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Succeeded,
+                IsLocking = false,
+                LockEnd = null
+            };
+
+            var id = await MessageStorage.SavePublished(msg, null, default);
+            var dbMsg = await MessageStorage.FindPublishedById(id, default);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            var list = await MessageStorage.SearchPublished(msg.EventName, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchPublished(string.Empty, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchPublished(string.Empty, string.Empty, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchPublished(msg.EventName, string.Empty, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+        }
+
+        [Fact]
+        public async Task QueryReceivedTests()
+        {
+            var @event = new TestEvent {Name = "张三"};
+            var msg = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = Env,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = DateTimeOffset.Now.AddHours(-1),
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Succeeded,
+                IsLocking = false,
+                LockEnd = null
+            };
+
+            var id = await MessageStorage.SaveReceived(msg, default);
+            var dbMsg = await MessageStorage.FindReceivedById(id, default);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            var list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(msg.EventName, string.Empty, string.Empty, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(msg.EventName, string.Empty, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+
+            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, string.Empty, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(string.Empty, string.Empty, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+
+            list = await MessageStorage.SearchReceived(msg.EventName, string.Empty, msg.Status, 0, 100, default);
+            dbMsg = list.FirstOrDefault(r => r.Id == id);
+            dbMsg.ShouldNotBeNull();
+            dbMsg.Id.ShouldBe(id);
+            dbMsg.EventName.ShouldBe(msg.EventName);
+        }
     }
 }

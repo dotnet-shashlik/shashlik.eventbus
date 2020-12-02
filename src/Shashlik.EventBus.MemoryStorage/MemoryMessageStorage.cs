@@ -65,7 +65,8 @@ namespace Shashlik.EventBus.MemoryStorage
             CancellationToken cancellationToken)
         {
             var list = _published.Values
-                .Where(r => r.EventName == eventName && r.Status == status)
+                .WhereIf(!eventName.IsNullOrWhiteSpace(), r => r.EventName == eventName)
+                .WhereIf(!status.IsNullOrWhiteSpace(), r => r.Status == status)
                 .Skip(skip)
                 .Take(take)
                 .ToList();
@@ -76,7 +77,9 @@ namespace Shashlik.EventBus.MemoryStorage
             CancellationToken cancellationToken)
         {
             var list = _received.Values
-                .Where(r => r.EventName == eventName && r.Status == status)
+                .WhereIf(!eventName.IsNullOrWhiteSpace(), r => r.EventName == eventName)
+                .WhereIf(!eventHandlerName.IsNullOrWhiteSpace(), r => r.EventHandlerName == eventHandlerName)
+                .WhereIf(!status.IsNullOrWhiteSpace(), r => r.Status == status)
                 .Skip(skip)
                 .Take(take)
                 .ToList();
