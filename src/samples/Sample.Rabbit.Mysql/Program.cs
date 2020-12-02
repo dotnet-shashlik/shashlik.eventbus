@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -17,9 +18,6 @@ namespace Sample.Rabbit.Mysql
 {
     public class Program
     {
-        public const string ConnectionString =
-            "server=192.168.50.178;database=eventbustest;user=testuser;password=123123;Pooling=True;Min Pool Size=5;Max Pool Size=10;";
-
         public static string ClusterId { get; set; }
 
         private static async Task Main(string[] args)
@@ -29,9 +27,19 @@ namespace Sample.Rabbit.Mysql
             if (ClusterId.IsNullOrWhiteSpace())
                 return;
 
-            var host = new HostBuilder().ConfigureHostConfiguration(configHost => { configHost.AddCommandLine(args); })
+            var host = new HostBuilder()
+                .ConfigureHostConfiguration(config =>
+                {
+                    config.AddCommandLine(args);
+                    var file = new FileInfo("./config.yaml").FullName;
+                    config.AddYamlFile(file);
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    using var serviceProvider = services.BuildServiceProvider();
+                    var configuration = serviceProvider.GetService<IConfiguration>();
+                    var connectionString = configuration.GetConnectionString("Default");
+                    
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
@@ -39,7 +47,7 @@ namespace Sample.Rabbit.Mysql
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(ConnectionString,
+                        r.UseMySql(connectionString,
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     }, 5);
 
@@ -109,17 +117,6 @@ namespace Sample.Rabbit.Mysql
             {
                 return Task.CompletedTask;
             }
-        }
-    }
-
-    public class DbContextFactory : IDesignTimeDbContextFactory<DemoDbContext>
-    {
-        public DemoDbContext CreateDbContext(string[] args)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<DemoDbContext>();
-            optionsBuilder.UseMySql(Program.ConnectionString);
-
-            return new DemoDbContext(optionsBuilder.Options);
         }
     }
 }

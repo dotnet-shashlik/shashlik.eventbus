@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -18,9 +19,6 @@ namespace Sample.Rabbit.SqlServer
     // dotnet ef migrations add init -c DemoDbContext  -o SqlServerMigrations -p ./samples/SampleBase/SampleBase.csproj -s ./samples/Sample.Rabbit.SqlServer/Sample.Rabbit.SqlServer.csproj
     public class Program
     {
-        public const string ConnectionString =
-            "Server=192.168.50.178;Database =eventbustest;User ID=sa;Password=Shashlik123123;";
-
         public static string ClusterId { get; set; }
 
         private static async Task Main(string[] args)
@@ -30,9 +28,18 @@ namespace Sample.Rabbit.SqlServer
             if (ClusterId.IsNullOrWhiteSpace())
                 return;
 
-            var host = new HostBuilder().ConfigureHostConfiguration(configHost => { configHost.AddCommandLine(args); })
+            var host = new HostBuilder()
+                .ConfigureHostConfiguration(config =>
+                {
+                    config.AddCommandLine(args);
+                    var file = new FileInfo("./config.yaml").FullName;
+                    config.AddYamlFile(file);
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    using var serviceProvider = services.BuildServiceProvider();
+                    var configuration = serviceProvider.GetService<IConfiguration>();
+                    var connectionString = configuration.GetConnectionString("Default");
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
@@ -40,7 +47,7 @@ namespace Sample.Rabbit.SqlServer
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseSqlServer(ConnectionString,
+                        r.UseSqlServer(connectionString,
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     }, 5);
 
@@ -110,17 +117,6 @@ namespace Sample.Rabbit.SqlServer
             {
                 return Task.CompletedTask;
             }
-        }
-    }
-
-    public class DbContextFactory : IDesignTimeDbContextFactory<DemoDbContext>
-    {
-        public DemoDbContext CreateDbContext(string[] args)
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<DemoDbContext>();
-            optionsBuilder.UseSqlServer(Program.ConnectionString);
-
-            return new DemoDbContext(optionsBuilder.Options);
         }
     }
 }
