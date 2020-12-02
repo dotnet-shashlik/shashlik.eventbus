@@ -39,7 +39,7 @@ namespace Sample.Rabbit.Mysql
                     using var serviceProvider = services.BuildServiceProvider();
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
-                    
+
                     services.AddTransient<TestEventHandler1>();
                     services.AddTransient<TestEventHandler2>();
 
@@ -47,7 +47,7 @@ namespace Sample.Rabbit.Mysql
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(connectionString,
+                        r.UseMySql(connectionString, ServerVersion.FromString("5.7"),
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     }, 5);
 

@@ -46,7 +46,7 @@ namespace Sample.Kafka.Mysql
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(connectionString,
+                        r.UseMySql(connectionString, ServerVersion.FromString("5.7"),
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     }, 5);
 

@@ -38,8 +38,15 @@ namespace Shashlik.EventBus.PostgreSQL
                     throw new InvalidCastException(
                         $"[EventBus-PostgreSql]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
                 // 事务的连接的信息未null了表示事务已回滚回已提交
-                if (relationDbStorageTransactionContext.DbTransaction.Connection != null)
-                    return false;
+                try
+                {
+                    if (relationDbStorageTransactionContext.DbTransaction.Connection != null)
+                        return false;
+                }
+                catch (InvalidOperationException)
+                {
+                    // 5.0开始dispose后不能访问Connection属性了
+                }
             }
 
             var sql =

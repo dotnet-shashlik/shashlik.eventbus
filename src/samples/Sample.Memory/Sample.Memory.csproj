@@ -11,11 +11,8 @@
     <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
     <ProjectReference Include="..\..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
     <ProjectReference Include="..\..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.9" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
   </ItemGroup>
 </Project>
