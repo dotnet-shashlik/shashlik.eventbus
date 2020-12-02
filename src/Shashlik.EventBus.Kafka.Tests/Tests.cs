@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.DefaultImpl;
+using Shashlik.EventBus.Kafka.Tests.Efcore;
 using Shashlik.Utils.Extensions;
 using Shashlik.Utils.Helpers;
 using Shouldly;
@@ -24,6 +25,7 @@ namespace Shashlik.EventBus.Kafka.Tests
             var beginTime = DateTimeOffset.Now;
             var options = GetService<IOptions<EventBusOptions>>().Value;
             var eventPublisher = GetService<IEventPublisher>();
+            var dbContext = GetService<DemoDbContext>();
             eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
             var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
             var testDelayEvent = new TestDelayEvent {Name = Guid.NewGuid().ToString("n")};
@@ -37,7 +39,7 @@ namespace Shashlik.EventBus.Kafka.Tests
 
             var delayAt = DateTimeOffset.Now.AddSeconds(10);
 
-            await eventPublisher.PublishAsync(testEvent, null, new Dictionary<string, string>
+            await dbContext.PublishEventAsync(testEvent, new Dictionary<string, string>
             {
                 {"code", testEventRandomCode}
             });
