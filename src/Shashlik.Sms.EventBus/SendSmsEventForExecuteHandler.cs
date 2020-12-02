@@ -5,6 +5,7 @@ using Shashlik.EventBus;
 using Shashlik.Kernel.Attributes;
 using Shashlik.Kernel.Dependency;
 using Shashlik.Sms.Exceptions;
+using Shashlik.Utils.Extensions;
 
 namespace Shashlik.Sms.EventBus
 {
@@ -30,15 +31,13 @@ namespace Shashlik.Sms.EventBus
             {
                 Sms.Send(@event.Phones, @event.Subject, @event.Args.ToArray());
             }
-            catch (SmsDomainException e)
+            catch (SmsLimitException e)
             {
-                Logger.LogError(e, "Sms send failed, domain error");
-                throw;
+                Logger.LogError(e, "Sms send failed of limited.");
             }
-            catch (SmsOptionsException e)
+            catch (SmsArgException e)
             {
-                Logger.LogError(e, "Sms send failed, options error");
-                throw;
+                Logger.LogError(e, $"Sms send failed, arguments error: {items.ToJson()}");
             }
 
             await Task.CompletedTask;

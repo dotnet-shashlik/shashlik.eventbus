@@ -13,7 +13,7 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
 
-        public static string Env { get; } = "UnitTest";
+        public static string Env { get; } = "PostgreSqlTest";
 
         public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)
         {

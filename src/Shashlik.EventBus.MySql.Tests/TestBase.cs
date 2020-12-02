@@ -13,7 +13,7 @@ namespace Shashlik.EventBus.MySql.Tests
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
 
-        public static string Env { get; } = "UnitTest";
+        public static string Env { get; } = "MySqlTest";
 
         public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)
         {
