@@ -28,7 +28,7 @@ namespace Shashlik.EventBus.MySql.Tests
 
             services.AddDbContextPool<DemoDbContext>(r =>
             {
-                r.UseMySql(Configuration.GetConnectionString("Default"),
+                r.UseMySql(Configuration.GetConnectionString("Default"), ServerVersion.FromString("5.7"),
                     db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
             }, 5);
 

@@ -31,9 +31,7 @@ namespace Shashlik.EventBus.MemoryQueue
                             if (msg.EventName != listener.Descriptor.EventName)
                                 return;
 
-                            logger.LogDebug(
-                                $"[EventBus-Memory: {listener.Descriptor.EventHandlerName}] received msg: {msg.ToJson()}.");
-
+                            logger.LogDebug($"[EventBus-Memory: {listener.Descriptor.EventHandlerName}] received msg: {msg.ToJson()}.");
 
                             try
                             {
@@ -42,6 +40,8 @@ namespace Shashlik.EventBus.MemoryQueue
                             }
                             catch (Exception ex)
                             {
+                                logger.LogDebug(ex,
+                                    $"[EventBus-Memory: {listener.Descriptor.EventHandlerName}]OnReceive occur error: {msg.ToJson()}.");
                                 // 一般是存储异常了，再重新加入队列
                                 Send(msg);
                             }

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using Shashlik.EventBus.MySql;
 using Shashlik.EventBus.RabbitMQ.Tests.Efcore;
 using Shashlik.Kernel;
@@ -30,13 +30,13 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
             services.AddAuthorization();
             services.AddDbContextPool<DemoDbContext>(r =>
             {
-                r.UseMySql(Configuration.GetConnectionString("Default"),
+                r.UseMySql(Configuration.GetConnectionString("Default"), ServerVersion.FromString("5.7"),
                     db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
             }, 5);
 
             using var serviceProvider = services.BuildServiceProvider();
             using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetService<DemoDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DemoDbContext>();
             dbContext.Database.Migrate();
 
             services.AddEventBus(r =>
@@ -82,7 +82,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
         /// </summary>
         private void ClearTestData(IServiceProvider serviceProvider)
         {
-            var options = serviceProvider.GetService<IOptions<EventBusMySqlOptions>>().Value;
+            var options = serviceProvider.GetRequiredService<IOptions<EventBusMySqlOptions>>().Value;
             using var conn = new MySqlConnection(Configuration.GetConnectionString("Default"));
             conn.Open();
             using var cmd = conn.CreateCommand();
