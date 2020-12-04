@@ -16,7 +16,7 @@ namespace Shashlik.EventBus
         Task Startup(CancellationToken cancellationToken);
 
         /// <summary>
-        /// 重试已接收的消息, 一般用于手动执行某条消息的重试，忽略重试次数
+        /// 直接重试已接收的消息, 一般用于手动执行某条消息的重试，将忽略重试次数
         /// </summary>
         /// <param name="id">存储id</param>
         /// <param name="cancellationToken"></param>

@@ -9,7 +9,7 @@ namespace Shashlik.EventBus
     /// <summary>
     /// 事件/事件处理名称定义
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class)]
     public class EventBusNameAttribute : Attribute
     {
         public EventBusNameAttribute(string name)

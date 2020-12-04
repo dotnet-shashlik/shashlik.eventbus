@@ -312,7 +312,7 @@ WHERE
             var list = table.AsEnumerable()
                 .Select(row =>
                 {
-                    var id = row.GetValue<long>("id");
+                    var id = row.GetRowValue<long>("id");
                     idsBuilder.Append(id.ToString());
                     idsBuilder.Append(",");
 
@@ -360,7 +360,7 @@ WHERE
             var list = table.AsEnumerable()
                 .Select(row =>
                 {
-                    var id = row.GetValue<long>("id");
+                    var id = row.GetRowValue<long>("id");
                     idsBuilder.Append(id.ToString());
                     idsBuilder.Append(",");
 
@@ -464,19 +464,19 @@ WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
         {
             return new MessageStorageModel
             {
-                Id = row.GetValue<long>("id"),
-                MsgId = row.GetValue<string>("msgId"),
-                Environment = row.GetValue<string>("environment"),
-                CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
-                DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
-                ExpireTime = row.GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
-                EventName = row.GetValue<string>("eventName"),
-                EventBody = row.GetValue<string>("eventBody"),
-                EventItems = row.GetValue<string>("eventItems"),
-                RetryCount = row.GetValue<int>("retryCount"),
-                Status = row.GetValue<string>("status"),
-                IsLocking = row.GetValue<bool>("isLocking"),
-                LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
+                Id = row.GetRowValue<long>("id"),
+                MsgId = row.GetRowValue<string>("msgId"),
+                Environment = row.GetRowValue<string>("environment"),
+                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset(),
+                DelayAt = row.GetRowValue<long?>("delayAt")?.LongToDateTimeOffset(),
+                ExpireTime = row.GetRowValue<long?>("expireTime")?.LongToDateTimeOffset(),
+                EventName = row.GetRowValue<string>("eventName"),
+                EventBody = row.GetRowValue<string>("eventBody"),
+                EventItems = row.GetRowValue<string>("eventItems"),
+                RetryCount = row.GetRowValue<int>("retryCount"),
+                Status = row.GetRowValue<string>("status"),
+                IsLocking = row.GetRowValue<bool>("isLocking"),
+                LockEnd = row.GetRowValue<long?>("lockEnd")?.LongToDateTimeOffset()
             };
         }
 
@@ -484,20 +484,20 @@ WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
         {
             return new MessageStorageModel
             {
-                Id = row.GetValue<long>("id"),
-                MsgId = row.GetValue<string>("msgId"),
-                Environment = row.GetValue<string>("environment"),
-                CreateTime = row.GetValue<long>("createTime").LongToDateTimeOffset(),
-                DelayAt = row.GetValue<long?>("delayAt")?.LongToDateTimeOffset(),
-                ExpireTime = row.GetValue<long?>("expireTime")?.LongToDateTimeOffset(),
-                EventName = row.GetValue<string>("eventName"),
-                EventHandlerName = row.GetValue<string>("eventHandlerName"),
-                EventBody = row.GetValue<string>("eventBody"),
-                EventItems = row.GetValue<string>("eventItems"),
-                RetryCount = row.GetValue<int>("retryCount"),
-                Status = row.GetValue<string>("status"),
-                IsLocking = row.GetValue<bool>("isLocking"),
-                LockEnd = row.GetValue<long?>("lockEnd")?.LongToDateTimeOffset()
+                Id = row.GetRowValue<long>("id"),
+                MsgId = row.GetRowValue<string>("msgId"),
+                Environment = row.GetRowValue<string>("environment"),
+                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset(),
+                DelayAt = row.GetRowValue<long?>("delayAt")?.LongToDateTimeOffset(),
+                ExpireTime = row.GetRowValue<long?>("expireTime")?.LongToDateTimeOffset(),
+                EventName = row.GetRowValue<string>("eventName"),
+                EventHandlerName = row.GetRowValue<string>("eventHandlerName"),
+                EventBody = row.GetRowValue<string>("eventBody"),
+                EventItems = row.GetRowValue<string>("eventItems"),
+                RetryCount = row.GetRowValue<int>("retryCount"),
+                Status = row.GetRowValue<string>("status"),
+                IsLocking = row.GetRowValue<bool>("isLocking"),
+                LockEnd = row.GetRowValue<long?>("lockEnd")?.LongToDateTimeOffset()
             };
         }
     }

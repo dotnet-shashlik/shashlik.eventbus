@@ -22,10 +22,11 @@ namespace Shashlik.EventBus
 
         public static DateTimeOffset LongToDateTimeOffset(this long time)
         {
-            return new DateTimeOffset(time.LongToDateTime());
+            return new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)
+                .AddSeconds(time);
         }
 
-        public static T GetValue<T>(this DataRow row, string col)
+        public static T GetRowValue<T>(this DataRow row, string col)
         {
             var v = row[col];
             if (v == null || v == DBNull.Value)

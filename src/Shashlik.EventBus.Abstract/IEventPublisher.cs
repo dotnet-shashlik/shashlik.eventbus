@@ -18,7 +18,7 @@ namespace Shashlik.EventBus
         /// <param name="event">事件实例</param>
         /// <param name="transactionContext">事务和连接信息</param>
         /// <param name="items">附加事件数据</param>
-        /// <param name="cancellationToken"></param>
+        /// <param name="cancellationToken">cancellationToken</param>
         /// <typeparam name="TEvent">事件类型</typeparam>
         /// <returns></returns>
         Task PublishAsync<TEvent>(
@@ -35,7 +35,7 @@ namespace Shashlik.EventBus
         /// <param name="transactionContext">事务和连接信息</param>
         /// <param name="delayAt">延迟执行时间</param>
         /// <param name="items">附加事件数据</param>
-        /// <param name="cancellationToken"></param>
+        /// <param name="cancellationToken">cancellationToken</param>
         /// <typeparam name="TEvent">事件类型</typeparam>
         /// <returns></returns>
         Task PublishAsync<TEvent>(

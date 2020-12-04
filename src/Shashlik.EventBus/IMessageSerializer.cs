@@ -3,7 +3,7 @@
 namespace Shashlik.EventBus
 {
     /// <summary>
-    /// 对象实例化器
+    /// 对象序列化化器
     /// </summary>
     public interface IMessageSerializer
     {

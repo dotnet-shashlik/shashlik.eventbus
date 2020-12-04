@@ -16,7 +16,7 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 消息接收处理
         /// </summary>
-        /// <param name="messageTransferModel"></param>
+        /// <param name="messageTransferModel">消息传输模型</param>
         /// <param name="cancellationToken"></param>
         Task OnReceive(MessageTransferModel messageTransferModel, CancellationToken cancellationToken);
     }

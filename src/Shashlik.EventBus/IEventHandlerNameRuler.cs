@@ -7,6 +7,11 @@ namespace Shashlik.EventBus
     /// </summary>
     public interface IEventHandlerNameRuler
     {
+        /// <summary>
+        /// 获取事件处理类名称
+        /// </summary>
+        /// <param name="eventHandlerType">事件处理类类型</param>
+        /// <returns></returns>
         string GetName(Type eventHandlerType);
     }
 }
