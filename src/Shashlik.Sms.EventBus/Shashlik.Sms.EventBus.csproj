@@ -8,7 +8,7 @@
     <ItemGroup>
         <PackageReference Include="Shashlik.Kernel" Version="1.0.0-rc2" />
         <PackageReference Include="Shashlik.Sms" Version="1.0.0-rc2" />
-        <PackageReference Include="Shashlik.Utils" Version="1.0.0-rc2" />
+        <PackageReference Include="Shashlik.Utils" Version="1.0.0-rc3" />
     </ItemGroup>
 
     <ItemGroup>
