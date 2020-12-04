@@ -21,7 +21,7 @@ namespace Shashlik.EventBus.PostgreSQL
         {
             // 9.2及以下不支持CREATE SCHEMA IF NOT EXISTS，只能使用public
             var sql = $@"
-{(Options.CurrentValue.Schema == "public" ? "CREATE SCHEMA IF NOT EXISTS " + Options.CurrentValue.Schema + ";" : "")}
+{(Options.CurrentValue.Schema != "public" ? "CREATE SCHEMA IF NOT EXISTS " + Options.CurrentValue.Schema + ";" : "")}
 
 CREATE TABLE IF NOT EXISTS {Options.CurrentValue.FullPublishedTableName}(
     ""id"" SERIAL PRIMARY KEY,    
