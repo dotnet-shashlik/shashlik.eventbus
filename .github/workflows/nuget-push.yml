@@ -29,7 +29,7 @@ jobs:
         with:
           postgresql version: '11'
           postgresql user: 'testuser'
-          postgresql  password: '123123'
+          postgresql password: '123123'
 
       - name: Setup SqlServer
         uses: 280780363/sqlserver-action@v1.0
