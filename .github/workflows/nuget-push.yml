@@ -2,7 +2,7 @@ name: shashlik-nuget
 
 on:
   push:
-    branches: [ release ]
+    branches: [ test ]
 
 jobs:
   build:
@@ -15,11 +15,38 @@ jobs:
         uses: actions/setup-dotnet@v1.7.2
         with:
           dotnet-version: 5.0.100
+
+      - name: Setup MySql  
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql version: '5.7'
+          mysql root password: '123123'
+          mysql user: 'testuser'
+          mysql password: '123123'
+
+      - name: Setup PostgreSql
+        uses: harmon758/postgresql-action@v1
+        with:
+          postgresql version: '11'
+          postgresql user: 'testuser'
+          postgresql  password: '123123'
+
+      - name: Setup SqlServer
+        uses: 280780363@sqlserver-action@v1.0
+        with:
+          accept eula: Y
+          sa password: 'Shashlik123123'
+          
+#      - name: Setup RabbitMQ
+#        uses: nijel/rabbitmq-action@v1.0.0
+
       - name: Install dependencies
         run: dotnet restore ./src/Shashlik.EventBus.Packages.sln
       - name: Build
         run: dotnet build ./src/Shashlik.EventBus.Packages.sln --configuration Release --no-restore
-      - name: Pack      
-        run: dotnet pack ./src/Shashlik.EventBus.Packages.sln  -p:SymbolPackageFormat=snupkg --include-symbols  --include-source --configuration Release --no-restore --output ./nugetPackages
-      - name: Publish
-        run: dotnet nuget push "./nugetPackages/*.nupkg" -k ${{ secrets.NUGET }} -s https://api.nuget.org/v3/index.json
+      - name: Test
+        run: dotnet test ./src/Shashlik.EventBus.sln --configuration Release --no-restore
+#      - name: Pack      
+#        run: dotnet pack ./src/Shashlik.EventBus.Packages.sln  -p:SymbolPackageFormat=snupkg --include-symbols  --include-source --configuration Release --no-restore --output ./nugetPackages
+#      - name: Publish
+#        run: dotnet nuget push "./nugetPackages/*.nupkg" -k ${{ secrets.NUGET }} -s https://api.nuget.org/v3/index.json
