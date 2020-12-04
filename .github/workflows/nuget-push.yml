@@ -16,7 +16,7 @@ jobs:
         with:
           dotnet-version: 5.0.100
 
-      - name: Setup MySql  
+      - name: Setup MySql
         uses: mirromutth/mysql-action@v1.1
         with:
           mysql version: '5.7'
@@ -32,13 +32,13 @@ jobs:
           postgresql  password: '123123'
 
       - name: Setup SqlServer
-        uses: 280780363@sqlserver-action@v1.0
+        uses: 280780363/sqlserver-action@v1.0
         with:
           accept eula: Y
           sa password: 'Shashlik123123'
-          
-#      - name: Setup RabbitMQ
-#        uses: nijel/rabbitmq-action@v1.0.0
+
+      #      - name: Setup RabbitMQ
+      #        uses: nijel/rabbitmq-action@v1.0.0
 
       - name: Install dependencies
         run: dotnet restore ./src/Shashlik.EventBus.Packages.sln
