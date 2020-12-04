@@ -15,25 +15,6 @@ namespace Shashlik.EventBus
 {
     public static class EventBusExtensions
     {
-        public static long GetLongDate(this DateTimeOffset dateTimeOffset)
-        {
-            return dateTimeOffset.ToUnixTimeSeconds();
-        }
-
-        public static DateTimeOffset LongToDateTimeOffset(this long time)
-        {
-            return new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)
-                .AddSeconds(time);
-        }
-
-        public static T GetRowValue<T>(this DataRow row, string col)
-        {
-            var v = row[col];
-            if (v == null || v == DBNull.Value)
-                return default;
-            return v.ParseTo<T>();
-        }
-
         public static IEventBusBuilder AddEventBus(this IServiceCollection serviceCollection,
             Action<EventBusOptions> configure)
         {
@@ -105,6 +86,23 @@ namespace Shashlik.EventBus
         public static byte[] SerializeToBytes<T>(this IMessageSerializer messageSerializer, T obj)
         {
             return Encoding.UTF8.GetBytes(messageSerializer.Serialize(obj));
+        }
+
+        /// <summary>
+        /// 获取column的值
+        /// </summary>
+        /// <param name="row">row</param>
+        /// <param name="col">column name</param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T GetRowValue<T>(this DataRow row, string col)
+        {
+            if (row == null) throw new ArgumentNullException(nameof(row));
+            if (string.IsNullOrWhiteSpace(col)) throw new ArgumentException("Value cannot be null or whitespace.", nameof(col));
+            var v = row[col];
+            if (v == null || v == DBNull.Value)
+                return default;
+            return v.ParseTo<T>();
         }
     }
 }
