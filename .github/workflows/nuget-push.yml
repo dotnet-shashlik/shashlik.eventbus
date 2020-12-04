@@ -1,4 +1,4 @@
-name: shashlik-nuget
+name: build and test
 
 on:
   push:
