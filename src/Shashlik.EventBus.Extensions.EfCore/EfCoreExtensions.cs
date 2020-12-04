@@ -17,13 +17,14 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 通过DbContext发布事件，自动使用DbContext事务上下文和连接信息
         /// </summary>
-        /// <param name="dbContext"></param>
-        /// <param name="event"></param>
-        /// <param name="items"></param>
-        /// <param name="cancellationToken"></param>
-        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="dbContext">DbContext上下文</param>
+        /// <param name="event">事件实例</param>
+        /// <param name="items">附加数据</param>
+        /// <param name="cancellationToken">cancellationToken</param>
+        /// <typeparam name="TEvent">事件类型</typeparam>
         /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="InvalidOperationException">Can't resolve service of <see cref="IEventPublisher"/></exception>
+        /// <exception cref="ArgumentNullException">DbContext/@event can't be null</exception>
         public static async Task PublishEventAsync<TEvent>(
             this DbContext dbContext,
             TEvent @event,
@@ -31,6 +32,8 @@ namespace Shashlik.EventBus
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
+            if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+            if (@event == null) throw new ArgumentNullException(nameof(@event));
             var eventPublisher = dbContext.GetService<IEventPublisher>();
             if (eventPublisher is null)
                 throw new InvalidOperationException($"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
@@ -49,14 +52,15 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 通过DbContext发布延迟事件，自动使用DbContext事务上下文和连接信息
         /// </summary>
-        /// <param name="dbContext"></param>
-        /// <param name="event"></param>
-        /// <param name="delayAt"></param>
-        /// <param name="items"></param>
-        /// <param name="cancellationToken"></param>
-        /// <typeparam name="TEvent"></typeparam>
+        /// <param name="dbContext">DbContext上下文</param>
+        /// <param name="event">事件实例</param>
+        /// <param name="delayAt">延迟执行时间</param>
+        /// <param name="items">附加数据</param>
+        /// <param name="cancellationToken">cancellationToken</param>
+        /// <typeparam name="TEvent">事件类型</typeparam>
         /// <returns></returns>
-        /// <exception cref="InvalidCastException"></exception>
+        /// <exception cref="InvalidOperationException">Can't resolve service of <see cref="IEventPublisher"/></exception>
+        /// <exception cref="ArgumentNullException">DbContext/@event can't be null</exception>
         public static async Task PublishEventAsync<TEvent>(
             this DbContext dbContext,
             TEvent @event,
@@ -64,6 +68,8 @@ namespace Shashlik.EventBus
             IDictionary<string, string>? items = null,
             CancellationToken cancellationToken = default) where TEvent : IDelayEvent
         {
+            if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+            if (@event == null) throw new ArgumentNullException(nameof(@event));
             var eventPublisher = dbContext.GetService<IEventPublisher>();
             if (eventPublisher is null)
                 throw new InvalidOperationException($"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
@@ -90,7 +96,6 @@ namespace Shashlik.EventBus
         {
             if (dbContext == null)
                 throw new ArgumentNullException(nameof(dbContext));
-
             if (dbContext.Database.CurrentTransaction is null)
                 return null;
 
