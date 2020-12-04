@@ -1,2 +1,2 @@
 ﻿ConnectionStrings:
-  Default: server=192.168.50.178;database=eventbustest;user=testuser;password=123123;Pooling=True;Min Pool Size=5;Max Pool Size=10;
+  Default: server=localhost;database=eventbustest;user=testuser;password=123123;
