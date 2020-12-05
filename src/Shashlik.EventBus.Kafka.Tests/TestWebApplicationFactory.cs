@@ -21,7 +21,7 @@ namespace Shashlik.EventBus.Kafka.Tests
                 .ConfigureLogging(r =>
                 {
                     r.ClearProviders();
-                    r.AddXUnit(Output).SetMinimumLevel(LogLevel.Warning);
+                    r.AddXUnit(Output).SetMinimumLevel(LogLevel.Debug);
                 })
                 .ConfigureAppConfiguration((host, config) =>
                 {
