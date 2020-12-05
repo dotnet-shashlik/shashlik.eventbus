@@ -1,5 +1,5 @@
 ﻿ConnectionStrings:
-  Default: server=localhost;database=eventbustest;user id=root;password=123123;
+  Default: server=localhost;database=rabbittest;user id=root;password=123123;
 EventBus:
   RabbitMQ:
     Host: "localhost"

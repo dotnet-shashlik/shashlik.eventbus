@@ -1,5 +1,5 @@
 ﻿ConnectionStrings:
-  Default: server=localhost;database=eventbustest;user id=root;password=123123;
+  Default: server=localhost;database=kafktest;user id=root;password=123123;
 EventBus:
   Kafka:
     Properties:
