@@ -43,4 +43,4 @@ jobs:
         uses: 280780363/kafka-action@v1.0
 
       - name: Test
-        run: dotnet test ./src/Shashlik.EventBus.Kafka.Tests/Shashlik.EventBus.Kafka.Tests.csproj
+        run: dotnet test ./src/Shashlik.EventBus.sln
