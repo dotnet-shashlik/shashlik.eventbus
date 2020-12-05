@@ -44,12 +44,17 @@ namespace Shashlik.EventBus.Kafka
                     try
                     {
                         consumerResult = cunsumer.Consume(cancellationToken);
-                        if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty()) continue;
+                        if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
+                        {
+                            await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                            continue;
+                        }
                     }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex,
                             $"[EventBus-Kafka]Consume message occur error, event: {listener.Descriptor.EventName}, handler: {listener.Descriptor.EventHandlerName}.");
+                        await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 
