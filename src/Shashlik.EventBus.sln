@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{D22B
 ProjectSection(SolutionItems) = preProject
 	..\.github\workflows\nuget-push.yml = ..\.github\workflows\nuget-push.yml
 	..\common.xml = ..\common.xml
+	..\.github\workflows\test.yml = ..\.github\workflows\test.yml
 EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Kafka", "Shashlik.EventBus.Kafka\Shashlik.EventBus.Kafka.csproj", "{03A6AB99-AC29-409D-80DA-44BA94D6ED76}"
@@ -49,6 +50,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".doc", ".doc", "{B0E67A7A-E
 ProjectSection(SolutionItems) = preProject
 	..\README.md = ..\README.md
 EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Kafka.Tests", "Shashlik.EventBus.Kafka.Tests\Shashlik.EventBus.Kafka.Tests.csproj", "{74246444-F0BF-41E0-95E0-F24EB5862463}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.RabbitMQ.Tests", "Shashlik.EventBus.RabbitMQ.Tests\Shashlik.EventBus.RabbitMQ.Tests.csproj", "{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -124,6 +129,14 @@ Global
 		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74246444-F0BF-41E0-95E0-F24EB5862463}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74246444-F0BF-41E0-95E0-F24EB5862463}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74246444-F0BF-41E0-95E0-F24EB5862463}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74246444-F0BF-41E0-95E0-F24EB5862463}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -134,6 +147,8 @@ Global
 		{DDD1889A-5984-45EC-8928-9096E0C01EFC} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{7F528759-7244-4305-AD4E-2186DADE56E0} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{74246444-F0BF-41E0-95E0-F24EB5862463} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}
