@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Shashlik.Utils.Extensions;
 
@@ -22,16 +23,37 @@ namespace Shashlik.EventBus.Kafka
 
         public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
-            var _ = Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
-                var cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
-                cunsumer.Subscribe(listener.Descriptor.EventName);
+                IConsumer<string, byte[]> cunsumer;
+                try
+                {
+                    cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
+                    cunsumer.Subscribe(listener.Descriptor.EventName);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex,
+                        $"[EventBus-Kafka]Subscribe occur error, event: {listener.Descriptor.EventName}, handler: {listener.Descriptor.EventHandlerName}");
+                    return;
+                }
+
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var consumerResult = cunsumer.Consume(cancellationToken);
-                    if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty()) continue;
+                    ConsumeResult<string, byte[]> consumerResult;
+                    try
+                    {
+                        consumerResult = cunsumer.Consume(cancellationToken);
+                        if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty()) continue;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex,
+                            $"[EventBus-Kafka]Consume message occur error, event: {listener.Descriptor.EventName}, handler: {listener.Descriptor.EventHandlerName}.");
+                        continue;
+                    }
 
-                    var __ = Task.Run(async () =>
+                    _ = Task.Run(async () =>
                     {
                         MessageTransferModel message;
                         try
