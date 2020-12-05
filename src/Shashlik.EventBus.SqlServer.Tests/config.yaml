@@ -1,2 +1,2 @@
 ﻿ConnectionStrings:
-  Default: server=localhost;database=eventbustest;user id=sa;password=Shashlik123123;
+  Default: server=localhost;database=sqlservertest;user id=sa;password=Shashlik123123;
