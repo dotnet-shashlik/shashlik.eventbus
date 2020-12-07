@@ -35,6 +35,8 @@ namespace Shashlik.EventBus.RabbitMQ
 
             var basicProperties = Channel.CreateBasicProperties();
             basicProperties.MessageId = message.MsgId;
+            // 启用消息持久化
+            basicProperties.Persistent = true;
 
             Channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
                 MessageSerializer.SerializeToBytes(message));
