@@ -224,3 +224,7 @@ public class UserManager
         .AddMemoryStorage();
 
 ```
+
+## Wiki
+
+[Wiki](https://github.com/dotnet-shashlik/shashlik.eventbus/wiki)
