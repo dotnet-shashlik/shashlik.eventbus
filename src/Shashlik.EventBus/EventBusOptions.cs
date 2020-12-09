@@ -47,7 +47,7 @@ namespace Shashlik.EventBus
         public int RetryWorkingIntervalSeconds { get; set; } = 5;
 
         /// <summary>
-        /// 成功的消息多久后删除,单位小时,默认7小时
+        /// 成功的消息多久后删除,单位小时,默认3天
         /// </summary>
         public int SucceedExpireHour { get; set; } = 3 * 24;
 
