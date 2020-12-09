@@ -190,3 +190,24 @@ public class UserManager
         }
     }    
 ```
+
+## 扩展
+
+如果默认实现不能满足你的需求，可以自行实现可扩展接口，并注册即可。
+
+- `IMsgIdGenerator`：消息Id生成器，是指传输的全局唯一id，不是指存储的id。
+- `IEventPublisher`：事件发布处理类。
+- `IMessageSerializer`：消息序列化、反序列化处理类。
+- `IReceivedMessageRetryProvider`：已接收消息重试器。
+- `IPublishedMessageRetryProvider`：已发布消息重试器。
+- `IMessageSendQueueProvider`：消息发送处理队列。
+- `IMessageReceiveQueueProvider`：消息接收处理队列。
+- `IEventHandlerInvoker`：事件处理执行器。
+- `IEventNameRuler`：事件名称规则生成。
+- `IEventHandlerNameRuler`：事件处理类名称规则生成。。
+- `IEventHandlerFindProvider`：事件处理类查找器
+- `IMessageListenerFactory`：消息监听器工厂方法。
+- `IReceivedDelayEventProvider`：已接收的延迟事件处理。
+- `IExpiredMessageProvider`：已过期删除处理。
+- `IMessageStorageInitializer`：存储介质初始化。
+- `IMessageStorage`：消息存储、读取等操作。

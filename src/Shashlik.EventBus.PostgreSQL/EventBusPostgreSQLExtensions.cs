@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.Utils.Extensions;
@@ -10,16 +8,18 @@ namespace Shashlik.EventBus.PostgreSQL
     public static class EventBusPostgreSQLExtensions
     {
         /// <summary>
-        /// add npgsql services
+        /// 使用连接字符串初始化注册PostgreSql存储
         /// </summary>
         /// <param name="eventBusBuilder"></param>
-        /// <param name="connectionString"></param>
-        /// <param name="publishTableName"></param>
-        /// <param name="receiveTableName"></param>
+        /// <param name="connectionString">连接字符串</param>
+        /// <param name="schema">模式，默认值eventbus</param>
+        /// <param name="publishTableName">已发布数据表名，默认值published</param>
+        /// <param name="receiveTableName">已接收数据表名，默认值received</param>
         /// <returns></returns>
         public static IEventBusBuilder AddNpgsql(
             this IEventBusBuilder eventBusBuilder,
             string connectionString,
+            string? schema = null,
             string? publishTableName = null,
             string? receiveTableName = null)
         {
@@ -28,6 +28,8 @@ namespace Shashlik.EventBus.PostgreSQL
             eventBusBuilder.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.ConnectionString = connectionString;
+                if (!schema.IsNullOrWhiteSpace())
+                    options.Schema = schema!;
                 if (!publishTableName.IsNullOrWhiteSpace())
                     options.PublishedTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
@@ -38,15 +40,17 @@ namespace Shashlik.EventBus.PostgreSQL
         }
 
         /// <summary>
-        /// add npgsql services
+        /// 使用DbContext初始化注册PostgreSql存储
         /// </summary>
         /// <param name="eventBusBuilder"></param>
-        /// <param name="publishTableName"></param>
-        /// <param name="receiveTableName"></param>
+        /// <param name="schema">模式，默认值eventbus</param>
+        /// <param name="publishTableName">已发布数据表名，默认值published</param>
+        /// <param name="receiveTableName">已接收数据表名，默认值received</param>
         /// <typeparam name="TDbContext"></typeparam>
         /// <returns></returns>
         public static IEventBusBuilder AddNpgsql<TDbContext>(
             this IEventBusBuilder eventBusBuilder,
+            string? schema = null,
             string? publishTableName = null,
             string? receiveTableName = null)
             where TDbContext : DbContext
@@ -54,6 +58,8 @@ namespace Shashlik.EventBus.PostgreSQL
             eventBusBuilder.Services.Configure<EventBusPostgreSQLOptions>(options =>
             {
                 options.DbContextType = typeof(TDbContext);
+                if (!schema.IsNullOrWhiteSpace())
+                    options.Schema = schema!;
                 if (!publishTableName.IsNullOrWhiteSpace())
                     options.PublishedTableName = publishTableName!;
                 if (!receiveTableName.IsNullOrWhiteSpace())
@@ -64,7 +70,7 @@ namespace Shashlik.EventBus.PostgreSQL
         }
 
         /// <summary>
-        /// add npgsql core services
+        /// 使用PostgreSql存储
         /// </summary>
         /// <param name="eventBusBuilder"></param>
         /// <returns></returns>

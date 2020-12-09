@@ -13,7 +13,7 @@ namespace Shashlik.EventBus
     public interface IEventPublisher
     {
         /// <summary>
-        /// 事件发布
+        /// 普通事件发布
         /// </summary>
         /// <param name="event">事件实例</param>
         /// <param name="transactionContext">事务和连接信息</param>
@@ -29,7 +29,7 @@ namespace Shashlik.EventBus
         ) where TEvent : IEvent;
 
         /// <summary>
-        /// 事件发布
+        /// 延迟事件发布
         /// </summary>
         /// <param name="event">事件实例</param>
         /// <param name="transactionContext">事务和连接信息</param>

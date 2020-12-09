@@ -6,6 +6,14 @@ namespace Shashlik.EventBus.MySql
 {
     public static class EventBusMySqlExtensions
     {
+        /// <summary>
+        /// 使用连接字符串初始化注册mysql存储
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="connectionString">连接字符串</param>
+        /// <param name="publishTableName">已发布消息表名，默认eventbus_published</param>
+        /// <param name="receiveTableName">已接收消息表名，默认eventbus_received</param>
+        /// <returns></returns>
         public static IEventBusBuilder AddMySql(
             this IEventBusBuilder service,
             string connectionString,
@@ -24,6 +32,14 @@ namespace Shashlik.EventBus.MySql
             return service.AddMySql();
         }
 
+        /// <summary>
+        /// 使用DbContext注册mysql存储
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="publishTableName">已发布消息表名，默认eventbus_published</param>
+        /// <param name="receiveTableName">已接收消息表名，默认eventbus_received</param>
+        /// <typeparam name="TDbContext">数据库上下文类型</typeparam>
+        /// <returns></returns>
         public static IEventBusBuilder AddMySql<TDbContext>(
             this IEventBusBuilder service,
             string? publishTableName = null,
@@ -42,6 +58,11 @@ namespace Shashlik.EventBus.MySql
             return service.AddMySql();
         }
 
+        /// <summary>
+        /// 使用MySql存储
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
         public static IEventBusBuilder AddMySql(this IEventBusBuilder service)
         {
             service.Services.AddOptions<EventBusMySqlOptions>();
