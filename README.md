@@ -211,3 +211,14 @@ public class UserManager
 - `IExpiredMessageProvider`：已过期删除处理。
 - `IMessageStorageInitializer`：存储介质初始化。
 - `IMessageStorage`：消息存储、读取等操作。
+
+例：
+```c#
+
+    // 替换默认的IMsgIdGenerator
+    service.AddSingleton<IMsgIdGenerator,CustomMsgIdGenerator>();
+    service.AddEventBus()
+        .AddMemoryQueue()
+        .AddMemoryStorage();
+
+```
