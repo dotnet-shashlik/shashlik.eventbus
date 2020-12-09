@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.Utils.Extensions;
 
@@ -71,16 +72,19 @@ namespace Shashlik.EventBus.SqlServer
         /// <summary>
         /// 使用sqlserver存储
         /// </summary>
-        /// <param name="service"></param>
+        /// <param name="eventBusBuilder"></param>
+        /// <param name="optionsAction"></param>
         /// <returns></returns>
-        public static IEventBusBuilder AddSqlServer(this IEventBusBuilder service)
+        public static IEventBusBuilder AddSqlServer(this IEventBusBuilder eventBusBuilder, Action<EventBusSqlServerOptions>? optionsAction = null)
         {
-            service.Services.AddOptions<EventBusSqlServerOptions>();
-            service.Services.AddSingleton<IMessageStorage, SqlServerMessageStorage>();
-            service.Services.AddTransient<IMessageStorageInitializer, SqlServerMessageStorageInitializer>();
-            service.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
+            eventBusBuilder.Services.AddOptions<EventBusSqlServerOptions>();
+            if (optionsAction != null)
+                eventBusBuilder.Services.Configure(optionsAction);
+            eventBusBuilder.Services.AddSingleton<IMessageStorage, SqlServerMessageStorage>();
+            eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, SqlServerMessageStorageInitializer>();
+            eventBusBuilder.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
 
-            return service;
+            return eventBusBuilder;
         }
     }
 }

@@ -73,10 +73,13 @@ namespace Shashlik.EventBus.PostgreSQL
         /// 使用PostgreSql存储
         /// </summary>
         /// <param name="eventBusBuilder"></param>
+        /// <param name="optionsAction"></param>
         /// <returns></returns>
-        public static IEventBusBuilder AddNpgsqlCore(this IEventBusBuilder eventBusBuilder)
+        public static IEventBusBuilder AddNpgsqlCore(this IEventBusBuilder eventBusBuilder, Action<EventBusPostgreSQLOptions>? optionsAction = null)
         {
             eventBusBuilder.Services.AddOptions<EventBusPostgreSQLOptions>();
+            if (optionsAction != null)
+                eventBusBuilder.Services.Configure(optionsAction);
             eventBusBuilder.Services.AddSingleton<IMessageStorage, PostgreSQLMessageStorage>();
             eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, PostgreSQLMessageStorageInitializer>();
             eventBusBuilder.Services.AddSingleton<IConnectionString, DefaultConnectionString>();

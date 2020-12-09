@@ -38,6 +38,6 @@ namespace Shashlik.EventBus.RabbitMQ
         /// <summary>
         /// 自定义连接创建,优先使用此属性
         /// </summary>
-        public Func<ConnectionFactory> ConnectionFactory { get; set; }
+        public Func<ConnectionFactory>? ConnectionFactory { get; set; }
     }
 }
