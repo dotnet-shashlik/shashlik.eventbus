@@ -211,6 +211,8 @@ public class UserManager
 - `IExpiredMessageProvider`：已过期删除处理。
 - `IMessageStorageInitializer`：存储介质初始化。
 - `IMessageStorage`：消息存储、读取等操作。
+- `IMessageSender`：消息发送器。
+- `IEventSubscriber`：事件订阅器。
 
 例：
 ```c#
