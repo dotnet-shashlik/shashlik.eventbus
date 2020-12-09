@@ -139,7 +139,7 @@ public class UserManager
 
             // 发布延迟事件
             // 通过ef扩展，直接使用DbContext发布事件，自动使用当前上下文事务
-            await DemoDbContext.PublishEventAsync(new NewUserPromotionEvent{
+            await DbContext.PublishEventAsync(new NewUserPromotionEvent{
                 Id = user.Id,
                 Name = input.Name,
                 PromotionId = "1"
