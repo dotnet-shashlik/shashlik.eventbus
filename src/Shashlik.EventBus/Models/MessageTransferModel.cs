@@ -41,5 +41,10 @@ namespace Shashlik.EventBus
         /// 延迟消费时间
         /// </summary>
         public DateTimeOffset? DelayAt { get; set; }
+
+        ~MessageTransferModel()
+        {
+            //Console.WriteLine($"MessageTransferModel MsgId: {MsgId} disposed.");
+        }
     }
 }

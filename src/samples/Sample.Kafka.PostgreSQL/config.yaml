@@ -1,5 +1,5 @@
 ﻿ConnectionStrings:
-  Default: server=192.168.50.178;database=eventbustest;user id=testuser;password=123123;
+  Default: server=192.168.50.178;database=eventbustest;user id=testuser;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
 EventBus:
   Kafka:
     Properties:

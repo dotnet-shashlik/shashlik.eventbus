@@ -57,9 +57,6 @@ namespace Shashlik.EventBus
             await ReceivedMessageRetryProvider.Startup(StopCancellationToken).ConfigureAwait(false);
             // 启动过期消息删除
             await ExpiredMessageProvider.DoDelete(StopCancellationToken);
-
-            // 双重保障应用退出时取消所有运行时任务，避免内存泄漏
-            AppDomain.CurrentDomain.ProcessExit += (s, e) => StopCancellationTokenSource.Cancel();
         }
 
         public async Task StartAsync(CancellationToken _)

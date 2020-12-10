@@ -42,15 +42,22 @@ namespace Shashlik.EventBus.Kafka
                         consumerResult = consumer.Consume(cancellationToken);
                         if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
                         {
-                            await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                            // ReSharper disable once MethodSupportsCancellation
+                            await Task.Delay(5).ConfigureAwait(false);
                             continue;
                         }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        continue;
+                        // ignore
                     }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex,
                             $"[EventBus-Kafka]Consume message occur error, event: {listener.Descriptor.EventName}, handler: {listener.Descriptor.EventHandlerName}.");
-                        await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                        // ReSharper disable once MethodSupportsCancellation
+                        await Task.Delay(5).ConfigureAwait(false);
                         continue;
                     }
 
@@ -97,7 +104,8 @@ namespace Shashlik.EventBus.Kafka
                         }
                     }, cancellationToken);
 
-                    await Task.Delay(5, cancellationToken).ConfigureAwait(false);
+                    // ReSharper disable once MethodSupportsCancellation
+                    await Task.Delay(5).ConfigureAwait(false);
                 }
             }, cancellationToken);
         }

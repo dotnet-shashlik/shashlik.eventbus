@@ -79,5 +79,10 @@ namespace Shashlik.EventBus
         /// 锁定结束时间
         /// </summary>
         public DateTimeOffset? LockEnd { get; set; }
+
+        ~MessageStorageModel()
+        {
+            //Console.WriteLine($"MessageStorageModel MsgId: {MsgId} disposed.");
+        }
     }
 }

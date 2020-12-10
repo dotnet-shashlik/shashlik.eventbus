@@ -48,7 +48,8 @@ namespace Shashlik.EventBus.MemoryQueue
                         });
                     }
 
-                    Task.Delay(10, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+                    // ReSharper disable once MethodSupportsCancellation
+                    Task.Delay(10).ConfigureAwait(false).GetAwaiter().GetResult();
                 }
             }, cancellationToken);
         }

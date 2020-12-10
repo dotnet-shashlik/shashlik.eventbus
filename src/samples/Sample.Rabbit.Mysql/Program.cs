@@ -40,7 +40,7 @@ namespace Sample.Rabbit.Mysql
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Error); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
@@ -87,6 +87,8 @@ namespace Sample.Rabbit.Mysql
 
                 for (var i = 0; i < 30000; i++)
                 {
+                    Console.WriteLine($"Memory Usage: {GC.GetTotalMemory(false)/1024}KB");
+                    
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
                     if (i % 3 == 0)
@@ -105,6 +107,9 @@ namespace Sample.Rabbit.Mysql
 
                     await transaction.CommitAsync(cancellationToken);
                     await Task.Delay(5, cancellationToken);
+                    
+                    // GC.WaitForPendingFinalizers();
+                    // GC.Collect();
                 }
 
                 Logger.LogWarning($"all message send completed.");

@@ -30,7 +30,8 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
-            Task.Delay(100, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
+            // ReSharper disable once MethodSupportsCancellation
+            Task.Delay(100).ConfigureAwait(false).GetAwaiter().GetResult();
 
             _ = Task.Run(async () =>
             {
@@ -50,7 +51,8 @@ namespace Shashlik.EventBus.DefaultImpl
                             .ConfigureAwait(false))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交
-                            await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
+                            // ReSharper disable once MethodSupportsCancellation
+                            await Task.Delay(1000).ConfigureAwait(false);
                             continue;
                         }
 

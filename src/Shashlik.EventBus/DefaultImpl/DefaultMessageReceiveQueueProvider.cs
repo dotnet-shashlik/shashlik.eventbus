@@ -85,7 +85,8 @@ namespace Shashlik.EventBus.DefaultImpl
                             $"[EventBus] message receive error, will try again later, event: {descriptor.EventName}, handler: {descriptor.EventHandlerName}, msgId: {messageStorageModel.MsgId}.");
                     }
 
-                    await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                    // ReSharper disable once MethodSupportsCancellation
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
             }, cancellationToken);
         }

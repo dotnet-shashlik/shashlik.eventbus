@@ -40,7 +40,7 @@ namespace Sample.Kafka.PostgreSQL
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Error); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
@@ -75,6 +75,8 @@ namespace Sample.Kafka.PostgreSQL
             {
                 for (var i = 0; i < 30000; i++)
                 {
+                    Console.WriteLine($"Memory Usage: {GC.GetTotalMemory(false)/1024}KB");
+                    
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
                     if (i % 3 == 0)
