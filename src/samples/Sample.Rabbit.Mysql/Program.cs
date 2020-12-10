@@ -40,9 +40,6 @@ namespace Sample.Rabbit.Mysql
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
 
-                    services.AddTransient<TestEventHandler1>();
-                    services.AddTransient<TestEventHandler2>();
-
                     services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>

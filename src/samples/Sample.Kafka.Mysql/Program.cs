@@ -39,9 +39,6 @@ namespace Sample.Kafka.Mysql
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
 
-                    services.AddTransient<TestEventHandler1>();
-                    services.AddTransient<TestEventHandler2>();
-
                     services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
@@ -50,7 +47,7 @@ namespace Sample.Kafka.Mysql
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     }, 5);
 
-                    services.AddEventBus(r => { r.Environment = "DemoKafkaMySql"; })
+                    services.AddEventBus(r => { r.Environment = "DemoKafkaMySql11"; })
                         .AddMySql<DemoDbContext>()
                         .AddKafka(configuration.GetSection("EventBus:Kafka"));
 

@@ -7,7 +7,7 @@ using Shashlik.EventBus.DefaultImpl;
 
 namespace Shashlik.EventBus
 {
-    public class EventBusStartup : IHostedService, IDisposable
+    public class EventBusStartup : IHostedService, IHostedStopToken, IDisposable
     {
         private IMessageStorageInitializer MessageStorageInitializer { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
@@ -17,6 +17,7 @@ namespace Shashlik.EventBus
         private IMessageListenerFactory MessageListenerFactory { get; }
         private IExpiredMessageProvider ExpiredMessageProvider { get; }
         private CancellationTokenSource StopCancellationTokenSource { get; }
+        public CancellationToken StopCancellationToken => StopCancellationTokenSource.Token;
 
         public EventBusStartup(
             IMessageStorageInitializer messageStorageInitializer,
@@ -39,7 +40,7 @@ namespace Shashlik.EventBus
         public async Task Build()
         {
             // 先执行存储设施初始化
-            await MessageStorageInitializer.Initialize(StopCancellationTokenSource.Token).ConfigureAwait(false);
+            await MessageStorageInitializer.Initialize(StopCancellationToken).ConfigureAwait(false);
 
             // 加载所有的事件处理类
             var descriptors = EventHandlerFindProvider.FindAll();
@@ -48,15 +49,15 @@ namespace Shashlik.EventBus
             foreach (var eventHandlerDescriptor in descriptors)
             {
                 var listener = MessageListenerFactory.CreateMessageListener(eventHandlerDescriptor);
-                await EventSubscriber.Subscribe(listener, StopCancellationTokenSource.Token).ConfigureAwait(false);
+                await EventSubscriber.Subscribe(listener, StopCancellationToken).ConfigureAwait(false);
             }
 
             // 启动重试器
-            await PublishedMessageRetryProvider.Startup(StopCancellationTokenSource.Token).ConfigureAwait(false);
+            await PublishedMessageRetryProvider.Startup(StopCancellationToken).ConfigureAwait(false);
             // 启动重试器
-            await ReceivedMessageRetryProvider.Startup(StopCancellationTokenSource.Token).ConfigureAwait(false);
+            await ReceivedMessageRetryProvider.Startup(StopCancellationToken).ConfigureAwait(false);
             // 启动过期消息删除
-            ExpiredMessageProvider.DoDelete(StopCancellationTokenSource.Token);
+            ExpiredMessageProvider.DoDelete(StopCancellationToken);
 
             // 双重保障应用退出时取消所有运行时任务，避免内存泄漏
             AppDomain.CurrentDomain.ProcessExit += (s, e) => StopCancellationTokenSource.Cancel();

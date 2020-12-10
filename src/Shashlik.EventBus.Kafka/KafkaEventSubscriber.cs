@@ -23,9 +23,10 @@ namespace Shashlik.EventBus.Kafka
 
         public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            IConsumer<string, byte[]> cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
-            cunsumer.Subscribe(listener.Descriptor.EventName);
+            if (cancellationToken.IsCancellationRequested)
+                return Task.CompletedTask;
+            IConsumer<string, byte[]> consumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
+            consumer.Subscribe(listener.Descriptor.EventName);
             _ = Task.Run(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -33,7 +34,7 @@ namespace Shashlik.EventBus.Kafka
                     ConsumeResult<string, byte[]> consumerResult;
                     try
                     {
-                        consumerResult = cunsumer.Consume(cancellationToken);
+                        consumerResult = consumer.Consume(cancellationToken);
                         if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
                         {
                             await Task.Delay(5, cancellationToken).ConfigureAwait(false);
@@ -82,7 +83,7 @@ namespace Shashlik.EventBus.Kafka
                             // 处理消息
                             await listener.OnReceive(message, cancellationToken).ConfigureAwait(false);
                             // 存储偏移,提交消息, see: https://docs.confluent.io/current/clients/dotnet.html
-                            cunsumer.StoreOffset(consumerResult);
+                            consumer.StoreOffset(consumerResult);
                         }
                         catch (Exception e)
                         {

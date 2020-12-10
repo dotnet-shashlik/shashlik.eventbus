@@ -6,41 +6,26 @@ using Microsoft.Extensions.Logging;
 
 namespace Shashlik.EventBus.MemoryQueue
 {
-    public class MemoryQueueHostedService : IHostedService, IDisposable
+    public class MemoryQueueHostedService : IHostedService
     {
-        public MemoryQueueHostedService(ILoggerFactory loggerFactory)
+        public MemoryQueueHostedService(ILoggerFactory loggerFactory, IHostedStopToken hostedStopToken)
         {
-            StopCancellationTokenSource = new CancellationTokenSource();
             LoggerFactory = loggerFactory;
+            HostedStopToken = hostedStopToken;
         }
 
         private ILoggerFactory LoggerFactory { get; }
-        private CancellationTokenSource StopCancellationTokenSource { get; }
+        private IHostedStopToken HostedStopToken { get; }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken _)
         {
-            InternalQueue.Start(LoggerFactory.CreateLogger(typeof(InternalQueue)), StopCancellationTokenSource.Token);
-            AppDomain.CurrentDomain.ProcessExit += (s, e) => StopCancellationTokenSource.Cancel();
+            InternalMemoryQueue.Start(LoggerFactory.CreateLogger(nameof(InternalMemoryQueue)), HostedStopToken.StopCancellationToken);
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public Task StopAsync(CancellationToken _)
         {
-            StopCancellationTokenSource.Cancel();
             return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                StopCancellationTokenSource.Cancel();
-                StopCancellationTokenSource.Dispose();
-            }
-            catch
-            {
-                // ignored
-            }
         }
     }
 }

@@ -7,7 +7,7 @@ using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.MemoryQueue
 {
-    internal static class InternalQueue
+    internal static class InternalMemoryQueue
     {
         private static ConcurrentQueue<MessageTransferModel> Queue { get; } = new ConcurrentQueue<MessageTransferModel>();
 

@@ -9,7 +9,7 @@ namespace Shashlik.EventBus.MemoryQueue
     {
         public Task Send(MessageTransferModel message)
         {
-            InternalQueue.Send(message);
+            InternalMemoryQueue.Send(message);
             return Task.CompletedTask;
         }
     }

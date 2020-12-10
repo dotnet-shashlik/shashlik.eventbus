@@ -61,7 +61,7 @@ namespace Shashlik.EventBus.DefaultImpl
             if (!EventHandlerDescriptors.TryGetValue(item.EventHandlerName, out var descriptor))
             {
                 Logger.LogWarning(
-                    $"[EventBus] can not find event handler: {item.EventHandlerName}, event: {item.EventName}, msgId: {item.MsgId}.");
+                    $"[EventBus]Can not find event handler: {item.EventHandlerName}, event: {item.EventName}, msgId: {item.MsgId}.");
                 return;
             }
 
@@ -72,7 +72,7 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
                 Logger.LogDebug(
-                    $"[EventBus] begin execute event handler, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
+                    $"[EventBus]Begin execute event handler, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
                 await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
                 await MessageStorage.UpdateReceived(
                         item.Id,
@@ -83,12 +83,12 @@ namespace Shashlik.EventBus.DefaultImpl
                     .ConfigureAwait(false);
 
                 Logger.LogDebug(
-                    $"[EventBus] execute event handler success, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
+                    $"[EventBus]Execute event handler success, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex,
-                    $"[EventBus] received event retry fail, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
+                    $"[EventBus]Received event retry fail, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
                 try
                 {
                     // 失败的数据不过期

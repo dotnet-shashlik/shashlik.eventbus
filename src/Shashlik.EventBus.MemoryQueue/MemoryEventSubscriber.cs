@@ -7,7 +7,7 @@ namespace Shashlik.EventBus.MemoryQueue
     {
         public Task Subscribe(IMessageListener listener, CancellationToken token)
         {
-            InternalQueue.AddListener(listener);
+            InternalMemoryQueue.AddListener(listener);
             return Task.CompletedTask;
         }
     }

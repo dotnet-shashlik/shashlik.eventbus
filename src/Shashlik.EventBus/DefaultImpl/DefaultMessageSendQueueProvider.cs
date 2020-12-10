@@ -9,18 +9,20 @@ namespace Shashlik.EventBus.DefaultImpl
     public class DefaultMessageSendQueueProvider : IMessageSendQueueProvider
     {
         public DefaultMessageSendQueueProvider(IMessageSender messageSender, IMessageStorage messageStorage,
-            IOptionsMonitor<EventBusOptions> options, ILogger<DefaultMessageSendQueueProvider> logger)
+            IOptionsMonitor<EventBusOptions> options, ILogger<DefaultMessageSendQueueProvider> logger, IHostedStopToken hostedStopToken)
         {
             MessageSender = messageSender;
             MessageStorage = messageStorage;
             Options = options;
             Logger = logger;
+            HostedStopToken = hostedStopToken;
         }
 
         private IMessageSender MessageSender { get; }
         private IMessageStorage MessageStorage { get; }
         private IOptionsMonitor<EventBusOptions> Options { get; }
         private ILogger<DefaultMessageSendQueueProvider> Logger { get; }
+        private IHostedStopToken HostedStopToken { get; }
 
         public void Enqueue(ITransactionContext? transactionContext, MessageTransferModel messageTransferModel,
             MessageStorageModel messageStorageModel,
@@ -34,7 +36,7 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 // 执行失败的次数
                 var failCount = 0;
-                while (!cancellationToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested && !HostedStopToken.StopCancellationToken.IsCancellationRequested)
                 {
                     if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
                         // 超过时间了,就不管了,状态还是SCHEDULED
@@ -95,7 +97,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             $"[EventBus] message publish error, will try again later, event: {messageStorageModel.EventName},  msgId: {messageStorageModel.MsgId}.");
                     }
                 }
-            }, cancellationToken).ConfigureAwait(false);
+            }, HostedStopToken.StopCancellationToken).ConfigureAwait(false);
         }
     }
 }

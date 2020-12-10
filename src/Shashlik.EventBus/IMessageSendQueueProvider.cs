@@ -13,7 +13,7 @@ namespace Shashlik.EventBus
         /// <param name="transactionContext">事务上下文信息</param>
         /// <param name="messageTransferModel">消息传输抹胸</param>
         /// <param name="messageStorageModel">消息存储模型</param>
-        /// <param name="cancellationToken"></param>
+        /// <param name="cancellationToken">发布方取消token</param>
         void Enqueue(
             ITransactionContext? transactionContext,
             MessageTransferModel messageTransferModel,
