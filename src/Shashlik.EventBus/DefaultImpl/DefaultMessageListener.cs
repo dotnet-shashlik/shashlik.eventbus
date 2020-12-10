@@ -33,6 +33,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task OnReceive(MessageTransferModel message, CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
+            message.Items ??= new Dictionary<string, string>();
             var receiveMessageStorageModel = new MessageStorageModel
             {
                 MsgId = message.MsgId,
@@ -45,7 +46,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 Status = MessageStatus.Scheduled,
                 IsLocking = false,
                 LockEnd = null,
-                EventItems = MessageSerializer.Serialize(message.Items ?? new Dictionary<string, string>()),
+                EventItems = MessageSerializer.Serialize(message.Items),
                 EventBody = message.MsgBody,
                 DelayAt = message.DelayAt
             };
