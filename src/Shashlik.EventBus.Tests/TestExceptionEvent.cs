@@ -14,7 +14,6 @@ namespace Shashlik.EventBus.Tests
         public string Name { get; set; }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestExceptionEventHandler : IEventHandler<TestExceptionEvent>
     {
         public TestExceptionEventHandler(ILogger<TestExceptionEventHandler> logger)
@@ -44,7 +43,6 @@ namespace Shashlik.EventBus.Tests
         }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestExceptionEventGroup2Handler : IEventHandler<TestExceptionEvent>
     {
         public TestExceptionEventGroup2Handler(ILogger<TestExceptionEventHandler> logger)

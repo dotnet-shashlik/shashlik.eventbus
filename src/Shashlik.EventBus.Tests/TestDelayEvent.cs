@@ -9,7 +9,6 @@ namespace Shashlik.EventBus.Tests
         public string Name { get; set; }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestDelayEventHandler : IEventHandler<TestDelayEvent>
     {
         public static TestDelayEvent Instance { get; private set; }
@@ -25,7 +24,6 @@ namespace Shashlik.EventBus.Tests
         }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestDelayEventGroup2Handler : IEventHandler<TestDelayEvent>
     {
         public static TestDelayEvent Instance { get; private set; }
@@ -41,7 +39,6 @@ namespace Shashlik.EventBus.Tests
         }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestDelayEventGroup3Handler : IEventHandler<TestDelayEvent>
     {
         public static TestDelayEvent Instance { get; private set; }

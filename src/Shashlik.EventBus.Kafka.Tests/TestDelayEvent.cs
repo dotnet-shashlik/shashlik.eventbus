@@ -13,7 +13,6 @@ namespace Shashlik.EventBus.Kafka.Tests
         public string Name { get; set; }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestDelayEventHandler : IEventHandler<TestDelayEvent>
     {
         public TestDelayEventHandler(ILogger<TestDelayEventHandler> logger)
@@ -39,7 +38,6 @@ namespace Shashlik.EventBus.Kafka.Tests
         }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestDelayEventGroup2Handler : IEventHandler<TestDelayEvent>
     {
         public static TestDelayEvent Instance { get; private set; }
@@ -57,7 +55,6 @@ namespace Shashlik.EventBus.Kafka.Tests
         }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestDelayEventGroup3Handler : IEventHandler<TestDelayEvent>
     {
         public static TestDelayEvent Instance { get; private set; }

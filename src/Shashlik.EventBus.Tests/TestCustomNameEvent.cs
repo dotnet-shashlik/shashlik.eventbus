@@ -10,7 +10,6 @@ namespace Shashlik.EventBus.Tests
         public string Name { get; set; }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     [EventBusName(nameof(TestCustomNameEventHandler) + "_Test")]
     public class TestCustomNameEventHandler : IEventHandler<TestCustomNameEvent>
     {
@@ -27,7 +26,6 @@ namespace Shashlik.EventBus.Tests
         }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     [EventBusName(nameof(TestCustomNameEventGroup2Handler) + "_Test")]
     public class TestCustomNameEventGroup2Handler : IEventHandler<TestCustomNameEvent>
     {

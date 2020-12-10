@@ -10,7 +10,6 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
         public string Name { get; set; }
     }
 
-    [Transient(typeof(IEventHandler<>))]
     public class TestEventHandler : IEventHandler<TestEvent>
     {
         public static TestEvent Instance { get; private set; }
@@ -30,7 +29,6 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
     /// <summary>
     /// 组2测试
     /// </summary>
-    [Transient(typeof(IEventHandler<>))]
     public class TestEventGroup2Handler : IEventHandler<TestEvent>
     {
         public static TestEvent Instance { get; private set; }
