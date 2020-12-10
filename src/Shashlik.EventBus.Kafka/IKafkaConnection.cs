@@ -16,6 +16,6 @@ namespace Shashlik.EventBus.Kafka
         /// </summary>
         /// <param name="groupId"></param>
         /// <returns></returns>
-        IConsumer<string, byte[]> CreateCunsumer(string groupId);
+        IConsumer<string, byte[]> CreateConsumer(string groupId);
     }
 }

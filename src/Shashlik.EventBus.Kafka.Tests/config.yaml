@@ -4,3 +4,4 @@ EventBus:
   Kafka:
     Properties:
       - ["bootstrap.servers", "localhost:9092"]
+      - ["allow.auto.create.topics", "true"]

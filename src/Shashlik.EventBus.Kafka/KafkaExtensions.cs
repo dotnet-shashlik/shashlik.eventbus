@@ -81,8 +81,9 @@ namespace Shashlik.EventBus.Kafka
                 return r[0];
             }, r => r[1]);
 
-            // 允许自动创建topic
-            dic["allow.auto.create.topics"] = "true";
+            // // 允许自动创建topic
+            // 自行配置
+            // dic["allow.auto.create.topics"] = "true";
             // 禁止自动保存offset
             dic["enable.auto.offset.store"] = "false";
             // 启用自动提交

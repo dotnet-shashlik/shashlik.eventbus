@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Shashlik.Utils.Extensions;
+
+// ReSharper disable SimplifyLinqExpressionUseAll
 
 namespace Shashlik.EventBus.Kafka
 {
@@ -21,12 +24,14 @@ namespace Shashlik.EventBus.Kafka
         private IMessageSerializer MessageSerializer { get; }
         private ILogger<KafkaEventSubscriber> Logger { get; }
 
-        public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
+        public async Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
+            await Task.CompletedTask;
             if (cancellationToken.IsCancellationRequested)
-                return Task.CompletedTask;
-            IConsumer<string, byte[]> consumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
+                return;
+            IConsumer<string, byte[]> consumer = Connection.CreateConsumer(listener.Descriptor.EventHandlerName);
             consumer.Subscribe(listener.Descriptor.EventName);
+
             _ = Task.Run(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -95,8 +100,6 @@ namespace Shashlik.EventBus.Kafka
                     await Task.Delay(5, cancellationToken).ConfigureAwait(false);
                 }
             }, cancellationToken);
-
-            return Task.CompletedTask;
         }
     }
 }

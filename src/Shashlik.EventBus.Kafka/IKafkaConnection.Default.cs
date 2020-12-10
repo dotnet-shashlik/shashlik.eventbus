@@ -28,7 +28,7 @@ namespace Shashlik.EventBus.Kafka
             );
         }
 
-        public IConsumer<string, byte[]> CreateCunsumer(string groupId)
+        public IConsumer<string, byte[]> CreateConsumer(string groupId)
         {
             var dic = Options.CurrentValue.Properties.ConvertToDictionary();
             dic["group.id"] = groupId;
