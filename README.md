@@ -80,12 +80,6 @@ Shashlik.EventBus 顾名思义，.NET 事件总线，同时也是分布式事务
             r.UserName = "rabbit";
             r.Password = "123123";
         });
-
-    // 注册事件处理类
-    // 再次安利Shashlik框架，进一步简化服务注册，可以做到这里所有的代码都可以省略^_^（除了AddMySql<DemoDbContext>()），详见https://github.com/dotnet-shashlik/shashlik
-    service.AddTransient<NewUserEventForSmsHandler>();
-    service.AddTransient<NewUserEventForCouponsHandler>();
-    service.AddTransient<NewUserPromotionEventHandler>();
 ```
 
 2. 定义事件
