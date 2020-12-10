@@ -43,7 +43,7 @@ namespace Shashlik.EventBus.RabbitMQ
         {
             eventBusBuilder.Services.AddOptions<EventBusRabbitMQOptions>();
             eventBusBuilder.Services.AddSingleton<IMessageSender, RabbitMQMessageSender>();
-            eventBusBuilder.Services.AddTransient<IEventSubscriber, RabbitMQEventSubscriber>();
+            eventBusBuilder.Services.AddSingleton<IEventSubscriber, RabbitMQEventSubscriber>();
             eventBusBuilder.Services.AddSingleton<IRabbitMQConnection, DefaultRabbitMQConnection>();
 
             return eventBusBuilder;

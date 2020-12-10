@@ -23,21 +23,11 @@ namespace Shashlik.EventBus.Kafka
 
         public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            IConsumer<string, byte[]> cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
+            cunsumer.Subscribe(listener.Descriptor.EventName);
             _ = Task.Run(async () =>
             {
-                IConsumer<string, byte[]> cunsumer;
-                try
-                {
-                    cunsumer = Connection.CreateCunsumer(listener.Descriptor.EventHandlerName);
-                    cunsumer.Subscribe(listener.Descriptor.EventName);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex,
-                        $"[EventBus-Kafka]Subscribe occur error, event: {listener.Descriptor.EventName}, handler: {listener.Descriptor.EventHandlerName}");
-                    return;
-                }
-
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     ConsumeResult<string, byte[]> consumerResult;

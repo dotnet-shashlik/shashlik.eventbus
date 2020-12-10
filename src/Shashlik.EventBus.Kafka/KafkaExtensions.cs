@@ -59,7 +59,7 @@ namespace Shashlik.EventBus.Kafka
         {
             eventBusBuilder.Services.AddOptions<EventBusKafkaOptions>();
             eventBusBuilder.Services.AddSingleton<IMessageSender, KafkaMessageSender>();
-            eventBusBuilder.Services.AddTransient<IEventSubscriber, KafkaEventSubscriber>();
+            eventBusBuilder.Services.AddSingleton<IEventSubscriber, KafkaEventSubscriber>();
             eventBusBuilder.Services.AddSingleton<IKafkaConnection, DefaultKafkaConnection>();
 
             return eventBusBuilder;

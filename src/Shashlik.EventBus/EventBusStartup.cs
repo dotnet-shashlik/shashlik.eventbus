@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -6,7 +7,7 @@ using Shashlik.EventBus.DefaultImpl;
 
 namespace Shashlik.EventBus
 {
-    public class EventBusStartup : IHostedService
+    public class EventBusStartup : IHostedService, IDisposable
     {
         private IMessageStorageInitializer MessageStorageInitializer { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
@@ -56,17 +57,33 @@ namespace Shashlik.EventBus
             await ReceivedMessageRetryProvider.Startup(StopCancellationTokenSource.Token).ConfigureAwait(false);
             // 启动过期消息删除
             ExpiredMessageProvider.DoDelete(StopCancellationTokenSource.Token);
+
+            // 双重保障应用退出时取消所有运行时任务，避免内存泄漏
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => StopCancellationTokenSource.Cancel();
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken _)
         {
             await Build().ConfigureAwait(false);
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public Task StopAsync(CancellationToken _)
         {
             StopCancellationTokenSource.Cancel();
             return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                StopCancellationTokenSource.Cancel();
+                StopCancellationTokenSource.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }

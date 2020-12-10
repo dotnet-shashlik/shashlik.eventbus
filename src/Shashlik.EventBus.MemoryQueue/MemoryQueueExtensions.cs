@@ -7,7 +7,7 @@ namespace Shashlik.EventBus.MemoryQueue
         public static IEventBusBuilder AddMemoryQueue(this IEventBusBuilder eventBusBuilder)
         {
             eventBusBuilder.Services.AddSingleton<IMessageSender, MemoryMessageSender>();
-            eventBusBuilder.Services.AddTransient<IEventSubscriber, MemoryEventSubscriber>();
+            eventBusBuilder.Services.AddSingleton<IEventSubscriber, MemoryEventSubscriber>();
             eventBusBuilder.Services.AddHostedService<MemoryQueueHostedService>();
             return eventBusBuilder;
         }
