@@ -19,9 +19,9 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventNameRuler EventNameRuler { get; }
         private IEventHandlerNameRuler EventHandlerNameRuler { get; }
 
-        private IEnumerable<EventHandlerDescriptor>? _cache;
+        private static IEnumerable<EventHandlerDescriptor>? _cache;
 
-        public IEnumerable<EventHandlerDescriptor> LoadAll()
+        public IEnumerable<EventHandlerDescriptor> FindAll()
         {
             if (_cache is null)
             {

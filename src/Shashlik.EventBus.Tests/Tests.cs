@@ -24,7 +24,7 @@ namespace Shashlik.EventBus.Tests
             var eventHandlerFindProvider = GetService<IEventHandlerFindProvider>();
             eventHandlerFindProvider.ShouldBeOfType<DefaultEventHandlerFindProvider>();
 
-            var handlers = eventHandlerFindProvider.LoadAll().ToList();
+            var handlers = eventHandlerFindProvider.FindAll().ToList();
 
             {
                 var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestEventHandler));
@@ -73,7 +73,7 @@ namespace Shashlik.EventBus.Tests
         {
             var invoker = GetService<IEventHandlerInvoker>();
             var eventHandlerFindProvider = GetService<IEventHandlerFindProvider>();
-            var testEventHandlerDescriptor = eventHandlerFindProvider.LoadAll().First(r => r.EventHandlerType == typeof(TestEventHandler));
+            var testEventHandlerDescriptor = eventHandlerFindProvider.FindAll().First(r => r.EventHandlerType == typeof(TestEventHandler));
             var messageSerializer = GetService<IMessageSerializer>();
             var @event = new TestEvent {Name = "张三"};
             var json = messageSerializer.Serialize(@event);

@@ -42,7 +42,7 @@ namespace Shashlik.EventBus
             await MessageStorageInitializer.Initialize(StopCancellationTokenSource.Token).ConfigureAwait(false);
 
             // 加载所有的事件处理类
-            var descriptors = EventHandlerFindProvider.LoadAll();
+            var descriptors = EventHandlerFindProvider.FindAll();
 
             // 注册事件订阅
             foreach (var eventHandlerDescriptor in descriptors)

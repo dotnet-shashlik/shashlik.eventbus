@@ -47,8 +47,14 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IMessageListenerFactory, DefaultMessageListenerFactory>();
             serviceCollection.TryAddSingleton<IReceivedDelayEventProvider, DefaultReceivedDelayEventProvider>();
             serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
-
             serviceCollection.AddSingleton<IHostedService, EventBusStartup>();
+
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+            var eventHandlerFindProvider = serviceProvider.GetRequiredService<IEventHandlerFindProvider>();
+            var handlers = eventHandlerFindProvider.FindAll();
+            foreach (var eventHandlerDescriptor in handlers)
+                serviceCollection.AddTransient(eventHandlerDescriptor.EventHandlerType);
+
             return new DefaultEventBusBuilder(serviceCollection);
         }
 

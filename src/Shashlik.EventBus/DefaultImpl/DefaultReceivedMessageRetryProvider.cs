@@ -26,7 +26,7 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageSerializer = messageSerializer;
             EventHandlerInvoker = eventHandlerInvoker;
             EventHandlerDescriptors = eventHandlerFindProvider
-                .LoadAll()
+                .FindAll()
                 .ToDictionary(r => r.EventHandlerName, r => r);
         }
 

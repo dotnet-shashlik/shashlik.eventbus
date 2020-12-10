@@ -11,6 +11,6 @@ namespace Shashlik.EventBus
         /// 加载系统所有的事件处理类
         /// </summary>
         /// <returns></returns>
-        IEnumerable<EventHandlerDescriptor> LoadAll();
+        IEnumerable<EventHandlerDescriptor> FindAll();
     }
 }
