@@ -31,6 +31,7 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
+
             _ = Task.Run(async () =>
             {
                 if (!message.DelayAt.HasValue)

@@ -8,6 +8,6 @@ namespace Shashlik.EventBus
     /// </summary>
     public interface IExpiredMessageProvider
     {
-        void DoDelete(CancellationToken cancellationToken);
+        Task DoDelete(CancellationToken cancellationToken);
     }
 }

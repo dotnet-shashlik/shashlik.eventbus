@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Shashlik.Utils.Helpers;
 
 namespace Shashlik.EventBus.DefaultImpl
@@ -16,13 +17,19 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private IMessageStorage MessageStorage { get; }
 
-        public void DoDelete(CancellationToken cancellationToken)
+        public Task DoDelete(CancellationToken cancellationToken)
         {
             // 每个小时执行1次删除
             TimerHelper.SetInterval(
-                async () => await MessageStorage.DeleteExpires(cancellationToken).ConfigureAwait(false),
+                async () =>
+                {
+                    await MessageStorage.DeleteExpires(cancellationToken).ConfigureAwait(false);
+                    GC.Collect();
+                },
                 TimeSpan.FromHours(1),
                 cancellationToken);
+
+            return Task.CompletedTask;
         }
     }
 }

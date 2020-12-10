@@ -36,7 +36,11 @@ namespace Shashlik.EventBus.DefaultImpl
 
             // 重试器执行间隔为5秒
             TimerHelper.SetInterval(
-                async () => await Retry(cancellationToken).ConfigureAwait(false),
+                async () =>
+                {
+                    await Retry(cancellationToken).ConfigureAwait(false);
+                    GC.Collect();
+                },
                 TimeSpan.FromSeconds(Options.CurrentValue.RetryWorkingIntervalSeconds),
                 cancellationToken);
         }

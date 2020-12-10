@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,7 +33,6 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task OnReceive(MessageTransferModel message, CancellationToken cancellationToken)
         {
             var now = DateTime.Now;
-            if (message.Items == null) return;
             var receiveMessageStorageModel = new MessageStorageModel
             {
                 MsgId = message.MsgId,
@@ -45,7 +45,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 Status = MessageStatus.Scheduled,
                 IsLocking = false,
                 LockEnd = null,
-                EventItems = MessageSerializer.Serialize(message.Items),
+                EventItems = MessageSerializer.Serialize(message.Items ?? new Dictionary<string, string>()),
                 EventBody = message.MsgBody,
                 DelayAt = message.DelayAt
             };
@@ -66,6 +66,8 @@ namespace Shashlik.EventBus.DefaultImpl
             else
                 ReceivedDelayEventProvider.Enqueue(receiveMessageStorageModel, message.Items, Descriptor,
                     cancellationToken);
+
+            GC.Collect();
         }
     }
 }

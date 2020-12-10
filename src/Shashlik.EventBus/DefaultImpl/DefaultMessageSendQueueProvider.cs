@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 return;
             Task.Delay(100, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
 
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
                 // 执行失败的次数
                 var failCount = 0;
