@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Shashlik.Utils.Helpers;
 
 namespace Shashlik.EventBus
 {
@@ -45,12 +46,19 @@ namespace Shashlik.EventBus
             foreach (var eventHandlerDescriptor in descriptors)
                 await EventSubscriber.Subscribe(eventHandlerDescriptor, StopCancellationToken).ConfigureAwait(false);
 
-            // 启动重试器
+            // 启动发送消息重试器
             await PublishedMessageRetryProvider.Startup(StopCancellationToken).ConfigureAwait(false);
-            // 启动重试器
+            // 启动接收消息重试器
             await ReceivedMessageRetryProvider.Startup(StopCancellationToken).ConfigureAwait(false);
             // 启动过期消息删除
             await ExpiredMessageProvider.DoDelete(StopCancellationToken);
+
+            // 每分钟执行一次垃圾回收，考虑到大量的异步逻辑可能带来的对象释放问题
+            TimerHelper.SetInterval(() =>
+            {
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }, TimeSpan.FromMinutes(1));
         }
 
         public async Task StartAsync(CancellationToken _)
@@ -61,7 +69,6 @@ namespace Shashlik.EventBus
         public Task StopAsync(CancellationToken _)
         {
             StopCancellationTokenSource.Cancel();
-            GC.Collect();
             return Task.CompletedTask;
         }
 

@@ -14,7 +14,7 @@ namespace Shashlik.EventBus.DefaultImpl
     public class DefaultPublishedMessageRetryProvider : IPublishedMessageRetryProvider
     {
         public DefaultPublishedMessageRetryProvider(IMessageStorage messageStorage, IMessageSender messageSender,
-            IOptionsMonitor<EventBusOptions> options, ILogger<DefaultPublishedMessageRetryProvider> logger,
+            IOptions<EventBusOptions> options, ILogger<DefaultPublishedMessageRetryProvider> logger,
             IMessageSerializer messageSerializer)
         {
             MessageStorage = messageStorage;
@@ -26,7 +26,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private IMessageStorage MessageStorage { get; }
         private IMessageSender MessageSender { get; }
-        private IOptionsMonitor<EventBusOptions> Options { get; }
+        private IOptions<EventBusOptions> Options { get; }
         private ILogger<DefaultPublishedMessageRetryProvider> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
@@ -36,12 +36,8 @@ namespace Shashlik.EventBus.DefaultImpl
 
             // 重试器执行间隔为5秒
             TimerHelper.SetInterval(
-                async () =>
-                {
-                    await Retry(cancellationToken).ConfigureAwait(false);
-                    GC.Collect();
-                },
-                TimeSpan.FromSeconds(Options.CurrentValue.RetryWorkingIntervalSeconds),
+                async () => await Retry(cancellationToken).ConfigureAwait(false),
+                TimeSpan.FromSeconds(Options.Value.RetryWorkingIntervalSeconds),
                 cancellationToken);
         }
 
@@ -56,7 +52,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private async Task Retry(MessageStorageModel item, CancellationToken cancellationToken, bool checkRetryFailedMax)
         {
-            if (checkRetryFailedMax && item.RetryCount >= Options.CurrentValue.RetryFailedMax)
+            if (checkRetryFailedMax && item.RetryCount >= Options.Value.RetryFailedMax)
                 return;
 
             var messageTransferModel = new MessageTransferModel
@@ -75,7 +71,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         item.Id,
                         MessageStatus.Succeeded,
                         item.RetryCount + 1,
-                        DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                        DateTime.Now.AddHours(Options.Value.SucceedExpireHour),
                         cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -106,11 +102,11 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             // 一次最多读取200条数据
             var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(
-                Options.CurrentValue.RetryLimitCount,
-                Options.CurrentValue.StartRetryAfterSeconds,
-                Options.CurrentValue.RetryFailedMax,
-                Options.CurrentValue.Environment,
-                Options.CurrentValue.RetryIntervalSeconds,
+                Options.Value.RetryLimitCount,
+                Options.Value.StartRetryAfterSeconds,
+                Options.Value.RetryFailedMax,
+                Options.Value.Environment,
+                Options.Value.RetryIntervalSeconds,
                 cancellationToken).ConfigureAwait(false);
             if (messages.IsNullOrEmpty())
                 return;
@@ -118,7 +114,7 @@ namespace Shashlik.EventBus.DefaultImpl
             // 并行重试
             Parallel.ForEach(
                 messages,
-                new ParallelOptions {MaxDegreeOfParallelism = Options.CurrentValue.RetryMaxDegreeOfParallelism},
+                new ParallelOptions {MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism},
                 async item => await Retry(item, cancellationToken, true).ConfigureAwait(false)
             );
         }

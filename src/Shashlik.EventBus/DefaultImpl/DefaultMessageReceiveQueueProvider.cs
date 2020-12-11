@@ -12,7 +12,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public DefaultMessageReceiveQueueProvider(
             IEventHandlerInvoker eventHandlerInvoker,
             ILogger<DefaultMessageReceiveQueueProvider> logger,
-            IOptionsMonitor<EventBusOptions> options,
+            IOptions<EventBusOptions> options,
             IMessageStorage messageStorage)
         {
             EventHandlerInvoker = eventHandlerInvoker;
@@ -23,7 +23,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private IEventHandlerInvoker EventHandlerInvoker { get; }
         private ILogger<DefaultMessageReceiveQueueProvider> Logger { get; }
-        private IOptionsMonitor<EventBusOptions> Options { get; }
+        private IOptions<EventBusOptions> Options { get; }
         private IMessageStorage MessageStorage { get; }
 
         public void Enqueue(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
@@ -37,7 +37,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 var failCount = 0;
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
+                    if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.Value.ConfirmTransactionSeconds))
                         // 超过时间了,就不管了,状态还是SCHEDULED
                         return;
                     if (failCount > 4)
@@ -72,7 +72,7 @@ namespace Shashlik.EventBus.DefaultImpl
                                 messageStorageModel.Id,
                                 MessageStatus.Succeeded,
                                 0,
-                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                                DateTime.Now.AddHours(Options.Value.SucceedExpireHour),
                                 cancellationToken)
                             .ConfigureAwait(false);
 

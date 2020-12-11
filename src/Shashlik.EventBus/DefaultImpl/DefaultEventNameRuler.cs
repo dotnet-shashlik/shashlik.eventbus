@@ -6,12 +6,12 @@ namespace Shashlik.EventBus.DefaultImpl
 {
     public class DefaultEventNameRuler : IEventNameRuler
     {
-        public DefaultEventNameRuler(IOptionsMonitor<EventBusOptions> options)
+        public DefaultEventNameRuler(IOptions<EventBusOptions> options)
         {
             Options = options;
         }
 
-        private IOptionsMonitor<EventBusOptions> Options { get; }
+        private IOptions<EventBusOptions> Options { get; }
 
 
         public string GetName(Type eventType)
@@ -19,7 +19,7 @@ namespace Shashlik.EventBus.DefaultImpl
             var name = eventType.GetCustomAttribute<EventBusNameAttribute>()?.Name;
             name ??= eventType.Name;
 
-            return $"{name}.{Options.CurrentValue.Environment}";
+            return $"{name}.{Options.Value.Environment}";
         }
     }
 }

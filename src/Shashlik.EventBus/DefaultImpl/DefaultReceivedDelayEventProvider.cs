@@ -14,7 +14,7 @@ namespace Shashlik.EventBus.DefaultImpl
     {
         public DefaultReceivedDelayEventProvider(
             IMessageStorage messageStorage,
-            IOptionsMonitor<EventBusOptions> options,
+            IOptions<EventBusOptions> options,
             IMessageReceiveQueueProvider messageReceiveQueueProvider)
         {
             MessageStorage = messageStorage;
@@ -23,7 +23,7 @@ namespace Shashlik.EventBus.DefaultImpl
         }
 
         private IMessageStorage MessageStorage { get; }
-        private IOptionsMonitor<EventBusOptions> Options { get; }
+        private IOptions<EventBusOptions> Options { get; }
         private IMessageReceiveQueueProvider MessageReceiveQueueProvider { get; }
 
         public void Enqueue(MessageStorageModel message, IDictionary<string, string> items,
@@ -51,7 +51,7 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             if (await MessageStorage.TryLockReceived(
                 message.Id,
-                DateTimeOffset.Now.AddSeconds(Options.CurrentValue.RetryIntervalSeconds),
+                DateTimeOffset.Now.AddSeconds(Options.Value.RetryIntervalSeconds),
                 cancellationToken).ConfigureAwait(false))
                 MessageReceiveQueueProvider.Enqueue(message, items, descriptor, cancellationToken);
         }

@@ -9,7 +9,7 @@ namespace Shashlik.EventBus.DefaultImpl
     public class DefaultMessageSendQueueProvider : IMessageSendQueueProvider
     {
         public DefaultMessageSendQueueProvider(IMessageSender messageSender, IMessageStorage messageStorage,
-            IOptionsMonitor<EventBusOptions> options, ILogger<DefaultMessageSendQueueProvider> logger, IHostedStopToken hostedStopToken)
+            IOptions<EventBusOptions> options, ILogger<DefaultMessageSendQueueProvider> logger, IHostedStopToken hostedStopToken)
         {
             MessageSender = messageSender;
             MessageStorage = messageStorage;
@@ -20,7 +20,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private IMessageSender MessageSender { get; }
         private IMessageStorage MessageStorage { get; }
-        private IOptionsMonitor<EventBusOptions> Options { get; }
+        private IOptions<EventBusOptions> Options { get; }
         private ILogger<DefaultMessageSendQueueProvider> Logger { get; }
         private IHostedStopToken HostedStopToken { get; }
 
@@ -39,7 +39,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 var failCount = 0;
                 while (!cancellationToken.IsCancellationRequested && !HostedStopToken.StopCancellationToken.IsCancellationRequested)
                 {
-                    if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.CurrentValue.ConfirmTransactionSeconds))
+                    if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.Value.ConfirmTransactionSeconds))
                         // 超过时间了,就不管了,状态还是SCHEDULED
                         return;
 
@@ -86,7 +86,7 @@ namespace Shashlik.EventBus.DefaultImpl
                                 messageStorageModel.Id,
                                 MessageStatus.Succeeded,
                                 0,
-                                DateTime.Now.AddHours(Options.CurrentValue.SucceedExpireHour),
+                                DateTime.Now.AddHours(Options.Value.SucceedExpireHour),
                                 cancellationToken)
                             .ConfigureAwait(false);
 

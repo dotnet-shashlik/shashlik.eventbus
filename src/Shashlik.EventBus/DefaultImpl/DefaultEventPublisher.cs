@@ -13,7 +13,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageStorage messageStorage,
             IMessageSerializer messageSerializer,
             IEventNameRuler eventNameRuler,
-            IOptionsMonitor<EventBusOptions> options,
+            IOptions<EventBusOptions> options,
             IMessageSendQueueProvider messageSendQueueProvider, IMsgIdGenerator msgIdGenerator)
         {
             MessageStorage = messageStorage;
@@ -29,7 +29,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageSendQueueProvider MessageSendQueueProvider { get; }
         private IEventNameRuler EventNameRuler { get; }
         private IMsgIdGenerator MsgIdGenerator { get; }
-        private IOptionsMonitor<EventBusOptions> Options { get; }
+        private IOptions<EventBusOptions> Options { get; }
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,
@@ -70,10 +70,10 @@ namespace Shashlik.EventBus.DefaultImpl
             items.Add(EventBusConsts.MsgIdHeaderKey, msgId);
             if (delayAt.HasValue)
             {
-                if ((delayAt.Value - DateTimeOffset.Now).TotalSeconds < Options.CurrentValue.DelayAtMinSeconds)
+                if ((delayAt.Value - DateTimeOffset.Now).TotalSeconds < Options.Value.DelayAtMinSeconds)
                 {
                     throw new ArgumentException(
-                        $"DelayAt value must great than now {Options.CurrentValue.DelayAtMinSeconds} seconds.",
+                        $"DelayAt value must great than now {Options.Value.DelayAtMinSeconds} seconds.",
                         nameof(delayAt));
                 }
 
@@ -83,7 +83,7 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageStorageModel messageStorageModel = new MessageStorageModel
             {
                 MsgId = msgId,
-                Environment = Options.CurrentValue.Environment,
+                Environment = Options.Value.Environment,
                 CreateTime = now,
                 ExpireTime = null,
                 EventHandlerName = null,
@@ -99,7 +99,8 @@ namespace Shashlik.EventBus.DefaultImpl
 
             MessageTransferModel messageTransferModel = new MessageTransferModel
             {
-                EventName = messageStorageModel.EventName,
+                EventName = Options.Value.Environment,
+                Environment = Options.Value.Environment,
                 MsgId = messageStorageModel.MsgId,
                 MsgBody = messageStorageModel.EventBody,
                 Items = items,
