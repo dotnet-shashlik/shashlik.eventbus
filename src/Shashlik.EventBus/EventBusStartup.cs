@@ -54,11 +54,7 @@ namespace Shashlik.EventBus
             await ExpiredMessageProvider.DoDelete(HostedStopToken.StopCancellationToken);
 
             // 每分钟执行一次垃圾回收，考虑到大量的异步逻辑可能带来的对象释放问题
-            TimerHelper.SetInterval(() =>
-            {
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-            }, TimeSpan.FromSeconds(3));
+            TimerHelper.SetInterval(GC.Collect, TimeSpan.FromMinutes(1));
         }
 
         public async Task StartAsync(CancellationToken _)

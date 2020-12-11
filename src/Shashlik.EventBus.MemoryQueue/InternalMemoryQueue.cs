@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.MemoryQueue
 {

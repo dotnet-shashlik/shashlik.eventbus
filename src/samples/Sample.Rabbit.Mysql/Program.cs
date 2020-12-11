@@ -40,7 +40,7 @@ namespace Sample.Rabbit.Mysql
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Error); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {

@@ -40,7 +40,7 @@ namespace Sample.Kafka.PostgreSQL
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Warning); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {

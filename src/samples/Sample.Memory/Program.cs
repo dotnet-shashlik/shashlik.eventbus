@@ -25,7 +25,7 @@ namespace Sample.Memory
             var host = new HostBuilder().ConfigureHostConfiguration(configHost => { configHost.AddCommandLine(args); })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Debug); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddEventBus(r => { r.Environment = "DemoMemory"; })
                         .AddMemoryQueue()
