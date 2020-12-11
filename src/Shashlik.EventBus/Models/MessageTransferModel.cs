@@ -18,6 +18,11 @@ namespace Shashlik.EventBus
         public string EventName { get; set; }
 
         /// <summary>
+        /// 环境变量
+        /// </summary>
+        public string Environment { get; set; }
+
+        /// <summary>
         /// 消息id
         /// </summary>
         public string MsgId { get; set; }

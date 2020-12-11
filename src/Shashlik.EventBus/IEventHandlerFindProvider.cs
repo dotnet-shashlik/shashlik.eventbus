@@ -12,5 +12,12 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <returns></returns>
         IEnumerable<EventHandlerDescriptor> FindAll();
+
+        /// <summary>
+        /// 根据事件处理名称获取描述器
+        /// </summary>
+        /// <param name="eventHandlerName">事件处理名称</param>
+        /// <returns></returns>
+        EventHandlerDescriptor GetByName(string eventHandlerName);
     }
 }

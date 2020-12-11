@@ -44,11 +44,11 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IEventNameRuler, DefaultEventNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultEventHandlerNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
-            serviceCollection.TryAddSingleton<IMessageListenerFactory, DefaultMessageListenerFactory>();
             serviceCollection.TryAddSingleton<IReceivedDelayEventProvider, DefaultReceivedDelayEventProvider>();
             serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
-            serviceCollection.AddSingleton<IHostedService, EventBusStartup>();
+            serviceCollection.TryAddSingleton<IMessageListener, DefaultMessageListener>();
             serviceCollection.AddSingleton<IHostedStopToken, EventBusStartup>();
+            serviceCollection.AddSingleton<IHostedService, EventBusStartup>();
 
             using var serviceProvider = serviceCollection.BuildServiceProvider();
             var eventHandlerFindProvider = serviceProvider.GetRequiredService<IEventHandlerFindProvider>();

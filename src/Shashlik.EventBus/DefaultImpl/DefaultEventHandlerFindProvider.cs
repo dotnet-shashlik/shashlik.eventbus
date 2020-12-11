@@ -19,7 +19,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventNameRuler EventNameRuler { get; }
         private IEventHandlerNameRuler EventHandlerNameRuler { get; }
 
-        private static IEnumerable<EventHandlerDescriptor>? _cache;
+        private static IDictionary<string, EventHandlerDescriptor>? _cache;
 
         public IEnumerable<EventHandlerDescriptor> FindAll()
         {
@@ -35,16 +35,24 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         EventHandlerName = EventHandlerNameRuler.GetName(typeInfo),
                         EventName = EventNameRuler.GetName(GetEventType(typeInfo)),
-                        IsDelay = eventType.IsSubTypeOrEqualsOf<IDelayEvent>(),
+                        IsDelay = eventType.IsSubType<IDelayEvent>(),
                         EventType = eventType,
                         EventHandlerType = typeInfo
                     });
                 }
 
-                _cache = list;
+                _cache = list.ToDictionary(r => r.EventHandlerName, r => r);
             }
 
-            return _cache;
+            return _cache.Values;
+        }
+
+        public EventHandlerDescriptor GetByName(string eventHandlerName)
+        {
+            if (_cache is null)
+                FindAll();
+
+            return _cache![eventHandlerName];
         }
 
         private static Type GetEventType(Type type)

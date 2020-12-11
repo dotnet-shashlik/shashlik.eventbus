@@ -5,9 +5,16 @@ namespace Shashlik.EventBus.MemoryQueue
 {
     public class MemoryEventSubscriber : IEventSubscriber
     {
-        public Task Subscribe(IMessageListener listener, CancellationToken token)
+        public MemoryEventSubscriber(MemoryQueue memoryQueue)
         {
-            InternalMemoryQueue.AddListener(listener);
+            MemoryQueue = memoryQueue;
+        }
+
+        private MemoryQueue MemoryQueue { get; }
+
+        public Task Subscribe(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken token)
+        {
+            MemoryQueue.AddListener(eventHandlerDescriptor);
             return Task.CompletedTask;
         }
     }

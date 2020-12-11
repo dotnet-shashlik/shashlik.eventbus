@@ -12,7 +12,6 @@ namespace Shashlik.EventBus
         private IEventSubscriber EventSubscriber { get; }
         private IPublishedMessageRetryProvider PublishedMessageRetryProvider { get; }
         private IReceivedMessageRetryProvider ReceivedMessageRetryProvider { get; }
-        private IMessageListenerFactory MessageListenerFactory { get; }
         private IExpiredMessageProvider ExpiredMessageProvider { get; }
         private CancellationTokenSource StopCancellationTokenSource { get; }
         public CancellationToken StopCancellationToken => StopCancellationTokenSource.Token;
@@ -23,7 +22,6 @@ namespace Shashlik.EventBus
             IEventSubscriber eventSubscriber,
             IPublishedMessageRetryProvider publishedMessageRetryProvider,
             IReceivedMessageRetryProvider receivedMessageRetryProvider,
-            IMessageListenerFactory messageListenerFactory,
             IExpiredMessageProvider expiredMessageProvider)
         {
             MessageStorageInitializer = messageStorageInitializer;
@@ -31,7 +29,6 @@ namespace Shashlik.EventBus
             EventSubscriber = eventSubscriber;
             PublishedMessageRetryProvider = publishedMessageRetryProvider;
             ReceivedMessageRetryProvider = receivedMessageRetryProvider;
-            MessageListenerFactory = messageListenerFactory;
             ExpiredMessageProvider = expiredMessageProvider;
             StopCancellationTokenSource = new CancellationTokenSource();
         }
@@ -46,10 +43,7 @@ namespace Shashlik.EventBus
 
             // 注册事件订阅
             foreach (var eventHandlerDescriptor in descriptors)
-            {
-                var listener = MessageListenerFactory.CreateMessageListener(eventHandlerDescriptor);
-                await EventSubscriber.Subscribe(listener, StopCancellationToken).ConfigureAwait(false);
-            }
+                await EventSubscriber.Subscribe(eventHandlerDescriptor, StopCancellationToken).ConfigureAwait(false);
 
             // 启动重试器
             await PublishedMessageRetryProvider.Startup(StopCancellationToken).ConfigureAwait(false);

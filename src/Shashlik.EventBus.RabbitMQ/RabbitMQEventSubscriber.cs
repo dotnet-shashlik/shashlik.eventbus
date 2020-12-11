@@ -13,11 +13,13 @@ namespace Shashlik.EventBus.RabbitMQ
     {
         public RabbitMQEventSubscriber(IOptionsMonitor<EventBusRabbitMQOptions> options,
             IRabbitMQConnection connection, ILogger<RabbitMQEventSubscriber> logger,
-            IMessageSerializer messageSerializer)
+            IMessageSerializer messageSerializer, IMessageListener messageListener)
         {
             Options = options;
+            Connection = connection;
             Logger = logger;
             MessageSerializer = messageSerializer;
+            MessageListener = messageListener;
             Channel = connection.GetChannel();
         }
 
@@ -25,18 +27,23 @@ namespace Shashlik.EventBus.RabbitMQ
         private IModel Channel { get; }
         private ILogger<RabbitMQEventSubscriber> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
+        private IMessageListener MessageListener { get; }
+        private IRabbitMQConnection Connection { get; }
 
-        public Task Subscribe(IMessageListener listener, CancellationToken cancellationToken)
+        public Task Subscribe(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken cancellationToken)
         {
             // 注册基础通信交换机,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
             // 定义队列
-            Channel.QueueDeclare(listener.Descriptor.EventHandlerName, true, false, false);
+            Channel.QueueDeclare(eventHandlerDescriptor.EventHandlerName, true, false, false);
             // 绑定队列到交换机以及routing key
-            Channel.QueueBind(listener.Descriptor.EventHandlerName, Options.CurrentValue.Exchange,
-                listener.Descriptor.EventName);
+            Channel.QueueBind(eventHandlerDescriptor.EventHandlerName, Options.CurrentValue.Exchange,
+                eventHandlerDescriptor.EventName);
 
-            var consumer = new EventingBasicConsumer(Channel);
+            var eventName = eventHandlerDescriptor.EventName;
+            var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
+
+            var consumer = Connection.CreateConsumer(eventHandlerName);
             consumer.Received += async (sender, e) =>
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -58,41 +65,36 @@ namespace Shashlik.EventBus.RabbitMQ
                     return;
                 }
 
-                if (message.EventName != listener.Descriptor.EventName)
+                if (message.EventName != eventName)
                 {
                     Logger.LogError(
-                        $"[EventBus-RabbitMQ] received invalid event name \"{message.EventName}\", expect \"{listener.Descriptor.EventName}\".");
+                        $"[EventBus-RabbitMQ] received invalid event name \"{message.EventName}\", expect \"{eventName}\".");
                     return;
                 }
 
                 Logger.LogDebug(
                     $"[EventBus-RabbitMQ] received msg: {message.ToJson()}.");
 
-                try
-                {
-                    // 处理消息
-                    await listener.OnReceive(message, cancellationToken).ConfigureAwait(false);
+                // 处理消息
+                var res = await MessageListener.OnReceive(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
+                if (res == MessageReceiveResult.Success)
                     // 一定要在消息接收处理完成后才确认ack
                     Channel.BasicAck(e.DeliveryTag, false);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex,
-                        $"[EventBus-Kafka] received msg execute OnReceive error: {message.ToJson()}.");
-                }
+                else
+                    Channel.BasicReject(e.DeliveryTag, true);
             };
 
             consumer.Registered += (sender, e) =>
             {
                 Logger.LogInformation(
-                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been registered.");
+                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been registered.");
             };
             consumer.Shutdown += (sender, e) =>
             {
                 Logger.LogWarning(
-                    $"[EventBus-RabbitMQ] event handler \"{listener.Descriptor.EventHandlerName}\" has been shutdown.");
+                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been shutdown.");
             };
-            Channel.BasicConsume(listener.Descriptor.EventHandlerName, false, consumer);
+            Channel.BasicConsume(eventHandlerName, false, consumer);
 
             return Task.CompletedTask;
         }

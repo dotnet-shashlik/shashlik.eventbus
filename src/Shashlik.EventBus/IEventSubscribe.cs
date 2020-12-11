@@ -9,10 +9,10 @@ namespace Shashlik.EventBus
     public interface IEventSubscriber
     {
         /// <summary>
-        /// 订阅事件
+        /// 注册事件订阅
         /// </summary>
-        /// <param name="listener">消息监听器</param>
+        /// <param name="descriptor"></param>
         /// <param name="token">取消token</param>
-        Task Subscribe(IMessageListener listener, CancellationToken token);
+        Task Subscribe(EventHandlerDescriptor descriptor, CancellationToken token);
     }
 }

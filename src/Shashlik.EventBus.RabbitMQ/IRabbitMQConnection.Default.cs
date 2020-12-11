@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace Shashlik.EventBus.RabbitMQ
 {
@@ -12,24 +13,32 @@ namespace Shashlik.EventBus.RabbitMQ
         {
             Options = options;
             _connection = new Lazy<IConnection>(Get);
+            _channels = new ConcurrentDictionary<int, IModel>();
+            _consumers = new ConcurrentDictionary<string, EventingBasicConsumer>();
         }
 
         private readonly Lazy<IConnection> _connection;
-        private static readonly ConcurrentDictionary<int, IModel> Channels = new ConcurrentDictionary<int, IModel>();
+        private readonly ConcurrentDictionary<int, IModel> _channels;
+        private readonly ConcurrentDictionary<string, EventingBasicConsumer> _consumers;
         private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
         private IConnection Connection => _connection.Value;
 
         public IModel GetChannel()
         {
             var id = Thread.CurrentThread.ManagedThreadId;
-            var channel = Channels.GetOrAdd(id, r => Connection.CreateModel());
+            var channel = _channels.GetOrAdd(id, r => Connection.CreateModel());
             if (channel.IsClosed)
             {
                 channel.Dispose();
-                channel = Channels[id] = Connection.CreateModel();
+                channel = _channels[id] = Connection.CreateModel();
             }
 
             return channel;
+        }
+
+        public EventingBasicConsumer CreateConsumer(string eventHandlerName)
+        {
+            return _consumers.GetOrAdd(eventHandlerName, r => new EventingBasicConsumer(GetChannel()));
         }
 
         private IConnection Get()
@@ -53,13 +62,13 @@ namespace Shashlik.EventBus.RabbitMQ
         {
             try
             {
-                foreach (var item in Channels.Values)
+                foreach (var item in _channels.Values)
                 {
                     item.Dispose();
                 }
 
                 Connection.Dispose();
-                Channels.Clear();
+                _channels.Clear();
             }
             catch
             {

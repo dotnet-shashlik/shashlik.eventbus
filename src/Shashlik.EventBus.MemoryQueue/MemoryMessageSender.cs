@@ -7,9 +7,16 @@ namespace Shashlik.EventBus.MemoryQueue
     /// </summary>
     public class MemoryMessageSender : IMessageSender
     {
+        public MemoryMessageSender(MemoryQueue memoryQueue)
+        {
+            MemoryQueue = memoryQueue;
+        }
+
+        private MemoryQueue MemoryQueue { get; }
+        
         public Task Send(MessageTransferModel message)
         {
-            InternalMemoryQueue.Send(message);
+            MemoryQueue.Send(message);
             return Task.CompletedTask;
         }
     }
