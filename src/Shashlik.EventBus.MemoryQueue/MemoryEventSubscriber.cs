@@ -33,6 +33,12 @@ namespace Shashlik.EventBus.MemoryQueue
             InternalMemoryQueue.OnReceived += msg =>
             {
                 var listeners = Listeners.GetOrDefault(msg.EventName);
+                if (listeners.IsNullOrEmpty())
+                {
+                    Logger.LogDebug($"[EventBus-Memory] received msg of {msg.EventName}, but not found associated event handlers.");
+                    return;
+                }
+
                 Parallel.ForEach(listeners, async descriptor =>
                 {
                     if (HostedStopToken.StopCancellationToken.IsCancellationRequested)
