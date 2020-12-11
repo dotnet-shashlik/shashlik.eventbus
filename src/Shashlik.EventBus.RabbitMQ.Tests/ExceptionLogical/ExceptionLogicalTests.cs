@@ -4,7 +4,7 @@ using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.MemoryStorage.Tests.ExceptionLogical
+namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
 {
     public class ExceptionLogicalTests : TestBase2
     {
@@ -20,7 +20,7 @@ namespace Shashlik.EventBus.MemoryStorage.Tests.ExceptionLogical
             await eventPublisher.PublishAsync(new ExceptionLogicalTestEvent {Name = "zhangsan"}, null);
 
             await Task.Delay(1000 * 60);
-            
+
             ExceptionMessageListener.MsgIds.Count.ShouldNotBe(1);
             ExceptionMessageListener.MsgIds.Distinct().Count().ShouldBe(1);
         }

@@ -4,7 +4,7 @@ using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.MemoryStorage.Tests.ExceptionLogical
+namespace Shashlik.EventBus.Kafka.Tests.ExceptionLogical
 {
     public class ExceptionLogicalTests : TestBase2
     {
@@ -21,7 +21,7 @@ namespace Shashlik.EventBus.MemoryStorage.Tests.ExceptionLogical
 
             await Task.Delay(1000 * 60);
             
-            ExceptionMessageListener.MsgIds.Count.ShouldNotBe(1);
+            ExceptionMessageListener.MsgIds.Count.ShouldBeGreaterThan(1);
             ExceptionMessageListener.MsgIds.Distinct().Count().ShouldBe(1);
         }
     }
