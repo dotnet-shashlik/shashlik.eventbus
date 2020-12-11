@@ -52,7 +52,7 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             var item = await MessageStorage.FindReceivedById(id, cancellationToken).ConfigureAwait(false);
             if (item is null)
-                throw new ArgumentException($"[EventBus]Not found published message of id: {id}", nameof(id));
+                throw new ArgumentException($"[EventBus]Not found received message of id: {id}", nameof(id));
             await Retry(item, cancellationToken, false).ConfigureAwait(false);
         }
 
