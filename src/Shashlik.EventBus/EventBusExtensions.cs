@@ -5,7 +5,6 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.Utils.Extensions;
 
@@ -47,8 +46,8 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IReceivedDelayEventProvider, DefaultReceivedDelayEventProvider>();
             serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
             serviceCollection.TryAddSingleton<IMessageListener, DefaultMessageListener>();
-            serviceCollection.AddSingleton<IHostedStopToken, EventBusStartup>();
-            serviceCollection.AddSingleton<IHostedService, EventBusStartup>();
+            serviceCollection.AddSingleton<IHostedStopToken, InternalHostedStopToken>();
+            serviceCollection.AddHostedService<EventBusStartup>();
 
             using var serviceProvider = serviceCollection.BuildServiceProvider();
             var eventHandlerFindProvider = serviceProvider.GetRequiredService<IEventHandlerFindProvider>();

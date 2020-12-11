@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -56,7 +57,7 @@ namespace Sample.Memory
             {
                 await Task.CompletedTask;
 
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 30000; i++)
                 {
                     if (i % 2 == 0)
                         await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null,
