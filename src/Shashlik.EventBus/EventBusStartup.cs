@@ -58,7 +58,7 @@ namespace Shashlik.EventBus
             {
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
-            }, TimeSpan.FromMinutes(1));
+            }, TimeSpan.FromSeconds(3));
         }
 
         public async Task StartAsync(CancellationToken _)

@@ -53,6 +53,12 @@ namespace Shashlik.EventBus.Kafka
                             continue;
                         }
                     }
+                    catch (OperationCanceledException)
+                    {
+                        // ReSharper disable once MethodSupportsCancellation
+                        await Task.Delay(5).ConfigureAwait(false);
+                        continue;
+                    }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex,

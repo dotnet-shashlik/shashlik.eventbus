@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -13,7 +14,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageStorage messageStorage,
             IMessageReceiveQueueProvider messageReceiveQueueProvider,
             IReceivedDelayEventProvider receivedDelayEventProvider, IEventHandlerFindProvider eventHandlerFindProvider,
-            ILogger<DefaultMessageListener> logger)
+            ILogger<DefaultMessageListener> logger, IOptions<EventBusOptions> options)
         {
             MessageSerializer = messageSerializer;
             MessageStorage = messageStorage;
@@ -21,6 +22,7 @@ namespace Shashlik.EventBus.DefaultImpl
             ReceivedDelayEventProvider = receivedDelayEventProvider;
             EventHandlerFindProvider = eventHandlerFindProvider;
             Logger = logger;
+            Options = options;
         }
 
         private IMessageSerializer MessageSerializer { get; }
@@ -29,6 +31,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IReceivedDelayEventProvider ReceivedDelayEventProvider { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
         private ILogger<DefaultMessageListener> Logger { get; }
+        private IOptions<EventBusOptions> Options { get; }
 
         public async Task<MessageReceiveResult> OnReceive(string eventHandlerName, MessageTransferModel message, CancellationToken cancellationToken)
         {
@@ -40,7 +43,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 var receiveMessageStorageModel = new MessageStorageModel
                 {
                     MsgId = message.MsgId,
-                    Environment = message.Environment,
+                    Environment = message.Environment ?? Options.Value.Environment,
                     CreateTime = now,
                     ExpireTime = null,
                     EventHandlerName = eventHandlerName,

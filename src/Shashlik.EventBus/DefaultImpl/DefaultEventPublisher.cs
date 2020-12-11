@@ -99,7 +99,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
             MessageTransferModel messageTransferModel = new MessageTransferModel
             {
-                EventName = Options.Value.Environment,
+                EventName = messageStorageModel.EventName,
                 Environment = Options.Value.Environment,
                 MsgId = messageStorageModel.MsgId,
                 MsgBody = messageStorageModel.EventBody,
