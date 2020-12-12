@@ -371,258 +371,132 @@ namespace CommonTestLogical
             (await MessageStorage.FindReceivedByIdAsync(msg10, default)).ShouldNotBeNull();
         }
 
-        public async Task GetPublishedMessagesOfNeedRetryAndLock_ScheduledTests()
+        public async Task GetPublishedMessagesOfNeedRetryAndLockTests()
         {
             var @event = new TestEvent {Name = "张三"};
-            var msg = new MessageStorageModel
+
+            Func<DateTimeOffset, string, long> addMsg = (createTime, status) =>
             {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 5,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
+                var model = new MessageStorageModel
+                {
+                    MsgId = Guid.NewGuid().ToString("n"),
+                    Environment = EventBusOptions.Environment,
+                    CreateTime = createTime,
+                    DelayAt = null,
+                    ExpireTime = null,
+                    EventHandlerName = "TestEventHandlerName1",
+                    EventName = "TestEventName1",
+                    EventBody = @event.ToJson(),
+                    EventItems = "{}",
+                    RetryCount = 0,
+                    Status = status,
+                    IsLocking = false,
+                    LockEnd = null
+                };
+
+                MessageStorage.SavePublishedAsync(model, null, default).GetAwaiter().GetResult();
+                return model.Id;
             };
 
-            var id1 = await MessageStorage.SavePublishedAsync(msg, null, default);
+            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Scheduled);
+            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Failed);
+            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Succeeded);
+            var msg4 = addMsg(DateTimeOffset.Now, MessageStatus.Failed);
 
             // 正常数据操作测试
             {
                 var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                     .EventBusOptions
                     .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list1.Any(r => r.Id == id1).ShouldBeTrue();
+                list1.Any(r => r.Id == msg1).ShouldBeTrue();
+                list1.Any(r => r.Id == msg2).ShouldBeTrue();
+                list1.Any(r => r.Id == msg3).ShouldBeFalse();
+                list1.Any(r => r.Id == msg4).ShouldBeFalse();
 
                 // 马上 再获取并锁定，必须不包含
                 var list2 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                     .EventBusOptions
                     .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list2.Any(r => r.Id == id1).ShouldBeFalse();
+                list2.Any(r => r.Id == msg1).ShouldBeFalse();
+                list2.Any(r => r.Id == msg2).ShouldBeFalse();
+                list2.Any(r => r.Id == msg3).ShouldBeFalse();
+                list2.Any(r => r.Id == msg4).ShouldBeFalse();
 
                 // 延迟6秒后，应该可以拿到数据了
                 await Task.Delay(6000);
-
-                // 马上 再获取并锁定，必须不包含
                 var list3 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                     .EventBusOptions
                     .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list3.Any(r => r.Id == id1).ShouldBeTrue();
+                list3.Any(r => r.Id == msg1).ShouldBeTrue();
+                list3.Any(r => r.Id == msg2).ShouldBeTrue();
+                list3.Any(r => r.Id == msg3).ShouldBeFalse();
+                list3.Any(r => r.Id == msg4).ShouldBeFalse();
             }
         }
 
-        public async Task GetPublishedMessagesOfNeedRetryAndLock_FailedTests()
+        public async Task GetReceivedMessagesOfNeedRetryAndLockTests()
         {
             var @event = new TestEvent {Name = "张三"};
-            var msg = new MessageStorageModel
+
+            Func<DateTimeOffset, string, long> addMsg = (createTime, status) =>
             {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 5,
-                Status = MessageStatus.Failed,
-                IsLocking = false,
-                LockEnd = null
+                var model = new MessageStorageModel
+                {
+                    MsgId = Guid.NewGuid().ToString("n"),
+                    Environment = EventBusOptions.Environment,
+                    CreateTime = createTime,
+                    DelayAt = null,
+                    ExpireTime = null,
+                    EventHandlerName = "TestEventHandlerName1",
+                    EventName = "TestEventName1",
+                    EventBody = @event.ToJson(),
+                    EventItems = "{}",
+                    RetryCount = 0,
+                    Status = status,
+                    IsLocking = false,
+                    LockEnd = null
+                };
+
+                MessageStorage.SaveReceivedAsync(model, default).GetAwaiter().GetResult();
+                return model.Id;
             };
 
-            var id1 = await MessageStorage.SavePublishedAsync(msg, null, default);
+            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Scheduled);
+            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Failed);
+            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Succeeded);
+            var msg4 = addMsg(DateTimeOffset.Now, MessageStatus.Failed);
 
-            // failed数据测试
+            // 正常数据操作测试
             {
-                var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                     .EventBusOptions
                     .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list1.Any(r => r.Id == id1).ShouldBeTrue();
+                list1.Any(r => r.Id == msg1).ShouldBeTrue();
+                list1.Any(r => r.Id == msg2).ShouldBeTrue();
+                list1.Any(r => r.Id == msg3).ShouldBeFalse();
+                list1.Any(r => r.Id == msg4).ShouldBeFalse();
 
                 // 马上 再获取并锁定，必须不包含
-                var list2 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                var list2 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                     .EventBusOptions
                     .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list2.Any(r => r.Id == id1).ShouldBeFalse();
+                list2.Any(r => r.Id == msg1).ShouldBeFalse();
+                list2.Any(r => r.Id == msg2).ShouldBeFalse();
+                list2.Any(r => r.Id == msg3).ShouldBeFalse();
+                list2.Any(r => r.Id == msg4).ShouldBeFalse();
 
                 // 延迟6秒后，应该可以拿到数据了
                 await Task.Delay(6000);
-
-                // 马上 再获取并锁定，必须不包含
-                var list3 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
+                var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                     .EventBusOptions
                     .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list3.Any(r => r.Id == id1).ShouldBeTrue();
+                list3.Any(r => r.Id == msg1).ShouldBeTrue();
+                list3.Any(r => r.Id == msg2).ShouldBeTrue();
+                list3.Any(r => r.Id == msg3).ShouldBeFalse();
+                list3.Any(r => r.Id == msg4).ShouldBeFalse();
             }
         }
 
-        public async Task GetPublishedMessagesOfNeedRetryAndLock_SuccessTests()
-        {
-            var @event = new TestEvent {Name = "张三"};
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 5,
-                Status = MessageStatus.Succeeded,
-                IsLocking = false,
-                LockEnd = null
-            };
-
-            var id1 = await MessageStorage.SavePublishedAsync(msg, null, default);
-
-            // 成功的数据永远不应该获取到
-            {
-                msg.Status = MessageStatus.Succeeded;
-                msg.LockEnd = null;
-                msg.IsLocking = false;
-                msg.CreateTime = DateTimeOffset.Now;
-
-                var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list1.Any(r => r.Id == id1).ShouldBeFalse();
-
-                await Task.Delay(6000);
-                // 马上 再获取并锁定，必须不包含
-                var list3 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list3.Any(r => r.Id == id1).ShouldBeFalse();
-            }
-        }
-
-        public async Task GetReceivedMessagesOfNeedRetryAndLock_ScheduledTests()
-        {
-            var @event = new TestEvent {Name = "张三"};
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 5,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
-
-            var id1 = await MessageStorage.SaveReceivedAsync(msg, default);
-            // 正常锁定
-            var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions.RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list1.Any(r => r.Id == id1).ShouldBeTrue();
-
-            // 马上 再获取并锁定，必须不包含
-            var list2 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions
-                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list2.Any(r => r.Id == id1).ShouldBeFalse();
-
-            // 延迟6秒后，应该可以拿到数据了
-            await Task.Delay(6000);
-
-            var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions.RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list3.Any(r => r.Id == id1).ShouldBeTrue();
-        }
-
-        public async Task GetReceivedMessagesOfNeedRetryAndLock_FailedTests()
-        {
-            var @event = new TestEvent {Name = "张三"};
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 5,
-                Status = MessageStatus.Failed,
-                IsLocking = false,
-                LockEnd = null
-            };
-
-            var id1 = await MessageStorage.SaveReceivedAsync(msg, default);
-            var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions
-                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list1.Any(r => r.Id == id1).ShouldBeTrue();
-
-            // 马上 再获取并锁定，必须不包含
-            var list2 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions
-                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list2.Any(r => r.Id == id1).ShouldBeFalse();
-
-            // 延迟6秒后，应该可以拿到数据了
-            await Task.Delay(6000);
-
-            // 马上 再获取并锁定，必须不包含
-            var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions
-                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list3.Any(r => r.Id == id1).ShouldBeTrue();
-        }
-
-        public async Task GetReceivedMessagesOfNeedRetryAndLock_SuccessTests()
-        {
-            var @event = new TestEvent {Name = "张三"};
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10),
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 5,
-                Status = MessageStatus.Succeeded,
-                IsLocking = false,
-                LockEnd = null
-            };
-
-            var id1 = await MessageStorage.SaveReceivedAsync(msg, default);
-            var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions
-                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list1.Any(r => r.Id == id1).ShouldBeFalse();
-
-            // 延迟6秒后，应该可以拿到数据了
-            await Task.Delay(6000);
-
-            // 马上 再获取并锁定，必须不包含
-            var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                .EventBusOptions
-                .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-            list3.Any(r => r.Id == id1).ShouldBeFalse();
-        }
 
         public async Task QueryPublishedTests()
         {

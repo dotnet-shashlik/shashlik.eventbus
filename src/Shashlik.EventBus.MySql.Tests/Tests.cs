@@ -68,40 +68,17 @@ namespace Shashlik.EventBus.MySql.Tests
         }
 
         [Fact]
-        public async Task GetPublishedMessagesOfNeedRetryAndLock_ScheduledTests()
+        public async Task GetPublishedMessagesOfNeedRetryAndLockTests()
         {
-            await StorageTests.GetPublishedMessagesOfNeedRetryAndLock_ScheduledTests();
+            await StorageTests.GetPublishedMessagesOfNeedRetryAndLockTests();
         }
 
         [Fact]
-        public async Task GetPublishedMessagesOfNeedRetryAndLock_FailedTests()
+        public async Task GetReceivedMessagesOfNeedRetryAndLockTests()
         {
-            await StorageTests.GetPublishedMessagesOfNeedRetryAndLock_FailedTests();
+            await StorageTests.GetReceivedMessagesOfNeedRetryAndLockTests();
         }
 
-        [Fact]
-        public async Task GetPublishedMessagesOfNeedRetryAndLock_SuccessTests()
-        {
-            await StorageTests.GetPublishedMessagesOfNeedRetryAndLock_SuccessTests();
-        }
-
-        [Fact]
-        public async Task GetReceivedMessagesOfNeedRetryAndLock_ScheduledTests()
-        {
-            await StorageTests.GetReceivedMessagesOfNeedRetryAndLock_ScheduledTests();
-        }
-
-        [Fact]
-        public async Task GetReceivedMessagesOfNeedRetryAndLock_FailedTests()
-        {
-            await StorageTests.GetReceivedMessagesOfNeedRetryAndLock_FailedTests();
-        }
-
-        [Fact]
-        public async Task GetReceivedMessagesOfNeedRetryAndLock_SuccessTests()
-        {
-            await StorageTests.GetReceivedMessagesOfNeedRetryAndLock_SuccessTests();
-        }
 
         [Fact]
         public async Task QueryPublishedTests()
