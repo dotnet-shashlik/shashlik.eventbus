@@ -1,12 +1,13 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Shashlik.EventBus;
 
-namespace Shashlik.EventBus.Kafka.Tests.ExceptionLogical
+namespace CommonTestLogical.MsgWithoutLosing
 {
-    public class ExceptionMessageListener : IMessageListener
+    public class MsgWithoutLosingListener : IMessageListener
     {
-        public ExceptionMessageListener(IMessageSerializer messageSerializer)
+        public MsgWithoutLosingListener(IMessageSerializer messageSerializer)
         {
             MessageSerializer = messageSerializer;
         }
@@ -18,8 +19,8 @@ namespace Shashlik.EventBus.Kafka.Tests.ExceptionLogical
         public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel messageTransferModel,
             CancellationToken cancellationToken)
         {
-            var @event = MessageSerializer.Deserialize<ExceptionLogicalTestEvent>(messageTransferModel.MsgBody);
-            if (@event.Id != ExceptionLogicalTestEvent._Id)
+            var @event = MessageSerializer.Deserialize<MsgWithoutLosingTestEvent>(messageTransferModel.MsgBody);
+            if (@event.Id != MsgWithoutLosingTestEvent._Id)
                 return MessageReceiveResult.Success;
 
             MsgIds.Add(messageTransferModel.MsgId);

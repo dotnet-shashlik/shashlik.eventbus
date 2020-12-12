@@ -7,9 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Kafka.Tests.ExceptionLogical
+namespace Shashlik.EventBus.Kafka.Tests.MsgWithoutLosing
 {
-    public class TestWebApplicationFactory2<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
+    public class MsgWithoutLosingWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
     {
         public ITestOutputHelper Output { get; set; }
 

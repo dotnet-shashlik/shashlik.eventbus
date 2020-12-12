@@ -15,10 +15,7 @@ namespace Shashlik.EventBus.Kafka.Tests.Efcore.MySqlMigrations
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(maxLength: 8, nullable: false)
                 },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Users", x => x.Id);
-                });
+                constraints: table => { table.PrimaryKey("PK_Users", x => x.Id); });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
