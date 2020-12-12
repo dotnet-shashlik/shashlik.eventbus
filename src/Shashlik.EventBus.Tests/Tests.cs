@@ -308,8 +308,7 @@ namespace Shashlik.EventBus.Tests
             {
                 var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
                 var messageStorage = GetService<IMessageStorage>();
-                var list = await messageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, options.RetryIntervalSeconds,
-                    options.RetryFailedMax, options.Environment, 100, default);
+                var list = await messageStorage.SearchReceived(null, null, null, 0, 100, default);
                 var storageModel = list.First(r => r.EventHandlerName.StartsWith(nameof(TestExceptionEventHandler)));
                 var retryCount = storageModel.RetryCount;
                 await receivedMessageRetryProvider.RetryAsync(storageModel.Id, default);
