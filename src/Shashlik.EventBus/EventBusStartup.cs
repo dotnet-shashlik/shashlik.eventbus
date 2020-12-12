@@ -37,21 +37,21 @@ namespace Shashlik.EventBus
         public async Task Build()
         {
             // 先执行存储设施初始化
-            await MessageStorageInitializer.Initialize(HostedStopToken.StopCancellationToken).ConfigureAwait(false);
+            await MessageStorageInitializer.InitializeAsync(HostedStopToken.StopCancellationToken).ConfigureAwait(false);
 
             // 加载所有的事件处理类
             var descriptors = EventHandlerFindProvider.FindAll();
 
             // 注册事件订阅
             foreach (var eventHandlerDescriptor in descriptors)
-                await EventSubscriber.Subscribe(eventHandlerDescriptor, HostedStopToken.StopCancellationToken).ConfigureAwait(false);
+                await EventSubscriber.SubscribeAsync(eventHandlerDescriptor, HostedStopToken.StopCancellationToken).ConfigureAwait(false);
 
             // 启动发送消息重试器
-            await PublishedMessageRetryProvider.Startup(HostedStopToken.StopCancellationToken).ConfigureAwait(false);
+            await PublishedMessageRetryProvider.StartupAsync(HostedStopToken.StopCancellationToken).ConfigureAwait(false);
             // 启动接收消息重试器
-            await ReceivedMessageRetryProvider.Startup(HostedStopToken.StopCancellationToken).ConfigureAwait(false);
+            await ReceivedMessageRetryProvider.StartupAsync(HostedStopToken.StopCancellationToken).ConfigureAwait(false);
             // 启动过期消息删除
-            await ExpiredMessageProvider.DoDelete(HostedStopToken.StopCancellationToken);
+            await ExpiredMessageProvider.DoDeleteAsync(HostedStopToken.StopCancellationToken);
 
             // 每分钟执行一次垃圾回收，考虑到大量的异步逻辑可能带来的对象释放问题
             TimerHelper.SetInterval(GC.Collect, TimeSpan.FromMinutes(1));

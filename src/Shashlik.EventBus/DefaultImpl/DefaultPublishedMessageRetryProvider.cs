@@ -30,7 +30,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private ILogger<DefaultPublishedMessageRetryProvider> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public async Task Startup(CancellationToken cancellationToken)
+        public async Task StartupAsync(CancellationToken cancellationToken)
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
@@ -41,9 +41,9 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task Retry(long id, CancellationToken cancellationToken)
+        public async Task RetryAsync(long id, CancellationToken cancellationToken)
         {
-            var item = await MessageStorage.FindPublishedById(id, cancellationToken).ConfigureAwait(false);
+            var item = await MessageStorage.FindPublishedByIdAsync(id, cancellationToken).ConfigureAwait(false);
             if (item is null)
                 throw new ArgumentException($"[EventBus]Not found published message of id: {id}", nameof(id));
 
@@ -66,8 +66,8 @@ namespace Shashlik.EventBus.DefaultImpl
 
             try
             {
-                await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
-                await MessageStorage.UpdatePublished(
+                await MessageSender.SendAsync(messageTransferModel).ConfigureAwait(false);
+                await MessageStorage.UpdatePublishedAsync(
                         item.Id,
                         MessageStatus.Succeeded,
                         item.RetryCount + 1,
@@ -82,7 +82,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 try
                 {
                     // 失败的数据不过期
-                    await MessageStorage.UpdatePublished(
+                    await MessageStorage.UpdatePublishedAsync(
                             item.Id,
                             MessageStatus.Failed,
                             item.RetryCount + 1,
@@ -101,7 +101,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private async Task Retry(CancellationToken cancellationToken)
         {
             // 一次最多读取200条数据
-            var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(
+            var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(
                 Options.Value.RetryLimitCount,
                 Options.Value.StartRetryAfterSeconds,
                 Options.Value.RetryFailedMax,

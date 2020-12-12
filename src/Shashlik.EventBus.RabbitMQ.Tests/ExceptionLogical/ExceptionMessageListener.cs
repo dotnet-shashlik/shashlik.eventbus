@@ -15,7 +15,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
         private IMessageSerializer MessageSerializer { get; }
 
 
-        public async Task<MessageReceiveResult> OnReceive(string eventHandlerName, MessageTransferModel messageTransferModel,
+        public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel messageTransferModel,
             CancellationToken cancellationToken)
         {
             var @event = MessageSerializer.Deserialize<ExceptionLogicalTestEvent>(messageTransferModel.MsgBody);

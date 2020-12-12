@@ -13,7 +13,7 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task Startup(CancellationToken cancellationToken);
+        Task StartupAsync(CancellationToken cancellationToken);
 
         /// <summary>
         /// 重试消息发送
@@ -21,6 +21,6 @@ namespace Shashlik.EventBus
         /// <param name="id">存储id</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task Retry(long id, CancellationToken cancellationToken);
+        Task RetryAsync(long id, CancellationToken cancellationToken);
     }
 }

@@ -49,7 +49,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task Invoke(MessageStorageModel message, IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            if (await MessageStorage.TryLockReceived(
+            if (await MessageStorage.TryLockReceivedAsync(
                 message.Id,
                 DateTimeOffset.Now.AddSeconds(Options.Value.RetryIntervalSeconds),
                 cancellationToken).ConfigureAwait(false))

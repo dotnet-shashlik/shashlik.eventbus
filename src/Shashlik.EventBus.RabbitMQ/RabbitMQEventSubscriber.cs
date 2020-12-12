@@ -30,7 +30,7 @@ namespace Shashlik.EventBus.RabbitMQ
         private IMessageListener MessageListener { get; }
         private IRabbitMQConnection Connection { get; }
 
-        public Task Subscribe(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken cancellationToken)
+        public Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken cancellationToken)
         {
             // 注册基础通信交换机,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
@@ -76,7 +76,7 @@ namespace Shashlik.EventBus.RabbitMQ
                     $"[EventBus-RabbitMQ] received msg: {message.ToJson()}.");
 
                 // 处理消息
-                var res = await MessageListener.OnReceive(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
+                var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
                 if (res == MessageReceiveResult.Success)
                     // 一定要在消息接收处理完成后才确认ack
                     Channel.BasicAck(e.DeliveryTag, false);

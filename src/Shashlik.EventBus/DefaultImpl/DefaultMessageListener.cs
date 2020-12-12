@@ -33,7 +33,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private ILogger<DefaultMessageListener> Logger { get; }
         private IOptions<EventBusOptions> Options { get; }
 
-        public async Task<MessageReceiveResult> OnReceive(string eventHandlerName, MessageTransferModel message, CancellationToken cancellationToken)
+        public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel message, CancellationToken cancellationToken)
         {
             try
             {
@@ -63,10 +63,10 @@ namespace Shashlik.EventBus.DefaultImpl
                     DelayAt = message.DelayAt
                 };
 
-                var existsModel = await MessageStorage.FindReceivedByMsgId(message.MsgId, descriptor, cancellationToken).ConfigureAwait(false);
+                var existsModel = await MessageStorage.FindReceivedByMsgIdAsync(message.MsgId, descriptor, cancellationToken).ConfigureAwait(false);
                 // 保存接收到的消息
                 if (existsModel is null)
-                    await MessageStorage.SaveReceived(receiveMessageStorageModel, cancellationToken).ConfigureAwait(false);
+                    await MessageStorage.SaveReceivedAsync(receiveMessageStorageModel, cancellationToken).ConfigureAwait(false);
                 else
                     receiveMessageStorageModel.Id = existsModel.Id;
 

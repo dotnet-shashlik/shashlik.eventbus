@@ -13,6 +13,6 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <param name="descriptor"></param>
         /// <param name="token">取消token</param>
-        Task Subscribe(EventHandlerDescriptor descriptor, CancellationToken token);
+        Task SubscribeAsync(EventHandlerDescriptor descriptor, CancellationToken token);
     }
 }

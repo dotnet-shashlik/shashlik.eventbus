@@ -12,6 +12,6 @@ namespace Shashlik.EventBus
         /// 执行存储设施初始化
         /// </summary>
         /// <returns></returns>
-        Task Initialize(CancellationToken cancellationToken = default);
+        Task InitializeAsync(CancellationToken cancellationToken = default);
     }
 }

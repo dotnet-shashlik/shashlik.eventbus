@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.SqlServer
         private IOptionsMonitor<EventBusSqlServerOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
 
-        public async Task Initialize(CancellationToken cancellationToken = default)
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             var sql = $@"
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '{Options.CurrentValue.Schema}')

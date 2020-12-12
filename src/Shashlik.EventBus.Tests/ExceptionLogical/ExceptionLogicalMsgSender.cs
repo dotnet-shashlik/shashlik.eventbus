@@ -4,7 +4,7 @@ namespace Shashlik.EventBus.Tests.ExceptionLogical
 {
     public class ExceptionLogicalMsgSender : IMessageSender
     {
-        public Task Send(MessageTransferModel message)
+        public Task SendAsync(MessageTransferModel message)
         {
             throw new System.NotImplementedException();
         }

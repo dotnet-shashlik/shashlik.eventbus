@@ -44,10 +44,10 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SavePublished(msg, null, default);
+            var id = await MessageStorage.SavePublishedAsync(msg, null, default);
             msg.Id.ShouldBe(id);
 
-            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg!.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
             dbMsg.EventHandlerName.ShouldBeNullOrWhiteSpace();
@@ -81,22 +81,22 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
             };
 
             var transactionContext = DbContext.GetTransactionContext();
-            var id = await MessageStorage.SavePublished(msg, transactionContext, default);
+            var id = await MessageStorage.SavePublishedAsync(msg, transactionContext, default);
             await DbContext.SaveChangesAsync();
 
             var begin = DateTimeOffset.Now;
             while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
             {
                 // 20秒内不提交事务， 消息就应该是未提交
-                (await MessageStorage.TransactionIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
                 await Task.Delay(300);
             }
 
             await tran.CommitAsync();
-            (await MessageStorage.TransactionIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeTrue();
+            (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeTrue();
 
             msg.Id.ShouldBe(id);
-            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg!.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
             dbMsg.EventHandlerName.ShouldBeNullOrWhiteSpace();
@@ -127,20 +127,20 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 LockEnd = null
             };
             var transactionContext = new RelationDbStorageTransactionContext(tran.GetDbTransaction());
-            var id = await MessageStorage.SavePublished(msg, transactionContext, default);
+            var id = await MessageStorage.SavePublishedAsync(msg, transactionContext, default);
 
             var begin = DateTimeOffset.Now;
             while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
             {
                 // 20秒内不提交事务， 消息就应该是未提交
-                (await MessageStorage.TransactionIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
                 await Task.Delay(300);
             }
 
             await tran.RollbackAsync();
-            (await MessageStorage.TransactionIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+            (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
 
-            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg.ShouldBeNull();
         }
 
@@ -168,20 +168,20 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 LockEnd = null
             };
             var transactionContext = new RelationDbStorageTransactionContext(tran.GetDbTransaction());
-            var id = await MessageStorage.SavePublished(msg, transactionContext, default);
+            var id = await MessageStorage.SavePublishedAsync(msg, transactionContext, default);
 
             var begin = DateTimeOffset.Now;
             while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
             {
                 // 20秒内不提交事务， 消息就应该是未提交
-                (await MessageStorage.TransactionIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
                 await Task.Delay(300);
             }
 
             await tran.DisposeAsync();
-            (await MessageStorage.TransactionIsCommitted(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+            (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
 
-            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg.ShouldBeNull();
         }
 
@@ -205,10 +205,10 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SaveReceived(msg, default);
+            var id = await MessageStorage.SaveReceivedAsync(msg, default);
             msg.Id.ShouldBe(id);
 
-            (await MessageStorage.FindReceivedByMsgId(msg.MsgId, new EventHandlerDescriptor
+            (await MessageStorage.FindReceivedByMsgIdAsync(msg.MsgId, new EventHandlerDescriptor
             {
                 EventHandlerName = "TestEventHandlerName1"
             }, default))!.Id.ShouldBe(id);
@@ -234,17 +234,17 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SaveReceived(msg, default);
+            var id = await MessageStorage.SaveReceivedAsync(msg, default);
             msg.Id.ShouldBe(id);
 
             // 锁5秒
-            (await MessageStorage.TryLockReceived(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeTrue();
+            (await MessageStorage.TryLockReceivedAsync(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeTrue();
             // 再锁失败
-            (await MessageStorage.TryLockReceived(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeFalse();
+            (await MessageStorage.TryLockReceivedAsync(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeFalse();
 
             // 6秒后再锁成功
             await Task.Delay(6000);
-            (await MessageStorage.TryLockReceived(id, DateTimeOffset.Now.AddSeconds(6), default)).ShouldBeTrue();
+            (await MessageStorage.TryLockReceivedAsync(id, DateTimeOffset.Now.AddSeconds(6), default)).ShouldBeTrue();
         }
 
         [Fact]
@@ -267,13 +267,13 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SavePublished(msg, null, default);
+            var id = await MessageStorage.SavePublishedAsync(msg, null, default);
             msg.Id.ShouldBe(id);
 
             var expireAt = DateTimeOffset.Now.AddHours(1);
-            await MessageStorage.UpdatePublished(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
+            await MessageStorage.UpdatePublishedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
 
-            var dbMsg = await MessageStorage.FindPublishedByMsgId(msg.MsgId, default);
+            var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg!.RetryCount.ShouldBe(1);
             dbMsg!.Status.ShouldBe(MessageStatus.Succeeded);
             dbMsg.ExpireTime!.Value.GetLongDate().ShouldBe(expireAt.GetLongDate());
@@ -299,13 +299,13 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id = await MessageStorage.SaveReceived(msg, default);
+            var id = await MessageStorage.SaveReceivedAsync(msg, default);
             msg.Id.ShouldBe(id);
 
             var expireAt = DateTimeOffset.Now.AddHours(1);
-            await MessageStorage.UpdateReceived(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
+            await MessageStorage.UpdateReceivedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
 
-            var dbMsg = await MessageStorage.FindReceivedByMsgId(msg.MsgId, new EventHandlerDescriptor
+            var dbMsg = await MessageStorage.FindReceivedByMsgIdAsync(msg.MsgId, new EventHandlerDescriptor
             {
                 EventHandlerName = msg.EventHandlerName
             }, default);
@@ -350,13 +350,13 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 IsLocking = false,
                 LockEnd = null
             };
-            var id1 = await MessageStorage.SavePublished(msg1, null, default);
-            var id2 = await MessageStorage.SaveReceived(msg2, default);
+            var id1 = await MessageStorage.SavePublishedAsync(msg1, null, default);
+            var id2 = await MessageStorage.SaveReceivedAsync(msg2, default);
 
-            await MessageStorage.DeleteExpires(default);
-            var dbMsg1 = await MessageStorage.FindPublishedByMsgId(msg1.MsgId, default);
+            await MessageStorage.DeleteExpiresAsync(default);
+            var dbMsg1 = await MessageStorage.FindPublishedByMsgIdAsync(msg1.MsgId, default);
             dbMsg1.ShouldBeNull();
-            var dbMsg2 = await MessageStorage.FindReceivedByMsgId(msg2.MsgId, new EventHandlerDescriptor
+            var dbMsg2 = await MessageStorage.FindReceivedByMsgIdAsync(msg2.MsgId, new EventHandlerDescriptor
             {
                 EventHandlerName = msg1.EventHandlerName
             }, default);
@@ -384,14 +384,14 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 LockEnd = null
             };
 
-            var id1 = await MessageStorage.SavePublished(msg, null, default);
-            var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+            var id1 = await MessageStorage.SavePublishedAsync(msg, null, default);
+            var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                 .EventBusOptions
                 .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
             list1.Any(r => r.Id == id1).ShouldBeTrue();
 
             // 马上 再获取并锁定，必须不包含
-            var list2 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+            var list2 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                 .EventBusOptions
                 .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
             list2.Any(r => r.Id == id1).ShouldBeFalse();
@@ -400,7 +400,7 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
             await Task.Delay(6000);
 
             // 马上 再获取并锁定，必须不包含
-            var list3 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+            var list3 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                 .EventBusOptions
                 .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
             list3.Any(r => r.Id == id1).ShouldBeTrue();
@@ -427,14 +427,14 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 LockEnd = null
             };
 
-            var id1 = await MessageStorage.SaveReceived(msg, default);
-            var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+            var id1 = await MessageStorage.SaveReceivedAsync(msg, default);
+            var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                 .EventBusOptions
                 .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
             list1.Any(r => r.Id == id1).ShouldBeTrue();
 
             // 马上 再获取并锁定，必须不包含
-            var list2 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+            var list2 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                 .EventBusOptions
                 .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
             list2.Any(r => r.Id == id1).ShouldBeFalse();
@@ -443,7 +443,7 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
             await Task.Delay(6000);
 
             // 马上 再获取并锁定，必须不包含
-            var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, this.EventBusOptions.StartRetryAfterSeconds, this
+            var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
                 .EventBusOptions
                 .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
             list3.Any(r => r.Id == id1).ShouldBeTrue();
@@ -470,31 +470,31 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 LockEnd = null
             };
 
-            var id = await MessageStorage.SavePublished(msg, null, default);
-            var dbMsg = await MessageStorage.FindPublishedById(id, default);
+            var id = await MessageStorage.SavePublishedAsync(msg, null, default);
+            var dbMsg = await MessageStorage.FindPublishedByIdAsync(id, default);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            var list = await MessageStorage.SearchPublished(msg.EventName, msg.Status, 0, 100, default);
+            var list = await MessageStorage.SearchPublishedAsync(msg.EventName, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchPublished(string.Empty, msg.Status, 0, 100, default);
+            list = await MessageStorage.SearchPublishedAsync(string.Empty, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchPublished(string.Empty, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchPublishedAsync(string.Empty, string.Empty, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchPublished(msg.EventName, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchPublishedAsync(msg.EventName, string.Empty, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
@@ -522,8 +522,8 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                 LockEnd = null
             };
 
-            var id = await MessageStorage.SaveReceived(msg, default);
-            var dbMsg = await MessageStorage.FindReceivedById(id, default);
+            var id = await MessageStorage.SaveReceivedAsync(msg, default);
+            var dbMsg = await MessageStorage.FindReceivedByIdAsync(id, default);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);

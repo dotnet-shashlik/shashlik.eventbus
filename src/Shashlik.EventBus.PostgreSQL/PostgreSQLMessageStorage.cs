@@ -29,7 +29,7 @@ namespace Shashlik.EventBus.PostgreSQL
         private IConnectionString ConnectionString { get; }
         private ILogger<PostgreSQLMessageStorage> Logger { get; }
 
-        public async ValueTask<bool> TransactionIsCommitted(string msgId, ITransactionContext? transactionContext,
+        public async ValueTask<bool> TransactionIsCommittedAsync(string msgId, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             if (transactionContext != null)
@@ -56,7 +56,7 @@ namespace Shashlik.EventBus.PostgreSQL
             return count > 0;
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByMsgId(string msgId,
+        public async Task<MessageStorageModel?> FindPublishedByMsgIdAsync(string msgId,
             CancellationToken cancellationToken)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\"='{msgId}';";
@@ -68,7 +68,7 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindPublishedById(long id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByIdAsync(long id, CancellationToken cancellationToken)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"id\"={id};";
 
@@ -78,7 +78,7 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByMsgId(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
+        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken = default)
         {
             var sql =
@@ -91,7 +91,7 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedById(long id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedByIdAsync(long id, CancellationToken cancellationToken)
         {
             var sql =
                 $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE \"id\"={id};";
@@ -103,7 +103,7 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<List<MessageStorageModel>> SearchPublished(string eventName, string status, int skip, int take,
+        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string eventName, string status, int skip, int take,
             CancellationToken cancellationToken)
         {
             var where = new StringBuilder();
@@ -167,7 +167,7 @@ LIMIT {take} OFFSET {skip};
                 .ToList();
         }
 
-        public async Task<long> SavePublished(MessageStorageModel message, ITransactionContext? transactionContext,
+        public async Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -201,7 +201,7 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
             return longId;
         }
 
-        public async Task<long> SaveReceived(MessageStorageModel message, CancellationToken cancellationToken = default)
+        public async Task<long> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken = default)
         {
             var sql = $@"
 INSERT INTO {Options.CurrentValue.FullReceivedTableName}
@@ -236,7 +236,7 @@ VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @even
             return longId;
         }
 
-        public async Task UpdatePublished(long id, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdatePublishedAsync(long id, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -249,7 +249,7 @@ WHERE ""id"" = {id}
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task UpdateReceived(long id, string status, int retryCount,
+        public async Task UpdateReceivedAsync(long id, string status, int retryCount,
             DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
@@ -262,7 +262,7 @@ WHERE ""id"" = {id}
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockReceived(long id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -286,7 +286,7 @@ WHERE ""id"" = {id} AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
             }
         }
 
-        public async Task DeleteExpires(CancellationToken cancellationToken = default)
+        public async Task DeleteExpiresAsync(CancellationToken cancellationToken = default)
         {
             var now = DateTime.Now.GetLongDate();
             var sql = $@"
@@ -296,7 +296,7 @@ DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE ""expireTime"" > 
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAndLock(int count,
+        public async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAndLockAsync(int count,
             int delayRetrySecond, int maxFailedRetryCount,
             string environment, int lockSecond, CancellationToken cancellationToken = default)
         {
@@ -340,7 +340,7 @@ WHERE ""id"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong});
             return rows != list.Count ? new List<MessageStorageModel>() : list;
         }
 
-        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLock(int count,
+        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLockAsync(int count,
             int delayRetrySecond, int maxFailedRetryCount, string environment,
             int lockSecond, CancellationToken cancellationToken = default)
         {

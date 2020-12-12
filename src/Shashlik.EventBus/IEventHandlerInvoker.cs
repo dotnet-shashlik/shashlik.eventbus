@@ -14,7 +14,7 @@ namespace Shashlik.EventBus
         /// <param name="messageStorageModel">消息存储模型</param>
         /// <param name="items">附加数据</param>
         /// <param name="eventHandlerDescriptor">事件处理描述器</param>
-        Task Invoke(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
+        Task InvokeAsync(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor eventHandlerDescriptor);
     }
 }

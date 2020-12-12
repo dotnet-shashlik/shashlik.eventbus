@@ -28,7 +28,7 @@ namespace Shashlik.EventBus.RabbitMQ
         private ILogger<RabbitMQMessageSender> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public async Task Send(MessageTransferModel message)
+        public async Task SendAsync(MessageTransferModel message)
         {
             // 交换机定义,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);

@@ -25,7 +25,7 @@ namespace Shashlik.EventBus.MemoryQueue
             new ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>>();
 
 
-        public Task Subscribe(EventHandlerDescriptor descriptor, CancellationToken token)
+        public Task SubscribeAsync(EventHandlerDescriptor descriptor, CancellationToken token)
         {
             var list = Listeners.GetOrAdd(descriptor.EventName, new ConcurrentBag<EventHandlerDescriptor>());
             list.Add(descriptor);
@@ -51,7 +51,7 @@ namespace Shashlik.EventBus.MemoryQueue
                     Logger.LogDebug($"[EventBus-Memory: {descriptor.EventHandlerName}] received msg: {msg.ToJson()}.");
 
                     // 处理消息
-                    var res = await MessageListener.OnReceive(descriptor.EventHandlerName, msg, HostedStopToken.StopCancellationToken)
+                    var res = await MessageListener.OnReceiveAsync(descriptor.EventHandlerName, msg, HostedStopToken.StopCancellationToken)
                         .ConfigureAwait(false);
                     if (res != MessageReceiveResult.Success)
                         InternalMemoryQueue.Send(msg);

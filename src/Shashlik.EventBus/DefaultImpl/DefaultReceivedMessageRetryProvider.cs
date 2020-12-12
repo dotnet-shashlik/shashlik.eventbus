@@ -35,7 +35,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventHandlerInvoker EventHandlerInvoker { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
 
-        public async Task Startup(CancellationToken cancellationToken)
+        public async Task StartupAsync(CancellationToken cancellationToken)
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
@@ -46,9 +46,9 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task Retry(long id, CancellationToken cancellationToken)
+        public async Task RetryAsync(long id, CancellationToken cancellationToken)
         {
-            var item = await MessageStorage.FindReceivedById(id, cancellationToken).ConfigureAwait(false);
+            var item = await MessageStorage.FindReceivedByIdAsync(id, cancellationToken).ConfigureAwait(false);
             if (item is null)
                 throw new ArgumentException($"[EventBus]Not found received message of id: {id}", nameof(id));
             await Retry(item, cancellationToken, false).ConfigureAwait(false);
@@ -71,8 +71,8 @@ namespace Shashlik.EventBus.DefaultImpl
                 var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems);
                 Logger.LogDebug(
                     $"[EventBus]Begin execute event handler, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}.");
-                await EventHandlerInvoker.Invoke(item, items, descriptor).ConfigureAwait(false);
-                await MessageStorage.UpdateReceived(
+                await EventHandlerInvoker.InvokeAsync(item, items, descriptor).ConfigureAwait(false);
+                await MessageStorage.UpdateReceivedAsync(
                         item.Id,
                         MessageStatus.Succeeded,
                         item.RetryCount + 1,
@@ -90,7 +90,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 try
                 {
                     // 失败的数据不过期
-                    await MessageStorage.UpdateReceived(
+                    await MessageStorage.UpdateReceivedAsync(
                             item.Id,
                             MessageStatus.Failed,
                             item.RetryCount + 1,
@@ -108,7 +108,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private async Task Retry(CancellationToken cancellationToken)
         {
             // 一次最多读取100条数据
-            var messages = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLock(
+            var messages = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(
                 Options.Value.RetryLimitCount,
                 Options.Value.StartRetryAfterSeconds,
                 Options.Value.RetryFailedMax,

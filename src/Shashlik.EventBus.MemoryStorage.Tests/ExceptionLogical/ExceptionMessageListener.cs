@@ -8,7 +8,7 @@ namespace Shashlik.EventBus.MemoryStorage.Tests.ExceptionLogical
     {
         public static ConcurrentBag<string> MsgIds { get; } = new ConcurrentBag<string>();
 
-        public async Task<MessageReceiveResult> OnReceive(string eventHandlerName, MessageTransferModel messageTransferModel,
+        public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel messageTransferModel,
             CancellationToken cancellationToken)
         {
             MsgIds.Add(messageTransferModel.MsgId);

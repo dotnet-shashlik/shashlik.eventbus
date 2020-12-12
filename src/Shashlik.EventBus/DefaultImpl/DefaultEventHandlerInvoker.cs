@@ -19,7 +19,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IServiceScopeFactory ServiceScopeFactory { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public async Task Invoke(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
+        public async Task InvokeAsync(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor eventHandlerDescriptor)
         {
             using var scope = ServiceScopeFactory.CreateScope();

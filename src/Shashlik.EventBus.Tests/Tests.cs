@@ -79,7 +79,7 @@ namespace Shashlik.EventBus.Tests
             var json = messageSerializer.Serialize(@event);
 
             {
-                Should.Throw<InvalidCastException>(() => invoker.Invoke(new MessageStorageModel
+                Should.Throw<InvalidCastException>(() => invoker.InvokeAsync(new MessageStorageModel
                 {
                     MsgId = Guid.NewGuid().ToString("n"),
                     Environment = Env,
@@ -97,7 +97,7 @@ namespace Shashlik.EventBus.Tests
                 }, new Dictionary<string, string>(), testEventHandlerDescriptor));
             }
 
-            invoker.Invoke(new MessageStorageModel
+            invoker.InvokeAsync(new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Env,
@@ -308,11 +308,11 @@ namespace Shashlik.EventBus.Tests
             {
                 var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
                 var messageStorage = GetService<IMessageStorage>();
-                var list = await messageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, options.RetryIntervalSeconds,
+                var list = await messageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, options.RetryIntervalSeconds,
                     options.RetryFailedMax, options.Environment, 100, default);
                 var storageModel = list.First(r => r.EventHandlerName.StartsWith(nameof(TestExceptionEventHandler)));
                 var retryCount = storageModel.RetryCount;
-                await receivedMessageRetryProvider.Retry(storageModel.Id, default);
+                await receivedMessageRetryProvider.RetryAsync(storageModel.Id, default);
                 storageModel.RetryCount.ShouldBe(retryCount + 1);
             }
         }

@@ -12,6 +12,6 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <param name="message">消息传输模型</param>
         /// <returns></returns>
-        Task Send(MessageTransferModel message);
+        Task SendAsync(MessageTransferModel message);
     }
 }

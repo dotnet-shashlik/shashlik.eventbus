@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.PostgreSQL
         private IOptionsMonitor<EventBusPostgreSQLOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
 
-        public async Task Initialize(CancellationToken cancellationToken = default)
+        public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             // 9.2及以下不支持CREATE SCHEMA IF NOT EXISTS，只能使用public
             var sql = $@"

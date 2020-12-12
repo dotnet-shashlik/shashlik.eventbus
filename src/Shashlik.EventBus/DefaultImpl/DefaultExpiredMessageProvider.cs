@@ -17,11 +17,11 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private IMessageStorage MessageStorage { get; }
 
-        public Task DoDelete(CancellationToken cancellationToken)
+        public Task DoDeleteAsync(CancellationToken cancellationToken)
         {
             // 每个小时执行1次删除
             TimerHelper.SetInterval(
-                async () => await MessageStorage.DeleteExpires(cancellationToken).ConfigureAwait(false),
+                async () => await MessageStorage.DeleteExpiresAsync(cancellationToken).ConfigureAwait(false),
                 TimeSpan.FromHours(1),
                 cancellationToken);
 

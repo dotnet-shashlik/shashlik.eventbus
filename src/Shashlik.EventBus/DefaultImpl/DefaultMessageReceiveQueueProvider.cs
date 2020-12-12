@@ -46,7 +46,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         // 消息处理没问题就更新数据库状态
                         try
                         {
-                            await MessageStorage.UpdateReceived(
+                            await MessageStorage.UpdateReceivedAsync(
                                     messageStorageModel.Id,
                                     MessageStatus.Failed,
                                     failCount,
@@ -65,10 +65,10 @@ namespace Shashlik.EventBus.DefaultImpl
                     try
                     {
                         // 执行事件消费
-                        await EventHandlerInvoker.Invoke(messageStorageModel, items, descriptor).ConfigureAwait(false);
+                        await EventHandlerInvoker.InvokeAsync(messageStorageModel, items, descriptor).ConfigureAwait(false);
 
                         // 消息处理没问题就更新数据库状态
-                        await MessageStorage.UpdateReceived(
+                        await MessageStorage.UpdateReceivedAsync(
                                 messageStorageModel.Id,
                                 MessageStatus.Succeeded,
                                 0,

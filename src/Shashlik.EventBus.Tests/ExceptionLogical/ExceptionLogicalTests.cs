@@ -26,14 +26,14 @@ namespace Shashlik.EventBus.Tests.ExceptionLogical
             await eventPublisher.PublishAsync(new ExceptionLogicalTestEvent {Name = name}, null);
             await Task.Delay(5000);
             
-            var list = await messageStorage.GetPublishedMessagesOfNeedRetryAndLock(100, options.RetryIntervalSeconds,
+            var list = await messageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, options.RetryIntervalSeconds,
                 options.RetryFailedMax, options.Environment, 100, default);
             list.Count.ShouldBe(1);
             var item = list[0];
             var id = item.Id;
 
-            await publishedMessageRetryProvider.Retry(id, default);
-            await publishedMessageRetryProvider.Retry(id, default);
+            await publishedMessageRetryProvider.RetryAsync(id, default);
+            await publishedMessageRetryProvider.RetryAsync(id, default);
 
             // 再过1分钟
             await Task.Delay((options.StartRetryAfterSeconds - options.ConfirmTransactionSeconds) * 1000);
@@ -41,8 +41,8 @@ namespace Shashlik.EventBus.Tests.ExceptionLogical
             await Task.Delay(30 * 1000);
             item.RetryCount.ShouldBe(options.RetryFailedMax);
 
-            await publishedMessageRetryProvider.Retry(id, default);
-            await publishedMessageRetryProvider.Retry(id, default);
+            await publishedMessageRetryProvider.RetryAsync(id, default);
+            await publishedMessageRetryProvider.RetryAsync(id, default);
 
             item.RetryCount.ShouldBe(options.RetryFailedMax + 2);
         }

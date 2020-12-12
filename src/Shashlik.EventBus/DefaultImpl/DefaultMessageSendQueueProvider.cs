@@ -47,7 +47,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         // 确保消息已提交才进行消息发送
                         if (!await MessageStorage
-                            .TransactionIsCommitted(messageStorageModel.MsgId, transactionContext, cancellationToken)
+                            .TransactionIsCommittedAsync(messageStorageModel.MsgId, transactionContext, cancellationToken)
                             .ConfigureAwait(false))
                         {
                             // 还没提交? 延迟1秒继续查询是否提交
@@ -62,7 +62,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             // 消息发送没问题就更新数据库状态
                             try
                             {
-                                await MessageStorage.UpdatePublished(
+                                await MessageStorage.UpdatePublishedAsync(
                                         messageStorageModel.Id,
                                         MessageStatus.Failed,
                                         failCount,
@@ -80,9 +80,9 @@ namespace Shashlik.EventBus.DefaultImpl
 
                         // 这里可能存在的是消息发送成功,数据库更新失败,那么就可能存在重复发送的情况,这个需要消费方自行冥等处理
                         // 事务已提交,执行消息发送和更新状态
-                        await MessageSender.Send(messageTransferModel).ConfigureAwait(false);
+                        await MessageSender.SendAsync(messageTransferModel).ConfigureAwait(false);
                         // 消息发送没问题就更新数据库状态
-                        await MessageStorage.UpdatePublished(
+                        await MessageStorage.UpdatePublishedAsync(
                                 messageStorageModel.Id,
                                 MessageStatus.Succeeded,
                                 0,

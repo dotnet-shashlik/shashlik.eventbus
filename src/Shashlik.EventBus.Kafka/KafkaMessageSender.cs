@@ -24,7 +24,7 @@ namespace Shashlik.EventBus.Kafka
         private IMessageSerializer MessageSerializer { get; }
         private ILogger<KafkaMessageSender> Logger { get; }
 
-        public async Task Send(MessageTransferModel message)
+        public async Task SendAsync(MessageTransferModel message)
         {
             var producer = Connection.GetProducer();
 
