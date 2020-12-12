@@ -347,14 +347,14 @@ namespace CommonTestLogical
             var msg1 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed, false);
             var msg2 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Scheduled, false);
             var msg3 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Succeeded, false);
-            var msg4 = addMsg(DateTimeOffset.Now, MessageStatus.Succeeded, false);
+            var msg4 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Succeeded, false);
             var msg5 = addMsg(DateTimeOffset.Now, MessageStatus.Failed, false);
 
             var msg6 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed, true);
             var msg7 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Scheduled, true);
             var msg8 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Succeeded, true);
-            var msg9 = addMsg(DateTimeOffset.Now, MessageStatus.Succeeded, true);
-            var msg10 = addMsg(DateTimeOffset.Now, MessageStatus.Failed, true);
+            var msg9 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Succeeded, true);
+            var msg10 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Failed, true);
 
             await MessageStorage.DeleteExpiresAsync(default);
 

@@ -20,6 +20,7 @@ namespace Shashlik.EventBus.MemoryStorage
         private static readonly object IdLck = new object();
         private static readonly object PublishedRetryLck = new object();
         private static readonly object ReceivedRetryLck = new object();
+        private static readonly object DeleteLck = new object();
 
         private static long AutoIncrementId()
         {
@@ -165,15 +166,30 @@ namespace Shashlik.EventBus.MemoryStorage
 
         public Task DeleteExpiresAsync(CancellationToken cancellationToken)
         {
-            var items1 = _published.Values.Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now).ToList();
-            foreach (var item in items1)
-                _published.Remove(item.Id, out _);
-
-            var items2 = _received.Values.Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now).ToList();
-            foreach (var item in items2)
-                _received.Remove(item.Id, out _);
-
+            DeleteExpires();
             return Task.CompletedTask;
+        }
+
+        public void DeleteExpires()
+        {
+            lock (DeleteLck)
+            {
+                var items1 = _published
+                    .Values
+                    .Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now)
+                    .Where(r => r.Status == MessageStatus.Succeeded)
+                    .ToList();
+                foreach (var item in items1)
+                    _published.TryRemove(item.Id, out _);
+
+                var items2 = _received
+                    .Values
+                    .Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now)
+                    .Where(r => r.Status == MessageStatus.Succeeded)
+                    .ToList();
+                foreach (var item in items2)
+                    _received.TryRemove(item.Id, out _);
+            }
         }
 
         public Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAndLockAsync(int count, int delayRetrySecond, int maxFailedRetryCount,
