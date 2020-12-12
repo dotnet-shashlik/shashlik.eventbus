@@ -1,2 +1,2 @@
 ﻿ConnectionStrings:
-  Default: server=localhost;database=sqlservertest;user id=sa;password=Shashlik123123;
+  Default: server=192.168.50.178;database=sqlservertest;user id=sa;password=Shashlik123123;

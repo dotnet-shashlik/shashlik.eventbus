@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
+using  CommonTestLogical.EfCore;
 
 namespace Shashlik.EventBus.SqlServer.Tests.Efcore.Migrations
 {

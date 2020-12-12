@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using CommonTestLogical.EfCore;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MemoryQueue;
-using Shashlik.EventBus.SqlServer.Tests.Efcore;
 using Shashlik.Kernel;
 
 namespace Shashlik.EventBus.SqlServer.Tests
@@ -29,12 +29,12 @@ namespace Shashlik.EventBus.SqlServer.Tests
             services.AddDbContextPool<DemoDbContext>(r =>
             {
                 r.UseSqlServer(Configuration.GetConnectionString("Default"),
-                    db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
+                    db => { db.MigrationsAssembly(GetType().Assembly.GetName().FullName); });
             }, 5);
 
             using var serviceProvider = services.BuildServiceProvider();
             using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetService<DemoDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DemoDbContext>();
             dbContext.Database.Migrate();
 
             services.AddEventBus(r =>
