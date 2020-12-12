@@ -5,16 +5,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests.ExceptionLogical
+namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 {
-    public class TestBase2 : IClassFixture<TestWebApplicationFactory2<TestStartup2>>, IDisposable
+    public class SendMsgWithoutLosingTestBase : IClassFixture<SendMsgWithoutLosingFactory<SendMsgWithoutLosingTestStartup>>, IDisposable
     {
-        protected TestWebApplicationFactory2<TestStartup2> Factory { get; }
+        protected SendMsgWithoutLosingFactory<SendMsgWithoutLosingTestStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
         public static string Env { get; } = "EventBusTest2";
 
-        public TestBase2(TestWebApplicationFactory2<TestStartup2> factory, ITestOutputHelper testOutputHelper)
+        public SendMsgWithoutLosingTestBase(SendMsgWithoutLosingFactory<SendMsgWithoutLosingTestStartup> factory, ITestOutputHelper testOutputHelper)
         {
             Factory = factory;
             factory.Output = testOutputHelper;

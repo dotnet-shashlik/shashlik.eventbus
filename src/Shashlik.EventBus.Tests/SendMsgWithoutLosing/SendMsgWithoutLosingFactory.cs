@@ -7,9 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests.ExceptionLogical
+namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 {
-    public class TestWebApplicationFactory2<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
+    public class SendMsgWithoutLosingFactory<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
     {
         public ITestOutputHelper Output { get; set; }
 

@@ -5,11 +5,11 @@ using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MemoryStorage;
 using Shashlik.Kernel;
 
-namespace Shashlik.EventBus.Tests.ExceptionLogical
+namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 {
-    public class TestStartup2
+    public class SendMsgWithoutLosingTestStartup
     {
-        public TestStartup2(IConfiguration configuration)
+        public SendMsgWithoutLosingTestStartup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -28,7 +28,7 @@ namespace Shashlik.EventBus.Tests.ExceptionLogical
             
             services.AddEventBus(r =>
                 {
-                    r.Environment = TestBase2.Env;
+                    r.Environment = SendMsgWithoutLosingTestBase.Env;
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
@@ -43,7 +43,7 @@ namespace Shashlik.EventBus.Tests.ExceptionLogical
 
             services.AddShashlik(Configuration);
             
-            services.AddSingleton<IMessageSender, ExceptionLogicalMsgSender>();
+            services.AddSingleton<IMessageSender, SendMsgWithoutLosingMsgSender>();
         }
 
         public void Configure(IApplicationBuilder app)

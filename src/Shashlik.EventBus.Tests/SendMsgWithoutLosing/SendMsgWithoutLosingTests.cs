@@ -5,17 +5,17 @@ using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests.ExceptionLogical
+namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 {
-    public class ExceptionLogicalTests : TestBase2
+    public class SendMsgWithoutLosingTests : SendMsgWithoutLosingTestBase
     {
-        public ExceptionLogicalTests(TestWebApplicationFactory2<TestStartup2> factory, ITestOutputHelper testOutputHelper) : base(factory,
+        public SendMsgWithoutLosingTests(SendMsgWithoutLosingFactory<SendMsgWithoutLosingTestStartup> factory, ITestOutputHelper testOutputHelper) : base(factory,
             testOutputHelper)
         {
         }
 
         [Fact]
-        public async Task PublishRetryTest()
+        public async Task DoTests()
         {
             var options = GetService<IOptions<EventBusOptions>>().Value;
             var publishedMessageRetryProvider = GetService<IPublishedMessageRetryProvider>();
@@ -23,7 +23,7 @@ namespace Shashlik.EventBus.Tests.ExceptionLogical
             var messageStorage = GetService<IMessageStorage>();
             
             var name = Guid.NewGuid().ToString();
-            await eventPublisher.PublishAsync(new ExceptionLogicalTestEvent {Name = name}, null);
+            await eventPublisher.PublishAsync(new SendMsgWithoutLosingTestEvent {Name = name}, null);
             await Task.Delay(5000);
             
             var list = await messageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, options.RetryIntervalSeconds,

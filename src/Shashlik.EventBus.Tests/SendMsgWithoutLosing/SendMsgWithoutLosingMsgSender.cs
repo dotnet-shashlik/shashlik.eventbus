@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace Shashlik.EventBus.Tests.ExceptionLogical
+namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 {
-    public class ExceptionLogicalMsgSender : IMessageSender
+    public class SendMsgWithoutLosingMsgSender : IMessageSender
     {
         public Task SendAsync(MessageTransferModel message)
         {
