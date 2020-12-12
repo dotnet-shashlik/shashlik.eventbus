@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Shashlik.EventBus.MySql.Tests.Efcore
+namespace CommonTestLogical.EfCore
 {
     public class DemoDbContext : DbContext
     {

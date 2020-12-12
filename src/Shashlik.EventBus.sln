@@ -53,6 +53,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.Kafka.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.RabbitMQ.Tests", "Shashlik.EventBus.RabbitMQ.Tests\Shashlik.EventBus.RabbitMQ.Tests.csproj", "{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonTestLogical", "CommonTestLogical\CommonTestLogical.csproj", "{EB0AAF0B-1DFF-4629-A841-9B8B471E0411}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +133,10 @@ Global
 		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB0AAF0B-1DFF-4629-A841-9B8B471E0411}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB0AAF0B-1DFF-4629-A841-9B8B471E0411}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB0AAF0B-1DFF-4629-A841-9B8B471E0411}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB0AAF0B-1DFF-4629-A841-9B8B471E0411}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -143,6 +149,7 @@ Global
 		{D9BCE1DD-38FA-415E-BB0D-1AC2FF40E23F} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{74246444-F0BF-41E0-95E0-F24EB5862463} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{CC9F82FF-DFB4-4509-8D1E-354958F56ECF} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{EB0AAF0B-1DFF-4629-A841-9B8B471E0411} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

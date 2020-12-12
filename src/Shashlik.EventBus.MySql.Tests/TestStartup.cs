@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using CommonTestLogical.EfCore;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,12 +30,12 @@ namespace Shashlik.EventBus.MySql.Tests
             services.AddDbContextPool<DemoDbContext>(r =>
             {
                 r.UseMySql(Configuration.GetConnectionString("Default"), ServerVersion.FromString("5.7"),
-                    db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
+                    db => { db.MigrationsAssembly(this.GetType().Assembly.GetName().FullName); });
             }, 5);
 
             using var serviceProvider = services.BuildServiceProvider();
             using var scope = serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetService<DemoDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<DemoDbContext>();
             dbContext.Database.Migrate();
 
             services.AddEventBus(r =>

@@ -277,8 +277,8 @@ WHERE [id] = {id} AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
         {
             var now = DateTime.Now.GetLongDate();
             var sql = $@"
-DELETE FROM {Options.CurrentValue.FullPublishedTableName} WHERE [expireTime] != 0 AND [expireTime] < {now} AND [status] != '{MessageStatus.Scheduled}';
-DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE [expireTime] != 0 AND [expireTime] < {now} AND [status] != '{MessageStatus.Scheduled}';
+DELETE FROM {Options.CurrentValue.FullPublishedTableName} WHERE [expireTime] != 0 AND [expireTime] < {now} AND [status] = '{MessageStatus.Succeeded}';
+DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE [expireTime] != 0 AND [expireTime] < {now} AND [status] = '{MessageStatus.Succeeded}';
 ";
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }

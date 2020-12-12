@@ -1,4 +1,4 @@
-﻿namespace Shashlik.EventBus.MySql.Tests.Efcore
+﻿namespace CommonTestLogical.EfCore
 {
     public class Users
     {

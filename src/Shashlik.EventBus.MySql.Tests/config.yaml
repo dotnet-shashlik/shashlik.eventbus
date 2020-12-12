@@ -1,2 +1,2 @@
 ﻿ConnectionStrings:
-  Default: server=localhost;database=mysqltest;user id=root;password=123123;
+  Default: server=192.168.50.178;database=mysqltest;user id=testuser;password=123123;
