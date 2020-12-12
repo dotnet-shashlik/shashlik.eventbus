@@ -86,7 +86,8 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(list);
         }
 
-        public Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext, CancellationToken cancellationToken)
+        public Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
+            CancellationToken cancellationToken)
         {
             message.Id = AutoIncrementId();
             if (_published.TryAdd(message.Id, message))
@@ -190,17 +191,21 @@ namespace Shashlik.EventBus.MemoryStorage
                 var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
                 var now = DateTime.Now;
                 var res = new List<MessageStorageModel>();
+                int counter = 0;
                 foreach (var r in _published.Values)
                 {
+                    if (counter > count)
+                        return res;
                     if (r.Environment == environment
                         && r.CreateTime < createTimeLimit
                         && r.RetryCount < maxFailedRetryCount
-                        && !r.IsLocking || r.LockEnd < now
+                        && (!r.IsLocking || r.LockEnd < now)
                         && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
                     {
                         r.IsLocking = true;
                         r.LockEnd = DateTimeOffset.Now.AddSeconds(lockSecond);
                         res.Add(r);
+                        count++;
                     }
                 }
 
@@ -228,7 +233,7 @@ namespace Shashlik.EventBus.MemoryStorage
                     if (r.Environment == environment
                         && r.CreateTime < createTimeLimit
                         && r.RetryCount < maxFailedRetryCount
-                        && !r.IsLocking || r.LockEnd < now
+                        && (!r.IsLocking || r.LockEnd < now)
                         && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
                     {
                         r.IsLocking = true;
