@@ -14,8 +14,7 @@ namespace Shashlik.EventBus.MemoryQueue
             Logger = logger;
             MessageListener = messageListener;
             HostedStopToken = hostedStopToken;
-
-            InternalMemoryQueue.StartAsync(HostedStopToken.StopCancellationToken);
+            Start();
         }
 
         private IMessageListener MessageListener { get; }
@@ -26,16 +25,21 @@ namespace Shashlik.EventBus.MemoryQueue
             new ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>>();
 
 
-        public Task Subscribe(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken token)
+        public Task Subscribe(EventHandlerDescriptor descriptor, CancellationToken token)
         {
-            AddListener(eventHandlerDescriptor);
+            var list = Listeners.GetOrAdd(descriptor.EventName, new ConcurrentBag<EventHandlerDescriptor>());
+            list.Add(descriptor);
+            return Task.CompletedTask;
+        }
 
+        private void Start()
+        {
             InternalMemoryQueue.OnReceived += msg =>
             {
                 var listeners = Listeners.GetOrDefault(msg.EventName);
                 if (listeners.IsNullOrEmpty())
                 {
-                    Logger.LogDebug($"[EventBus-Memory] received msg of {msg.EventName}, but not found associated event handlers.");
+                    Logger.LogWarning($"[EventBus-Memory] received msg of {msg.EventName}, but not found associated event handlers.");
                     return;
                 }
 
@@ -53,13 +57,8 @@ namespace Shashlik.EventBus.MemoryQueue
                         InternalMemoryQueue.Send(msg);
                 });
             };
-            return Task.CompletedTask;
-        }
 
-        public void AddListener(EventHandlerDescriptor descriptor)
-        {
-            var list = Listeners.GetOrAdd(descriptor.EventName, new ConcurrentBag<EventHandlerDescriptor>());
-            list.Add(descriptor);
+            InternalMemoryQueue.Start(HostedStopToken.StopCancellationToken);
         }
     }
 }

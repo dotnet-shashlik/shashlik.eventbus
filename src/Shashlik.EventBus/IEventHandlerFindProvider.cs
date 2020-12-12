@@ -18,6 +18,6 @@ namespace Shashlik.EventBus
         /// </summary>
         /// <param name="eventHandlerName">事件处理名称</param>
         /// <returns></returns>
-        EventHandlerDescriptor GetByName(string eventHandlerName);
+        EventHandlerDescriptor? GetByName(string eventHandlerName);
     }
 }

@@ -15,7 +15,7 @@ namespace Shashlik.EventBus.MemoryQueue
             Queue.Enqueue(messageTransferModel);
         }
 
-        public static void StartAsync(CancellationToken stopCancellationToken)
+        public static void Start(CancellationToken stopCancellationToken)
         {
             _ = Task.Run(() =>
             {

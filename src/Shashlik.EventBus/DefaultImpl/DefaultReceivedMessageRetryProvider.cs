@@ -24,10 +24,8 @@ namespace Shashlik.EventBus.DefaultImpl
             Options = options;
             Logger = logger;
             MessageSerializer = messageSerializer;
+            EventHandlerFindProvider = eventHandlerFindProvider;
             EventHandlerInvoker = eventHandlerInvoker;
-            EventHandlerDescriptors = eventHandlerFindProvider
-                .FindAll()
-                .ToDictionary(r => r.EventHandlerName, r => r);
         }
 
         private IMessageStorage MessageStorage { get; }
@@ -35,7 +33,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private ILogger<DefaultPublishedMessageRetryProvider> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IEventHandlerInvoker EventHandlerInvoker { get; }
-        private IDictionary<string, EventHandlerDescriptor> EventHandlerDescriptors { get; }
+        private IEventHandlerFindProvider EventHandlerFindProvider { get; }
 
         public async Task Startup(CancellationToken cancellationToken)
         {
@@ -58,10 +56,10 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private async Task Retry(MessageStorageModel item, CancellationToken cancellationToken, bool checkRetryFailedMax)
         {
-            if (!EventHandlerDescriptors.TryGetValue(item.EventHandlerName, out var descriptor))
+            var descriptor = EventHandlerFindProvider.GetByName(item.EventHandlerName);
+            if (descriptor is null)
             {
-                Logger.LogWarning(
-                    $"[EventBus]Can not find event handler: {item.EventHandlerName}, event: {item.EventName}, msgId: {item.MsgId}.");
+                Logger.LogWarning($"[EventBus] not found of event handler: {item.EventHandlerName}, but receive msg: {item.EventBody}.");
                 return;
             }
 

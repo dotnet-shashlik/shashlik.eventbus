@@ -38,6 +38,12 @@ namespace Shashlik.EventBus.DefaultImpl
             try
             {
                 var descriptor = EventHandlerFindProvider.GetByName(eventHandlerName);
+                if (descriptor is null)
+                {
+                    Logger.LogError($"[EventBus] not found of event handler: {eventHandlerName}, but receive msg: {message.MsgBody}.");
+                    return MessageReceiveResult.Failed;
+                }
+
                 var now = DateTime.Now;
                 message.Items ??= new Dictionary<string, string>();
                 var receiveMessageStorageModel = new MessageStorageModel

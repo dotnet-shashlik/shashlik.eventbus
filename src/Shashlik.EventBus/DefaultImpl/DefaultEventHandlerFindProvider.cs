@@ -47,12 +47,12 @@ namespace Shashlik.EventBus.DefaultImpl
             return _cache.Values;
         }
 
-        public EventHandlerDescriptor GetByName(string eventHandlerName)
+        public EventHandlerDescriptor? GetByName(string eventHandlerName)
         {
             if (_cache is null)
                 FindAll();
 
-            return _cache![eventHandlerName];
+            return _cache.GetOrDefault(eventHandlerName);
         }
 
         private static Type GetEventType(Type type)

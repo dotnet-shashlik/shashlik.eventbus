@@ -303,6 +303,18 @@ namespace Shashlik.EventBus.Tests
             TestExceptionEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
             TestExceptionEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
             TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestExceptionEvent)}.{Env}");
+
+            // retry test
+            {
+                var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
+                var messageStorage = GetService<IMessageStorage>();
+                var list = await messageStorage.GetReceivedMessagesOfNeedRetryAndLock(100, options.RetryIntervalSeconds,
+                    options.RetryFailedMax, options.Environment, 100, default);
+                var storageModel = list.First(r => r.EventHandlerName.StartsWith(nameof(TestExceptionEventHandler)));
+                var retryCount = storageModel.RetryCount;
+                await receivedMessageRetryProvider.Retry(storageModel.Id, default);
+                storageModel.RetryCount.ShouldBe(retryCount + 1);
+            }
         }
     }
 }
