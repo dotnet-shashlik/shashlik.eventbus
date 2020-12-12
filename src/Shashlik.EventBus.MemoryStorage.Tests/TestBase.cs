@@ -13,8 +13,6 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
 
-        public static string Env { get; } = "MemoryTest";
-
         public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)
         {
             Factory = factory;

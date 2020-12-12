@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         {
             var builder = Host.CreateDefaultBuilder();
 
-            return builder.UseEnvironment("EventBusUnitTest")
+            return builder
                 .ConfigureLogging(r =>
                 {
                     r.ClearProviders();

@@ -26,7 +26,7 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
 
             services.AddEventBus(r =>
                 {
-                    r.Environment = TestBase.Env;
+                    r.Environment = "MemoryTests";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
