@@ -1,2 +1,2 @@
 ﻿ConnectionStrings:
-  Default: server=localhost;database=postgretest;user id=testuser;password=123123;
+  Default: server=192.168.50.178;database=postgretest;user id=testuser;password=123123;
