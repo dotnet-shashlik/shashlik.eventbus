@@ -28,7 +28,7 @@ namespace Shashlik.EventBus.Kafka.Tests.MsgWithoutLosing
             services.AddSingleton<IMessageListener, MsgWithoutLosingListener>();
             services.AddEventBus(r =>
                 {
-                    r.Environment = MsgWithoutLosingTestBase.Env;
+                    r.Environment = "KafkaLosingTest";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后

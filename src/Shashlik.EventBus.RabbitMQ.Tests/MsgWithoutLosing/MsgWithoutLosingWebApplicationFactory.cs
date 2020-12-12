@@ -7,9 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
+namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
 {
-    public class TestWebApplicationFactory2<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
+    public class MsgWithoutLosingWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup> where TStartup : class
     {
         public ITestOutputHelper Output { get; set; }
 
@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
         {
             var builder = Host.CreateDefaultBuilder();
 
-            return builder.UseEnvironment("EventBusUnitTest2")
+            return builder
                 .ConfigureLogging(r =>
                 {
                     r.ClearProviders();

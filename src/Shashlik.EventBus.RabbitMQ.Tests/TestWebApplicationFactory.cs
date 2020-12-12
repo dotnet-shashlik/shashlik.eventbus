@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
         {
             var builder = Host.CreateDefaultBuilder();
 
-            return builder.UseEnvironment("RabbitTest")
+            return builder
                 .ConfigureLogging(r =>
                 {
                     r.ClearProviders();

@@ -12,8 +12,6 @@ namespace Shashlik.EventBus.Kafka.Tests.MsgWithoutLosing
         protected MsgWithoutLosingWebApplicationFactory<MsgWithoutLosingStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
-        public static string Env { get; } = "MsgWithoutLosingKafkaTest";
-
         public MsgWithoutLosingTestBase(MsgWithoutLosingWebApplicationFactory<MsgWithoutLosingStartup> factory, ITestOutputHelper testOutputHelper)
         {
             Factory = factory;

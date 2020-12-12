@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.Kafka.Tests
         {
             var builder = Host.CreateDefaultBuilder();
 
-            return builder.UseEnvironment("KafkaTest")
+            return builder
                 .ConfigureLogging(r =>
                 {
                     r.ClearProviders();

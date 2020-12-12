@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using CommonTestLogical.MsgWithoutLosing;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MemoryStorage;
 using Shashlik.Kernel;
 
-namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
+namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
 {
-    public class TestStartup2
+    public class MsgWithoutLosingStartup
     {
-        public TestStartup2(IConfiguration configuration)
+        public MsgWithoutLosingStartup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -25,10 +25,10 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
             services.AddAuthentication();
             services.AddAuthorization();
 
-            services.AddSingleton<IMessageListener, ExceptionMessageListener>();
+            services.AddSingleton<IMessageListener, MsgWithoutLosingListener>();
             services.AddEventBus(r =>
                 {
-                    r.Environment = TestBase2.Env;
+                    r.Environment = "RabbitLosingTests";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
@@ -38,7 +38,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
                     // 失败重试间隔5秒
                     r.RetryIntervalSeconds = 5;
                 })
-                .AddMemoryQueue()
+                .AddRabbitMQ(Configuration.GetSection("EventBus:RabbitMQ"))
                 .AddMemoryStorage();
 
             services.AddShashlik(Configuration);
@@ -49,7 +49,6 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.ExceptionLogical
             app.ApplicationServices.UseShashlik()
                 .AutowireServiceProvider()
                 ;
-
 
             // mvc
             app.UseRouting();

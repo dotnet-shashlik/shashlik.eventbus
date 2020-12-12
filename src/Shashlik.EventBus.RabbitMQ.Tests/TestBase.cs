@@ -12,7 +12,6 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
         protected TestWebApplicationFactory<TestStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
-        public static string Env { get; } = "RabbitTest";
         protected ITestOutputHelper TestOutputHelper { get; }
 
         public TestBase(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper)

@@ -1,4 +1,5 @@
 ﻿using System;
+using CommonTestLogical.EfCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,7 +32,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
             services.AddDbContextPool<DemoDbContext>(r =>
             {
                 r.UseMySql(Configuration.GetConnectionString("Default"), ServerVersion.FromString("5.7"),
-                    db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
+                    db => { db.MigrationsAssembly(GetType().Assembly.GetName().FullName); });
             }, 5);
 
             using var serviceProvider = services.BuildServiceProvider();
@@ -41,7 +42,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
 
             services.AddEventBus(r =>
                 {
-                    r.Environment = TestBase.Env;
+                    r.Environment = "RabbitTest";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
