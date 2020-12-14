@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using CommonTestLogical;
 using Microsoft.Extensions.Options;
 using Shouldly;
 using Xunit;
@@ -7,10 +8,10 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 {
-    public class SendMsgWithoutLosingTests : SendMsgWithoutLosingTestBase
+    public class SendMsgWithoutLosingTests : TestBase<SendMsgWithoutLosingTestStartup>
     {
-        public SendMsgWithoutLosingTests(SendMsgWithoutLosingFactory<SendMsgWithoutLosingTestStartup> factory, ITestOutputHelper testOutputHelper) : base(factory,
-            testOutputHelper)
+        public SendMsgWithoutLosingTests(TestWebApplicationFactory<SendMsgWithoutLosingTestStartup> factory, ITestOutputHelper testOutputHelper) :
+            base(factory, testOutputHelper)
         {
         }
 
@@ -21,11 +22,11 @@ namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
             var publishedMessageRetryProvider = GetService<IPublishedMessageRetryProvider>();
             var eventPublisher = GetService<IEventPublisher>();
             var messageStorage = GetService<IMessageStorage>();
-            
+
             var name = Guid.NewGuid().ToString();
             await eventPublisher.PublishAsync(new SendMsgWithoutLosingTestEvent {Name = name}, null);
             await Task.Delay(5000);
-            
+
             var list = await messageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, options.RetryIntervalSeconds,
                 options.RetryFailedMax, options.Environment, 100, default);
             list.Count.ShouldBe(1);

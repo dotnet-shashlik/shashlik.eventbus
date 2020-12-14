@@ -7,9 +7,9 @@ using Shashlik.Kernel;
 
 namespace Shashlik.EventBus.Tests
 {
-    public class TestStartup
+    public class Startup
     {
-        public TestStartup(IConfiguration configuration)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -18,16 +18,9 @@ namespace Shashlik.EventBus.Tests
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMemoryCache();
-            services.AddControllers()
-                .AddControllersAsServices();
-
-            services.AddAuthentication();
-            services.AddAuthorization();
-
             services.AddEventBus(r =>
                 {
-                    r.Environment = TestBase.Env;
+                    r.Environment = "BaseTest";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
@@ -48,18 +41,6 @@ namespace Shashlik.EventBus.Tests
             app.ApplicationServices.UseShashlik()
                 .AutowireServiceProvider()
                 ;
-
-
-            // mvc
-            app.UseRouting();
-
-            app.UseStaticFiles();
-
-            // 认证
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => { endpoints.MapDefaultControllerRoute(); });
         }
     }
 }

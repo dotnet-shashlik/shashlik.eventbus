@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CommonTestLogical;
+using CommonTestLogical.TestEvents;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.Utils.Extensions;
@@ -12,11 +14,13 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests
 {
-    public class Tests : TestBase
+    public class BaseTests : TestBase<Startup>
     {
-        public Tests(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public BaseTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
+
+        private EventBusOptions Options => GetService<IOptions<EventBusOptions>>().Value;
 
         [Fact]
         public void EventHandlerFindProviderAndNameRuleTests()
@@ -28,33 +32,33 @@ namespace Shashlik.EventBus.Tests
 
             {
                 var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestEventHandler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventHandler)}.{Env}");
+                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventHandler)}.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Env}");
+                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
                 testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
             }
 
             {
                 var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestEventGroup2Handler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventGroup2Handler)}.{Env}");
+                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventGroup2Handler)}.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Env}");
+                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
                 testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
             }
 
             {
                 var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestDelayEventHandler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestDelayEventHandler)}.{Env}");
+                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestDelayEventHandler)}.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestDelayEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
+                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
                 testEventHandlerDescriptor.IsDelay.ShouldBeTrue();
             }
 
             {
                 var testEventHandlerDescriptor = handlers.First(r => r.EventHandlerType == typeof(TestCustomNameEventHandler));
-                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestCustomNameEventHandler)}_Test.{Env}");
+                testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestCustomNameEventHandler)}_Test.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestCustomNameEvent));
-                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Env}");
+                testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Options.Environment}");
                 testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
             }
         }
@@ -82,7 +86,7 @@ namespace Shashlik.EventBus.Tests
                 Should.Throw<InvalidCastException>(() => invoker.InvokeAsync(new MessageStorageModel
                 {
                     MsgId = Guid.NewGuid().ToString("n"),
-                    Environment = Env,
+                    Environment = Options.Environment,
                     CreateTime = DateTimeOffset.Now,
                     DelayAt = null,
                     ExpireTime = DateTimeOffset.Now.AddDays(1),
@@ -100,7 +104,7 @@ namespace Shashlik.EventBus.Tests
             invoker.InvokeAsync(new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
-                Environment = Env,
+                Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
                 DelayAt = null,
                 ExpireTime = DateTimeOffset.Now.AddDays(1),
@@ -149,13 +153,13 @@ namespace Shashlik.EventBus.Tests
                 TestEventHandler.Items["age"].ShouldBe("18");
                 TestEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestEvent)}.{Env}");
+                TestEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
 
                 TestEventGroup2Handler.Instance.Name.ShouldBe(@event.Name);
                 TestEventGroup2Handler.Items["age"].ShouldBe("18");
                 TestEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestEvent)}.{Env}");
+                TestEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
 
                 break;
             }
@@ -198,7 +202,7 @@ namespace Shashlik.EventBus.Tests
                 TestDelayEventHandler.Items["age"].ShouldBe("19");
                 TestDelayEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestDelayEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
+                TestDelayEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
                 TestDelayEventHandler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
                     .ShouldBe(delayAt.GetLongDate());
 
@@ -206,7 +210,7 @@ namespace Shashlik.EventBus.Tests
                 TestDelayEventGroup2Handler.Items["age"].ShouldBe("19");
                 TestDelayEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestDelayEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
+                TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
                 TestDelayEventGroup2Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
                     .ShouldBe(delayAt.GetLongDate());
 
@@ -214,7 +218,7 @@ namespace Shashlik.EventBus.Tests
                 TestDelayEventGroup3Handler.Items["age"].ShouldBe("19");
                 TestDelayEventGroup3Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestDelayEventGroup3Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Env}");
+                TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
                 TestDelayEventGroup3Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
                     .ShouldBe(delayAt.GetLongDate());
                 break;
@@ -247,13 +251,15 @@ namespace Shashlik.EventBus.Tests
                 TestCustomNameEventHandler.Items["age"].ShouldBe("20");
                 TestCustomNameEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestCustomNameEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestCustomNameEventHandler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Env}");
+                TestCustomNameEventHandler.Items[EventBusConsts.EventNameHeaderKey]
+                    .ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Options.Environment}");
 
                 TestCustomNameEventGroup2Handler.Instance.Name.ShouldBe(@event.Name);
                 TestCustomNameEventGroup2Handler.Items["age"].ShouldBe("20");
                 TestCustomNameEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestCustomNameEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestCustomNameEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Env}");
+                TestCustomNameEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
+                    .ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Options.Environment}");
 
                 break;
             }
@@ -302,7 +308,7 @@ namespace Shashlik.EventBus.Tests
             TestExceptionEventGroup2Handler.Items["age"].ShouldBe("21");
             TestExceptionEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
             TestExceptionEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-            TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestExceptionEvent)}.{Env}");
+            TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestExceptionEvent)}.{Options.Environment}");
 
             // retry test
             {
