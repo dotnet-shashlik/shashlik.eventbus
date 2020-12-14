@@ -8,6 +8,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 {
+    [Collection("Shashlik.EventBus.Tests")]
     public class SendMsgWithoutLosingTests : TestBase<SendMsgWithoutLosingTestStartup>
     {
         public SendMsgWithoutLosingTests(TestWebApplicationFactory<SendMsgWithoutLosingTestStartup> factory, ITestOutputHelper testOutputHelper) :
@@ -39,7 +40,7 @@ namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
             // 再过1分钟
             await Task.Delay((options.StartRetryAfterSeconds - options.ConfirmTransactionSeconds) * 1000);
             // 再等30秒
-            await Task.Delay(30 * 1000);
+            await Task.Delay(options.RetryWorkingIntervalSeconds * 6 * 1000);
             item.RetryCount.ShouldBe(options.RetryFailedMax);
 
             await publishedMessageRetryProvider.RetryAsync(id, default);

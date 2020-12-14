@@ -7,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Shashlik.EventBus;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -41,6 +43,7 @@ namespace CommonTestLogical
         protected TestWebApplicationFactory<TStartup> Factory { get; }
         protected HttpClient HttpClient { get; }
         protected IServiceScope ServiceScope { get; }
+        protected EventBusOptions Options { get; }
 
         public TestBase(TestWebApplicationFactory<TStartup> factory, ITestOutputHelper testOutputHelper)
         {
@@ -48,6 +51,7 @@ namespace CommonTestLogical
             factory.Output = testOutputHelper;
             HttpClient = factory.CreateClient();
             ServiceScope = factory.Services.CreateScope();
+            Options = GetService<IOptions<EventBusOptions>>().Value;
         }
 
         protected T GetService<T>()

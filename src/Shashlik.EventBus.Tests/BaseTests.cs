@@ -14,13 +14,12 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests
 {
+    [Collection("Shashlik.EventBus.Tests")]
     public class BaseTests : TestBase<Startup>
     {
         public BaseTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
-
-        private EventBusOptions Options => GetService<IOptions<EventBusOptions>>().Value;
 
         [Fact]
         public void EventHandlerFindProviderAndNameRuleTests()
@@ -144,8 +143,8 @@ namespace Shashlik.EventBus.Tests
                 {"age", "18"}
             });
 
-            // 1分钟之内必须被执行
-            while ((DateTimeOffset.Now - beginTime).TotalMinutes <= 1)
+            // 重试器开始前必须被执行
+            while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfterSeconds)
             {
                 if (TestEventHandler.Instance is null || TestEventGroup2Handler.Instance is null)
                     continue;
@@ -190,8 +189,8 @@ namespace Shashlik.EventBus.Tests
                 TestDelayEventGroup3Handler.Instance.ShouldBeNull();
             }
 
-            // 1分钟之内必须被执行
-            while ((DateTimeOffset.Now - beginTime).TotalMinutes <= 1)
+            // 重试器开始前必须被执行
+            while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfterSeconds)
             {
                 if (TestDelayEventHandler.Instance is null
                     || TestDelayEventGroup2Handler.Instance is null
@@ -243,7 +242,7 @@ namespace Shashlik.EventBus.Tests
             });
 
             // 1分钟之内必须被执行
-            while ((DateTimeOffset.Now - beginTime).TotalMinutes <= 1)
+            while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfterSeconds)
             {
                 if (TestCustomNameEventHandler.Instance is null || TestCustomNameEventGroup2Handler.Instance is null)
                     continue;
@@ -281,7 +280,7 @@ namespace Shashlik.EventBus.Tests
                 {"age", "21"}
             });
 
-            // 1分钟之内会全部异常,未执行
+            // 事务确认前都应该是异常
             while ((DateTimeOffset.Now - beginTime).TotalSeconds < options.ConfirmTransactionSeconds)
             {
                 TestExceptionEventHandler.Instance.ShouldBeNull();
@@ -292,10 +291,10 @@ namespace Shashlik.EventBus.Tests
             TestExceptionEventHandler.Counter.ShouldBe(5);
             TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
 
-            // 再过1分钟
+            // 重试器开始工作
             await Task.Delay((options.StartRetryAfterSeconds - options.ConfirmTransactionSeconds) * 1000);
-            // 再等20秒
-            await Task.Delay(20 * 1000);
+            // 重试器轮询6次以后
+            await Task.Delay(options.RetryWorkingIntervalSeconds * 1000 * 6);
 
             // 错误次数达到最大
             TestExceptionEventHandler.Counter.ShouldBe(options.RetryFailedMax);
@@ -310,7 +309,7 @@ namespace Shashlik.EventBus.Tests
             TestExceptionEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
             TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestExceptionEvent)}.{Options.Environment}");
 
-            // retry test
+            // 手动retry test
             {
                 var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
                 var messageStorage = GetService<IMessageStorage>();
