@@ -6,15 +6,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MySqlConnector;
+using Shashlik.EventBus.Kafka.Tests.Efcore;
 using Shashlik.EventBus.MySql;
-using Shashlik.EventBus.RabbitMQ.Tests.Efcore;
 using Shashlik.Kernel;
 
-namespace Shashlik.EventBus.RabbitMQ.Tests
+namespace Shashlik.EventBus.Kafka.Tests
 {
-    public class TestStartup
+    public class Startup
     {
-        public TestStartup(IConfiguration configuration)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -42,7 +42,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
 
             services.AddEventBus(r =>
                 {
-                    r.Environment = "RabbitTest";
+                    r.Environment = "KafkaTests";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
@@ -52,7 +52,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
                     // 失败重试间隔5秒
                     r.RetryIntervalSeconds = 5;
                 })
-                .AddRabbitMQ(Configuration.GetSection("EventBus:RabbitMQ"))
+                .AddKafka(Configuration.GetSection("EventBus:Kafka"))
                 .AddMySql<DemoDbContext>();
 
             services.AddShashlik(Configuration);

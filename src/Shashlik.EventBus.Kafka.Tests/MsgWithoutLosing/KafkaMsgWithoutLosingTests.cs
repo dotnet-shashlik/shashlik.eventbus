@@ -1,15 +1,15 @@
 ﻿using System.Threading.Tasks;
+using CommonTestLogical;
 using CommonTestLogical.MsgWithoutLosing;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Kafka.Tests.MsgWithoutLosing
 {
-    public class KafkaMsgWithoutLosingTests : MsgWithoutLosingTestBase
+    public class KafkaMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
     {
-        public KafkaMsgWithoutLosingTests(MsgWithoutLosingWebApplicationFactory<MsgWithoutLosingStartup> factory,
-            ITestOutputHelper testOutputHelper) :
-            base(factory, testOutputHelper)
+        public KafkaMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory, ITestOutputHelper testOutputHelper) : base(
+            factory, testOutputHelper)
         {
         }
 

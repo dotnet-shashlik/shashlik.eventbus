@@ -77,7 +77,7 @@ namespace CommonTestLogical
             }
 
             // 1分钟以后，所有的正常事件处理类必须被处理
-            await Task.Delay(60 * 1000);
+            await Task.Delay(Options.ConfirmTransactionSeconds * 1000);
 
             // TestEvent
             {
@@ -147,7 +147,7 @@ namespace CommonTestLogical
                 // 再过1分钟
                 await Task.Delay((Options.StartRetryAfterSeconds - Options.ConfirmTransactionSeconds) * 1000);
                 // 再等30秒
-                await Task.Delay(30 * 1000);
+                await Task.Delay(Options.RetryWorkingIntervalSeconds * 6 * 1000);
 
                 // 错误次数达到最大
                 TestExceptionEventHandler.Counter.ShouldBe(Options.RetryFailedMax);

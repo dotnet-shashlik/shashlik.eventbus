@@ -18,14 +18,6 @@ namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMemoryCache();
-            services.AddControllers()
-                .AddControllersAsServices();
-
-            services.AddAuthentication();
-            services.AddAuthorization();
-
-            
             services.AddEventBus(r =>
                 {
                     r.Environment = "SendMsgWithoutLosing";
@@ -51,17 +43,6 @@ namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
             app.ApplicationServices.UseShashlik()
                 .AutowireServiceProvider()
                 ;
-
-            // mvc
-            app.UseRouting();
-
-            app.UseStaticFiles();
-
-            // 认证
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => { endpoints.MapDefaultControllerRoute(); });
         }
     }
 }

@@ -4,9 +4,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MemoryStorage;
 using Shashlik.Kernel;
+using Xunit;
 
 namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
 {
+    
     public class MsgWithoutLosingStartup
     {
         public MsgWithoutLosingStartup(IConfiguration configuration)
@@ -18,13 +20,6 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMemoryCache();
-            services.AddControllers()
-                .AddControllersAsServices();
-
-            services.AddAuthentication();
-            services.AddAuthorization();
-
             services.AddSingleton<IMessageListener, MsgWithoutLosingListener>();
             services.AddEventBus(r =>
                 {
@@ -49,17 +44,6 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
             app.ApplicationServices.UseShashlik()
                 .AutowireServiceProvider()
                 ;
-
-            // mvc
-            app.UseRouting();
-
-            app.UseStaticFiles();
-
-            // 认证
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => { endpoints.MapDefaultControllerRoute(); });
         }
     }
 }

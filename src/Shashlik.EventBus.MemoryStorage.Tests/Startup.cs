@@ -6,9 +6,9 @@ using Shashlik.Kernel;
 
 namespace Shashlik.EventBus.MemoryStorage.Tests
 {
-    public class TestStartup
+    public class Startup
     {
-        public TestStartup(IConfiguration configuration)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -17,13 +17,6 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMemoryCache();
-            services.AddControllers()
-                .AddControllersAsServices();
-
-            services.AddAuthentication();
-            services.AddAuthorization();
-
             services.AddEventBus(r =>
                 {
                     r.Environment = "MemoryTests";
@@ -47,18 +40,6 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
             app.ApplicationServices.UseShashlik()
                 .AutowireServiceProvider()
                 ;
-
-
-            // mvc
-            app.UseRouting();
-
-            app.UseStaticFiles();
-
-            // 认证
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => { endpoints.MapDefaultControllerRoute(); });
         }
     }
 }

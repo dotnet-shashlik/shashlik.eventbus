@@ -1,15 +1,16 @@
 ﻿using System.Threading.Tasks;
+using CommonTestLogical;
 using CommonTestLogical.MsgWithoutLosing;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
 {
-    public class RabbitMsgWithoutLosingTests : MsgWithoutLosingTestBase
+    [Collection("Shashlik.EventBus.RabbitMQ.Tests")]
+    public class RabbitMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
     {
-        public RabbitMsgWithoutLosingTests(MsgWithoutLosingWebApplicationFactory<MsgWithoutLosingStartup> factory,
-            ITestOutputHelper testOutputHelper) :
-            base(factory, testOutputHelper)
+        public RabbitMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory,
+            ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
 

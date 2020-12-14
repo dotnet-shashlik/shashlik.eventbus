@@ -23,7 +23,7 @@ namespace CommonTestLogical.MsgWithoutLosing
         {
             await EventPublisher.PublishAsync(new MsgWithoutLosingTestEvent {Name = "zhangsan"}, null);
 
-            await Task.Delay((Options.Value.StartRetryAfterSeconds + 60) * 1000);
+            await Task.Delay((Options.Value.StartRetryAfterSeconds + Options.Value.ConfirmTransactionSeconds) * 1000);
 
             MsgWithoutLosingListener.MsgIds.Count.ShouldBeGreaterThan(1);
             MsgWithoutLosingListener.MsgIds.Distinct().Count().ShouldBe(1);

@@ -5,9 +5,9 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.MySql.Tests
 {
-    public class Tests : TestBase
+    public class Tests : TestBase<Startup>
     {
-        public Tests(TestWebApplicationFactory<TestStartup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public Tests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
 

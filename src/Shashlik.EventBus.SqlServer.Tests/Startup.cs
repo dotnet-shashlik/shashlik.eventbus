@@ -4,14 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MemoryQueue;
-using Shashlik.EventBus.PostgreSQL.Tests.Efcore;
 using Shashlik.Kernel;
 
-namespace Shashlik.EventBus.PostgreSQL.Tests
+namespace Shashlik.EventBus.SqlServer.Tests
 {
-    public class TestStartup
+    public class Startup
     {
-        public TestStartup(IConfiguration configuration)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -20,16 +19,10 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMemoryCache();
-            services.AddControllers()
-                .AddControllersAsServices();
-
-            services.AddAuthentication();
-            services.AddAuthorization();
 
             services.AddDbContextPool<DemoDbContext>(r =>
             {
-                r.UseNpgsql(Configuration.GetConnectionString("Default"),
+                r.UseSqlServer(Configuration.GetConnectionString("Default"),
                     db => { db.MigrationsAssembly(GetType().Assembly.GetName().FullName); });
             }, 5);
 
@@ -40,7 +33,7 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
 
             services.AddEventBus(r =>
                 {
-                    r.Environment = TestBase.Env;
+                    r.Environment = "SqlServerTest";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
@@ -51,7 +44,7 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
                     r.RetryIntervalSeconds = 5;
                 })
                 .AddMemoryQueue()
-                .AddNpgsql<DemoDbContext>();
+                .AddSqlServer<DemoDbContext>();
 
             services.AddShashlik(Configuration);
         }
@@ -61,18 +54,6 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
             app.ApplicationServices.UseShashlik()
                 .AutowireServiceProvider()
                 ;
-
-
-            // mvc
-            app.UseRouting();
-
-            app.UseStaticFiles();
-
-            // 认证
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => { endpoints.MapDefaultControllerRoute(); });
         }
     }
 }

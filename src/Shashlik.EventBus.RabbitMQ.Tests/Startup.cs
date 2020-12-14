@@ -1,20 +1,16 @@
-﻿using System;
-using CommonTestLogical.EfCore;
+﻿using CommonTestLogical.EfCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using MySqlConnector;
-using Shashlik.EventBus.Kafka.Tests.Efcore;
 using Shashlik.EventBus.MySql;
 using Shashlik.Kernel;
 
-namespace Shashlik.EventBus.Kafka.Tests
+namespace Shashlik.EventBus.RabbitMQ.Tests
 {
-    public class TestStartup
+    public class Startup
     {
-        public TestStartup(IConfiguration configuration)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -42,7 +38,7 @@ namespace Shashlik.EventBus.Kafka.Tests
 
             services.AddEventBus(r =>
                 {
-                    r.Environment = "KafkaTests";
+                    r.Environment = "RabbitTest";
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
@@ -52,7 +48,7 @@ namespace Shashlik.EventBus.Kafka.Tests
                     // 失败重试间隔5秒
                     r.RetryIntervalSeconds = 5;
                 })
-                .AddKafka(Configuration.GetSection("EventBus:Kafka"))
+                .AddRabbitMQ(Configuration.GetSection("EventBus:RabbitMQ"))
                 .AddMySql<DemoDbContext>();
 
             services.AddShashlik(Configuration);
@@ -60,38 +56,9 @@ namespace Shashlik.EventBus.Kafka.Tests
 
         public void Configure(IApplicationBuilder app)
         {
-            ClearTestData(app.ApplicationServices);
             app.ApplicationServices.UseShashlik()
                 .AutowireServiceProvider()
                 ;
-
-
-            // mvc
-            app.UseRouting();
-
-            app.UseStaticFiles();
-
-            // 认证
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints => { endpoints.MapDefaultControllerRoute(); });
-        }
-
-        /// <summary>
-        /// 清理测试数据
-        /// </summary>
-        private void ClearTestData(IServiceProvider serviceProvider)
-        {
-            var options = serviceProvider.GetRequiredService<IOptions<EventBusMySqlOptions>>().Value;
-            using var conn = new MySqlConnection(Configuration.GetConnectionString("Default"));
-            conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = $@"
-delete from {options.PublishedTableName};
-delete from {options.ReceivedTableName};
-";
-            cmd.ExecuteNonQuery();
         }
     }
 }
