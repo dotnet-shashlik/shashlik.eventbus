@@ -56,7 +56,6 @@ namespace Shashlik.EventBus.Kafka
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    consumer.Close();
                     return;
                 }
 

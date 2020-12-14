@@ -49,6 +49,7 @@ namespace Shashlik.EventBus.Kafka
                 Producers.Clear();
                 foreach (var value in Consumers.Values)
                 {
+                    value.Unsubscribe();
                     value.Close();
                     value.Dispose();
                 }
