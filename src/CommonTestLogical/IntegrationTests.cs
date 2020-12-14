@@ -42,12 +42,12 @@ namespace CommonTestLogical
             string testCustomNameEventRandomCode = RandomHelper.GetRandomCode(6);
             string testExceptionEventRandomCode = RandomHelper.GetRandomCode(6);
 
-            var delayAt = DateTimeOffset.Now.AddSeconds(10);
-
             await DbContext.PublishEventAsync(testEvent, new Dictionary<string, string>
             {
                 {"code", testEventRandomCode}
             });
+
+            var delayAt = DateTimeOffset.Now.AddSeconds(10);
             await EventPublisher.PublishAsync(testDelayEvent, delayAt, null, new Dictionary<string, string>
             {
                 {"code", testDelayEventRandomCode}
