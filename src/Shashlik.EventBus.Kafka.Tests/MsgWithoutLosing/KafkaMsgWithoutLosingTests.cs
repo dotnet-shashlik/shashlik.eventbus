@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Kafka.Tests.MsgWithoutLosing
 {
+    [Collection("Shashlik.EventBus.Kafka.Tests")]
     public class KafkaMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
     {
         public KafkaMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory, ITestOutputHelper testOutputHelper) : base(

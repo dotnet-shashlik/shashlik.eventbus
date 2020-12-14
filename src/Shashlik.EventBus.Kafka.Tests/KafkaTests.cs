@@ -5,9 +5,10 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Kafka.Tests
 {
-    public class Tests : TestBase<Startup>
+    [Collection("Shashlik.EventBus.Kafka.Tests")]
+    public class KafkaTests : TestBase<Startup>
     {
-        public Tests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public KafkaTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
 

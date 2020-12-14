@@ -3,11 +3,11 @@ using CommonTestLogical;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.MemoryStorage.Tests
+namespace Shashlik.EventBus.PostgreSQL.Tests
 {
-    public class Tests : TestBase<Startup>
+    public class PostgreSqlTests : TestBase<Startup>
     {
-        public Tests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public PostgreSqlTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
 
@@ -17,6 +17,24 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         public async Task SavePublishedNoTransactionTest()
         {
             await StorageTests.SavePublishedNoTransactionTest();
+        }
+
+        [Fact]
+        public async Task SavePublishedWithTransactionCommitTest()
+        {
+            await StorageTests.SavePublishedWithTransactionCommitTest();
+        }
+
+        [Fact]
+        public async Task SavePublishedWithTransactionRollBackTest()
+        {
+            await StorageTests.SavePublishedWithTransactionRollBackTest();
+        }
+
+        [Fact]
+        public async Task SavePublishedWithTransactionDisposeTest()
+        {
+            await StorageTests.SavePublishedWithTransactionDisposeTest();
         }
 
         [Fact]

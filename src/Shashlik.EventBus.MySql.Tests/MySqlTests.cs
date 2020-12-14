@@ -3,11 +3,11 @@ using CommonTestLogical;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.PostgreSQL.Tests
+namespace Shashlik.EventBus.MySql.Tests
 {
-    public class Tests : TestBase<Startup>
+    public class MySqlTests : TestBase<Startup>
     {
-        public Tests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public MySqlTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
 

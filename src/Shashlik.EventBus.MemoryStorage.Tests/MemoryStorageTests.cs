@@ -3,11 +3,11 @@ using CommonTestLogical;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.MySql.Tests
+namespace Shashlik.EventBus.MemoryStorage.Tests
 {
-    public class Tests : TestBase<Startup>
+    public class MemoryStorageTests : TestBase<Startup>
     {
-        public Tests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public MemoryStorageTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
         {
         }
 
@@ -17,24 +17,6 @@ namespace Shashlik.EventBus.MySql.Tests
         public async Task SavePublishedNoTransactionTest()
         {
             await StorageTests.SavePublishedNoTransactionTest();
-        }
-
-        [Fact]
-        public async Task SavePublishedWithTransactionCommitTest()
-        {
-            await StorageTests.SavePublishedWithTransactionCommitTest();
-        }
-
-        [Fact]
-        public async Task SavePublishedWithTransactionRollBackTest()
-        {
-            await StorageTests.SavePublishedWithTransactionRollBackTest();
-        }
-
-        [Fact]
-        public async Task SavePublishedWithTransactionDisposeTest()
-        {
-            await StorageTests.SavePublishedWithTransactionDisposeTest();
         }
 
         [Fact]
