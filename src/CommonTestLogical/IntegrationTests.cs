@@ -31,7 +31,6 @@ namespace CommonTestLogical
 
         public async Task DoTests()
         {
-            return;
             var beginTime = DateTimeOffset.Now;
             var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
             var testDelayEvent = new TestDelayEvent {Name = Guid.NewGuid().ToString("n")};

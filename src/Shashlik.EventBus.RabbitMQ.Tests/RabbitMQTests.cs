@@ -5,10 +5,10 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.RabbitMQ.Tests
 {
-    [Collection("Shashlik.EventBus.RabbitMQ.Tests")]
     public class RabbitMQTests : TestBase<Startup>
     {
-        public RabbitMQTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public RabbitMQTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper)
+            : base(factory, testOutputHelper)
         {
         }
 

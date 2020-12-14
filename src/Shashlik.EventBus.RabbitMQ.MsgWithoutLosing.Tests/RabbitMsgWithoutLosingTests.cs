@@ -4,9 +4,8 @@ using CommonTestLogical.MsgWithoutLosing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
+namespace Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests
 {
-    [Collection("Shashlik.EventBus.RabbitMQ.Tests")]
     public class RabbitMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
     {
         public RabbitMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory,

@@ -14,7 +14,6 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests
 {
-    [Collection("Shashlik.EventBus.Tests")]
     public class BaseTests : TestBase<Startup>
     {
         public BaseTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)

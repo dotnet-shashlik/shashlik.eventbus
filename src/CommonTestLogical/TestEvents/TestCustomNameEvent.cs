@@ -7,7 +7,6 @@ namespace CommonTestLogical.TestEvents
     [EventBusName(nameof(TestCustomNameEvent) + "_Test")]
     public class TestCustomNameEvent : IEvent
     {
-        public string TestId { get; set; } = CurrentTestIdClass.TestIdNo;
         public string Name { get; set; }
     }
 
@@ -20,8 +19,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestCustomNameEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
             Instance = @event;
             Items = items;
 
@@ -38,8 +35,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestCustomNameEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
             Instance = @event;
             Items = items;
 

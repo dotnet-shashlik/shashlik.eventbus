@@ -9,7 +9,6 @@ namespace CommonTestLogical.TestEvents
 {
     public class TestDelayEvent : IDelayEvent
     {
-        public string TestId { get; set; } = CurrentTestIdClass.TestIdNo;
         public string Name { get; set; }
     }
 
@@ -27,10 +26,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestDelayEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
-
-            Logger.LogInformation($"NOW: {DateTimeOffset.Now}, TestId: {CurrentTestIdClass.TestIdNo}, items: {items.ToJson()}, event: {@event.ToJson()}");
             Instance = @event;
             Items = items;
 
@@ -46,8 +41,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestDelayEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
             Instance = @event;
             Items = items;
 
@@ -63,8 +56,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestDelayEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
             Instance = @event;
             Items = items;
 

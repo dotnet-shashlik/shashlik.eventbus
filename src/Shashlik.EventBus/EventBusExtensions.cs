@@ -30,8 +30,6 @@ namespace Shashlik.EventBus
 
         public static IEventBusBuilder AddEventBus(this IServiceCollection serviceCollection)
         {
-            serviceCollection.AddOptions<EventBusOptions>();
-
             serviceCollection.TryAddSingleton<IMsgIdGenerator, GuidMsgIdGenerator>();
             serviceCollection.TryAddSingleton<IEventPublisher, DefaultEventPublisher>();
             serviceCollection.TryAddSingleton<IMessageSerializer, DefaultJsonSerializer>();

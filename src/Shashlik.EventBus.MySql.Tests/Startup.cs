@@ -17,6 +17,7 @@ namespace Shashlik.EventBus.MySql.Tests
         }
 
         private IConfiguration Configuration { get; }
+        private readonly string _env = CommonTestLogical.Utils.RandomEnv();
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -33,7 +34,7 @@ namespace Shashlik.EventBus.MySql.Tests
 
             services.AddEventBus(r =>
                 {
-                    r.Environment = "MySqlTest";
+                    r.Environment = _env;
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后

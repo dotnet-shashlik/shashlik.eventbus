@@ -4,11 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MemoryStorage;
 using Shashlik.Kernel;
-using Xunit;
 
-namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
+namespace Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests
 {
-    
     public class MsgWithoutLosingStartup
     {
         public MsgWithoutLosingStartup(IConfiguration configuration)
@@ -17,13 +15,14 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
         }
 
         private IConfiguration Configuration { get; }
+        private readonly string _env = CommonTestLogical.Utils.RandomEnv();
 
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IMessageListener, MsgWithoutLosingListener>();
             services.AddEventBus(r =>
                 {
-                    r.Environment = "RabbitLosingTests";
+                    r.Environment = _env;
                     // 为了便于测试，最大重试设置为7次
                     r.RetryFailedMax = 7;
                     // 重试开始工作的时间为2分钟后
@@ -33,7 +32,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests.MsgWithoutLosing
                     // 失败重试间隔5秒
                     r.RetryIntervalSeconds = 5;
                 })
-                .AddRabbitMQ(Configuration.GetSection("EventBus:RabbitMQ"))
+                .AddKafka(Configuration.GetSection("EventBus:Kafka"))
                 .AddMemoryStorage();
 
             services.AddShashlik(Configuration);

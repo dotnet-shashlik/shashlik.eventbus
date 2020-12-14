@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
+namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
 {
     public class SendMsgWithoutLosingTestEvent : IEvent
     {

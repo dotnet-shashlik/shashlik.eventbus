@@ -19,10 +19,6 @@ namespace CommonTestLogical.MsgWithoutLosing
         public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel messageTransferModel,
             CancellationToken cancellationToken)
         {
-            var @event = MessageSerializer.Deserialize<MsgWithoutLosingTestEvent>(messageTransferModel.MsgBody);
-            if (@event.Id != MsgWithoutLosingTestEvent._Id)
-                return MessageReceiveResult.Success;
-
             MsgIds.Add(messageTransferModel.MsgId);
             if (MsgIds.Count > 3)
                 return MessageReceiveResult.Success;

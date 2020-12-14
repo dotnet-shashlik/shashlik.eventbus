@@ -11,7 +11,6 @@ namespace CommonTestLogical.TestEvents
     /// </summary>
     public class TestExceptionEvent : IEvent
     {
-        public string TestId { get; set; } = CurrentTestIdClass.TestIdNo;
         public string Name { get; set; }
     }
 
@@ -30,8 +29,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
             Counter++;
             throw new Exception("...111");
         }
@@ -52,9 +49,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
-
             // 模拟执行5次后，恢复正常
             if (Counter >= 5)
             {

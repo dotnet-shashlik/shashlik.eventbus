@@ -33,7 +33,11 @@ namespace CommonTestLogical
                     config.AddYamlFile("config.yaml");
                     config.AddEnvironmentVariables();
                 })
-                .ConfigureWebHostDefaults(x => { x.UseStartup<TStartup>(); });
+                .ConfigureWebHostDefaults(x =>
+                {
+                    Output.WriteLine($"ConfigureWebHostDefaults, {AppDomain.CurrentDomain.FriendlyName}");
+                    x.UseStartup<TStartup>();
+                });
         }
     }
 

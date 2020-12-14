@@ -6,7 +6,6 @@ namespace CommonTestLogical.TestEvents
 {
     public class TestEvent : IEvent
     {
-        public string TestId { get; set; } = CurrentTestIdClass.TestIdNo;
         public string Name { get; set; }
     }
 
@@ -18,8 +17,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
             Instance = @event;
             Items = items;
             return Task.CompletedTask;
@@ -37,8 +34,6 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestEvent @event, IDictionary<string, string> items)
         {
-            if (@event.TestId != CurrentTestIdClass.TestIdNo)
-                return Task.CompletedTask;
             Instance = @event;
             Items = items;
 

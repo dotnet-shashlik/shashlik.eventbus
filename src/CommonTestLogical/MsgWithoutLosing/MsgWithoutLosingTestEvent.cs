@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Shashlik.EventBus;
 
@@ -7,10 +6,6 @@ namespace CommonTestLogical.MsgWithoutLosing
 {
     public class MsgWithoutLosingTestEvent : IEvent
     {
-        public static string _Id = Guid.NewGuid().ToString();
-
-        public string Id { get; set; } = _Id;
-
         public string Name { get; set; }
     }
 

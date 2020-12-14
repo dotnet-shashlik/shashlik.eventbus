@@ -6,9 +6,8 @@ using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Tests.SendMsgWithoutLosing
+namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
 {
-    [Collection("Shashlik.EventBus.Tests")]
     public class SendMsgWithoutLosingTests : TestBase<SendMsgWithoutLosingTestStartup>
     {
         public SendMsgWithoutLosingTests(TestWebApplicationFactory<SendMsgWithoutLosingTestStartup> factory, ITestOutputHelper testOutputHelper) :
