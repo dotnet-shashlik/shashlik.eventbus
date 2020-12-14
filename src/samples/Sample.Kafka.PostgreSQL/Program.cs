@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
 using Shashlik.EventBus.Kafka;
+using Shashlik.EventBus.MemoryStorage;
 using Shashlik.EventBus.PostgreSQL;
 using Shashlik.Utils.Extensions;
 
@@ -49,7 +50,8 @@ namespace Sample.Kafka.PostgreSQL
                     });
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaPostgre3"; })
-                        .AddNpgsql<DemoDbContext>()
+                        //.AddNpgsql<DemoDbContext>()
+                        .AddMemoryStorage()
                         .AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", "192.168.50.178:9092"}); });
 
                     services.AddHostedService<TestService>();
