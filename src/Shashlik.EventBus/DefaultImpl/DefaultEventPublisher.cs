@@ -70,14 +70,10 @@ namespace Shashlik.EventBus.DefaultImpl
             items.Add(EventBusConsts.MsgIdHeaderKey, msgId);
             if (delayAt.HasValue)
             {
-                if ((delayAt.Value - DateTimeOffset.Now).TotalSeconds < Options.Value.DelayAtMinSeconds)
-                {
-                    throw new ArgumentException(
-                        $"DelayAt value must great than now {Options.Value.DelayAtMinSeconds} seconds.",
-                        nameof(delayAt));
-                }
-
-                items.Add(EventBusConsts.DelayAtHeaderKey, delayAt.ToString());
+                if (delayAt.Value <= DateTimeOffset.Now)
+                    delayAt = null;
+                else
+                    items.Add(EventBusConsts.DelayAtHeaderKey, delayAt.ToString());
             }
 
             MessageStorageModel messageStorageModel = new MessageStorageModel
