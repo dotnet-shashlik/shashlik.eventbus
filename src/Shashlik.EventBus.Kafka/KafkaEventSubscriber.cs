@@ -43,7 +43,19 @@ namespace Shashlik.EventBus.Kafka
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Consume(consumer, eventName, eventHandlerName, cancellationToken);
+                    try
+                    {
+                        await Consume(consumer, eventName, eventHandlerName, cancellationToken);
+                    }
+                    catch (AccessViolationException)
+                    {
+                        // ignore
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, $"[EventBus] consume message occur error.");
+                    }
+
                     // ReSharper disable once MethodSupportsCancellation
                     await Task.Delay(5).ConfigureAwait(false);
                 }
@@ -52,69 +64,62 @@ namespace Shashlik.EventBus.Kafka
 
         private async Task Consume(IConsumer<string, byte[]> consumer, string eventName, string eventHandlerName, CancellationToken cancellationToken)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            ConsumeResult<string, byte[]> consumerResult;
             try
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
+                consumerResult = consumer.Consume(cancellationToken);
+                if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
                     return;
-                }
-
-                ConsumeResult<string, byte[]> consumerResult;
-                try
-                {
-                    consumerResult = consumer.Consume(cancellationToken);
-                    if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
-                        return;
-                }
-                catch (OperationCanceledException)
-                {
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex,
-                        $"[EventBus-Kafka] consume message occur error, event: {eventName}, handler: {eventHandlerName}.");
-                    return;
-                }
-
-                MessageTransferModel message;
-                try
-                {
-                    message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
-                }
-                catch (Exception e)
-                {
-                    Logger.LogError(e, "[EventBus-Kafka] deserialize message from kafka error.");
-                    return;
-                }
-
-                if (message == null)
-                {
-                    Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
-                    return;
-                }
-
-                if (message.EventName != eventName)
-                {
-                    Logger.LogError(
-                        $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{eventName}\".");
-                    return;
-                }
-
-                Logger.LogDebug(
-                    $"[EventBus-Kafka] received msg: {message.ToJson()}.");
-
-                // 执行消息监听处理
-                var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
-                // 存储偏移,确认消费, see: https://docs.confluent.io/current/clients/dotnet.html
-                if (res == MessageReceiveResult.Success)
-                    // 只有监听处理成功才提交偏移量,否则不处理即可
-                    consumer.StoreOffset(consumerResult);
             }
-            catch (AccessViolationException)
+            catch (OperationCanceledException)
             {
-                // ignore
+                return;
             }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex,
+                    $"[EventBus-Kafka] consume message occur error, event: {eventName}, handler: {eventHandlerName}.");
+                return;
+            }
+
+            MessageTransferModel message;
+            try
+            {
+                message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, "[EventBus-Kafka] deserialize message from kafka error.");
+                return;
+            }
+
+            if (message == null)
+            {
+                Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
+                return;
+            }
+
+            if (message.EventName != eventName)
+            {
+                Logger.LogError(
+                    $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{eventName}\".");
+                return;
+            }
+
+            Logger.LogDebug(
+                $"[EventBus-Kafka] received msg: {message.ToJson()}.");
+
+            // 执行消息监听处理
+            var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
+            // 存储偏移,确认消费, see: https://docs.confluent.io/current/clients/dotnet.html
+            if (res == MessageReceiveResult.Success)
+                // 只有监听处理成功才提交偏移量,否则不处理即可
+                consumer.StoreOffset(consumerResult);
         }
     }
 }
