@@ -33,7 +33,7 @@ namespace Shashlik.EventBus.Tests
                 testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventHandler)}.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestEvent));
                 testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
+                // testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
             }
 
             {
@@ -41,7 +41,7 @@ namespace Shashlik.EventBus.Tests
                 testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestEventGroup2Handler)}.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestEvent));
                 testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
+                // testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
             }
 
             {
@@ -49,7 +49,7 @@ namespace Shashlik.EventBus.Tests
                 testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestDelayEventHandler)}.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestDelayEvent));
                 testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeTrue();
+                // testEventHandlerDescriptor.IsDelay.ShouldBeTrue();
             }
 
             {
@@ -57,7 +57,7 @@ namespace Shashlik.EventBus.Tests
                 testEventHandlerDescriptor.EventHandlerName.ShouldBe($"{nameof(TestCustomNameEventHandler)}_Test.{Options.Environment}");
                 testEventHandlerDescriptor.EventType.ShouldBe(typeof(TestCustomNameEvent));
                 testEventHandlerDescriptor.EventName.ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Options.Environment}");
-                testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
+                // testEventHandlerDescriptor.IsDelay.ShouldBeFalse();
             }
         }
 

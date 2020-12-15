@@ -47,7 +47,7 @@ namespace Shashlik.EventBus.DefaultImpl
             ITransactionContext? transactionContext,
             IDictionary<string, string>? items = null,
             CancellationToken cancellationToken = default
-        ) where TEvent : IDelayEvent
+        ) where TEvent : IEvent
         {
             await Publish(@event, delayAt, transactionContext, items, cancellationToken).ConfigureAwait(false);
         }

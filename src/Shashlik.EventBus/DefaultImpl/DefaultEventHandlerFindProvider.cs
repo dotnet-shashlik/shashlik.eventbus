@@ -35,7 +35,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     {
                         EventHandlerName = EventHandlerNameRuler.GetName(typeInfo),
                         EventName = EventNameRuler.GetName(GetEventType(typeInfo)),
-                        IsDelay = eventType.IsSubType<IDelayEvent>(),
+                        // IsDelay = eventType.IsSubType<IDelayEvent>(),
                         EventType = eventType,
                         EventHandlerType = typeInfo
                     });

@@ -20,10 +20,10 @@ namespace Shashlik.EventBus
         /// </summary>
         public string EventName { get; set; }
 
-        /// <summary>
-        /// 是否为延迟事件
-        /// </summary>
-        public bool IsDelay { get; set; }
+        // /// <summary>
+        // /// 是否为延迟事件
+        // /// </summary>
+        // public bool IsDelay { get; set; }
 
         /// <summary>
         /// 事件类型

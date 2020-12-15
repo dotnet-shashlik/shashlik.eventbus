@@ -44,6 +44,6 @@ namespace Shashlik.EventBus
             ITransactionContext? transactionContext,
             IDictionary<string, string>? items = null,
             CancellationToken cancellationToken = default)
-            where TEvent : IDelayEvent;
+            where TEvent : IEvent;
     }
 }

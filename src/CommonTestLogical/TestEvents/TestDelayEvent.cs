@@ -7,7 +7,7 @@ using Shashlik.Utils.Extensions;
 
 namespace CommonTestLogical.TestEvents
 {
-    public class TestDelayEvent : IDelayEvent
+    public class TestDelayEvent : IEvent
     {
         public string Name { get; set; }
     }

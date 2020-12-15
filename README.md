@@ -200,11 +200,11 @@ public class UserManager
 - `IMessageReceiveQueueProvider`：消息接收处理队列。
 - `IEventHandlerInvoker`：事件处理执行器。
 - `IEventNameRuler`：事件名称规则生成。
-- `IEventHandlerNameRuler`：事件处理类名称规则生成。。
+- `IEventHandlerNameRuler`：事件处理名称规则生成。
 - `IEventHandlerFindProvider`：事件处理类查找器
-- `IMessageListenerFactory`：消息监听器工厂方法。
+- `IMessageListener`：消息监听处理器。
 - `IReceivedDelayEventProvider`：已接收的延迟事件处理。
-- `IExpiredMessageProvider`：已过期删除处理。
+- `IExpiredMessageProvider`：已过期消息删除处理。
 - `IMessageStorageInitializer`：存储介质初始化。
 - `IMessageStorage`：消息存储、读取等操作。
 - `IMessageSender`：消息发送器。

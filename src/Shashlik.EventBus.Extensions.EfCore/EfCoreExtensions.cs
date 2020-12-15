@@ -66,7 +66,7 @@ namespace Shashlik.EventBus
             TEvent @event,
             DateTimeOffset delayAt,
             IDictionary<string, string>? items = null,
-            CancellationToken cancellationToken = default) where TEvent : IDelayEvent
+            CancellationToken cancellationToken = default) where TEvent : IEvent
         {
             if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
             if (@event == null) throw new ArgumentNullException(nameof(@event));
