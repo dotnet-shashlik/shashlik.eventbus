@@ -62,13 +62,11 @@ Shashlik.EventBus 顾名思义，.NET 事件总线，同时也是分布式事务
             r.RetryLimitCount = 100;
             // 成功的消息过期时间，默认3天，失败的消息永不过期，必须处理
             r.SucceedExpireHour = 24 * 3;
-            // 延迟消息最小延迟时间，默认5秒
-            r.DelayAtMinSeconds = 5;
             // 重试器工作时间间隔，默认5秒
             r.RetryWorkingIntervalSeconds = 5;
             // 消息处理失败后，重试器介入时间，默认5分钟后
             r.StartRetryAfterSeconds = 60 * 5;
-            // 重试器并行执行数量
+            // 重试器并行执行数量，默认5
             r.RetryMaxDegreeOfParallelism = 5;
         })
         // 使用ef DbContext mysql
