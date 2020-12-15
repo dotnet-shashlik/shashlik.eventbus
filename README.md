@@ -86,15 +86,15 @@ Shashlik.EventBus 顾名思义，.NET 事件总线，同时也是分布式事务
 
 ```c#
 
-    // 定义普通事件，实现接口IEvent
+    // 新用户注册完成事件，实现接口IEvent
     public class NewUserEvent : IEvent
     {
         public string Id { get;set; }
         public string Name { get; set; }
     }
     
-    // 定义延迟事件，实现接口IDelayEvent
-    public class NewUserPromotionEvent : IDelayEvent
+    // 定义新用户注册延迟活动推送事件
+    public class NewUserPromotionEvent : IEvent
     {
         public string Id { get;set; }
         public string Name { get; set; }
