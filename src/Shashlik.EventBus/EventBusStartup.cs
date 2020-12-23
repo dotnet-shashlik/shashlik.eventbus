@@ -52,9 +52,6 @@ namespace Shashlik.EventBus
             await ReceivedMessageRetryProvider.StartupAsync(HostedStopToken.StopCancellationToken).ConfigureAwait(false);
             // 启动过期消息删除
             await ExpiredMessageProvider.DoDeleteAsync(HostedStopToken.StopCancellationToken);
-
-            // 每分钟执行一次垃圾回收，考虑到大量的异步逻辑可能带来的对象释放问题
-            TimerHelper.SetInterval(GC.Collect, TimeSpan.FromMinutes(1));
         }
 
         public async Task StartAsync(CancellationToken _)
