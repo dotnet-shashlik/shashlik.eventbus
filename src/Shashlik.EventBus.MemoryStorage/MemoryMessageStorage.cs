@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.MemoryStorage
             return _lastId;
         }
 
-        public ValueTask<bool> TransactionIsCommittedAsync(string msgId, ITransactionContext? transactionContext, CancellationToken cancellationToken)
+        public ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken)
         {
             return new ValueTask<bool>(_published.Any(r => r.Value.MsgId == msgId));
         }

@@ -11,13 +11,12 @@ namespace Shashlik.EventBus
     public interface IMessageStorage
     {
         /// <summary>
-        /// 确认事务是否已提交
+        /// 消息数据是否已提交
         /// </summary>
         /// <param name="msgId">消息id</param>
-        /// <param name="transactionContext">事务上下文</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        ValueTask<bool> TransactionIsCommittedAsync(string msgId, ITransactionContext? transactionContext, CancellationToken cancellationToken);
+        ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken);
 
         /// <summary>
         /// 根据msgId查找发布的消息

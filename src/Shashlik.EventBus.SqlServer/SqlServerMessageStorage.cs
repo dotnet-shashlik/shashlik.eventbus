@@ -29,19 +29,8 @@ namespace Shashlik.EventBus.SqlServer
         private IOptionsMonitor<EventBusSqlServerOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
 
-        public async ValueTask<bool> TransactionIsCommittedAsync(string msgId, ITransactionContext? transactionContext,
-            CancellationToken cancellationToken = default)
+        public async ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken = default)
         {
-            if (transactionContext != null)
-            {
-                if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
-                    throw new InvalidCastException(
-                        $"[EventBus-SqlServer]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
-                // 事务的连接的信息未null了表示事务已回滚回已提交
-                if (relationDbStorageTransactionContext.DbTransaction.Connection != null)
-                    return false;
-            }
-
             var sql = $@"
 SELECT COUNT([msgId]) FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]='{msgId}';";
 

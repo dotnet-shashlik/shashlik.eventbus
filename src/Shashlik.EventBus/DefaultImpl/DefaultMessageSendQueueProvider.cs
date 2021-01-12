@@ -24,17 +24,39 @@ namespace Shashlik.EventBus.DefaultImpl
         private ILogger<DefaultMessageSendQueueProvider> Logger { get; }
         private IHostedStopToken HostedStopToken { get; }
 
-        public void Enqueue(ITransactionContext? transactionContext, MessageTransferModel messageTransferModel,
+        public void Enqueue(
+            ITransactionContext? transactionContext,
+            MessageTransferModel messageTransferModel,
             MessageStorageModel messageStorageModel,
             CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
-            // ReSharper disable once MethodSupportsCancellation
-            Task.Delay(100).ConfigureAwait(false).GetAwaiter().GetResult();
 
             _ = Task.Run(async () =>
             {
+                // 等待事务完成，循环间隔10毫秒
+                while (transactionContext is null || !transactionContext.IsDone())
+                    // ReSharper disable once MethodSupportsCancellation
+                    await Task.Delay(10);
+                try
+                {
+                    // 消息未提交, 不执行任何操作
+                    if (!await MessageStorage
+                        .IsCommittedAsync(messageStorageModel.MsgId, cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        Logger.LogDebug($"[EventBus] message \"{messageStorageModel.MsgId}\" has been rollback.");
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogDebug(ex, $"[EventBus] query message \"{messageStorageModel.MsgId}\" commit state occur error.");
+                    // 查询异常，将由重试器处理
+                    return;
+                }
+
                 // 执行失败的次数
                 var failCount = 0;
                 while (!cancellationToken.IsCancellationRequested && !HostedStopToken.StopCancellationToken.IsCancellationRequested)
@@ -45,17 +67,6 @@ namespace Shashlik.EventBus.DefaultImpl
 
                     try
                     {
-                        // 确保消息已提交才进行消息发送
-                        if (!await MessageStorage
-                            .TransactionIsCommittedAsync(messageStorageModel.MsgId, transactionContext, cancellationToken)
-                            .ConfigureAwait(false))
-                        {
-                            // 还没提交? 延迟1秒继续查询是否提交
-                            // ReSharper disable once MethodSupportsCancellation
-                            await Task.Delay(1000).ConfigureAwait(false);
-                            continue;
-                        }
-
                         if (failCount > 4)
                             // 最多失败5次就不再重试了,如果消息已经写入那么5分钟后由重试器执行,如果没写入那就撒事也没有
                         {

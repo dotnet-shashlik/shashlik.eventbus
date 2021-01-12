@@ -7,5 +7,10 @@ namespace Shashlik.EventBus
     /// </summary>
     public interface ITransactionContext
     {
+        /// <summary>
+        /// 当前事务是否已提交或回滚
+        /// </summary>
+        /// <returns></returns>
+        bool IsDone();
     }
 }

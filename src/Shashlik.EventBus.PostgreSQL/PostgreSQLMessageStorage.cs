@@ -29,26 +29,8 @@ namespace Shashlik.EventBus.PostgreSQL
         private IConnectionString ConnectionString { get; }
         private ILogger<PostgreSQLMessageStorage> Logger { get; }
 
-        public async ValueTask<bool> TransactionIsCommittedAsync(string msgId, ITransactionContext? transactionContext,
-            CancellationToken cancellationToken = default)
+        public async ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken = default)
         {
-            if (transactionContext != null)
-            {
-                if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
-                    throw new InvalidCastException(
-                        $"[EventBus-PostgreSql]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
-                // 事务的连接的信息未null了表示事务已回滚回已提交
-                try
-                {
-                    if (relationDbStorageTransactionContext.DbTransaction.Connection != null)
-                        return false;
-                }
-                catch (InvalidOperationException)
-                {
-                    // 5.0开始dispose后不能访问Connection属性了
-                }
-            }
-
             var sql =
                 $"SELECT COUNT(\"msgId\") FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\"='{msgId}';";
 

@@ -93,12 +93,12 @@ namespace CommonTestLogical
             while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
             {
                 // 20秒内不提交事务， 消息就应该是未提交
-                (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
                 await Task.Delay(300);
             }
 
             await tran.CommitAsync();
-            (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeTrue();
+            (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeTrue();
 
             msg.Id.ShouldBe(id);
             var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
@@ -137,12 +137,12 @@ namespace CommonTestLogical
             while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
             {
                 // 20秒内不提交事务， 消息就应该是未提交
-                (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
                 await Task.Delay(300);
             }
 
             await tran.RollbackAsync();
-            (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+            (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
 
             var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg.ShouldBeNull();
@@ -177,12 +177,12 @@ namespace CommonTestLogical
             while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
             {
                 // 20秒内不提交事务， 消息就应该是未提交
-                (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+                (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
                 await Task.Delay(300);
             }
 
             await tran.DisposeAsync();
-            (await MessageStorage.TransactionIsCommittedAsync(msg.MsgId, transactionContext, default)).ShouldBeFalse();
+            (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
 
             var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg.ShouldBeNull();

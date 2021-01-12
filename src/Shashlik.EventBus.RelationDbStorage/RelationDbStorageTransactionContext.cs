@@ -1,4 +1,5 @@
 ﻿using System.Data;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace Shashlik.EventBus.RelationDbStorage
 {
@@ -10,5 +11,17 @@ namespace Shashlik.EventBus.RelationDbStorage
         }
 
         public IDbTransaction DbTransaction { get; }
+
+        public virtual bool IsDone()
+        {
+            try
+            {
+                return DbTransaction.Connection is null;
+            }
+            catch
+            {
+                return true;
+            }
+        }
     }
 }
