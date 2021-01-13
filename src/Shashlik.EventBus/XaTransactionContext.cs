@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Transactions;
 
-namespace Shashlik.EventBus.RelationDbStorage
+namespace Shashlik.EventBus
 {
     /// <summary>
     /// xa transaction context

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.DefaultImpl
@@ -61,6 +62,21 @@ namespace Shashlik.EventBus.DefaultImpl
         )
         {
             if (@event == null) throw new ArgumentNullException(nameof(@event));
+            if (transactionContext is null)
+            {
+                try
+                {
+                    if (Transaction.Current != null)
+                        transactionContext = new XaTransactionContext(Transaction.Current);
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+
             var now = DateTimeOffset.Now;
             var eventName = EventNameRuler.GetName(typeof(TEvent));
             var msgId = MsgIdGenerator.GenerateId();

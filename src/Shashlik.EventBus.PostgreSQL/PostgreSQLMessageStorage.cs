@@ -424,7 +424,7 @@ WHERE ""id"" IN ({ids}) AND (""isLocking"" = false OR ""lockEnd"" < {nowLong});
         private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql, NpgsqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            if (transactionContext is null)
+            if (transactionContext is null || transactionContext is XaTransactionContext)
                 return await SqlScalar(sql, parameter, cancellationToken).ConfigureAwait(false);
 
             if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
