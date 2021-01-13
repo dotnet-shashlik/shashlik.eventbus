@@ -89,7 +89,43 @@ namespace Shashlik.EventBus.MySql.Tests
         [Fact]
         public async Task QueryReceivedTests()
         {
-            await StorageTests.QueryReceivedTests();
+            await StorageTests.QueryPublishedTests();
+        }
+
+        [Fact]
+        public void RelationDbStorageTransactionContextCommitTest()
+        {
+            StorageTests.RelationDbStorageTransactionContextCommitTest();
+        }
+
+        [Fact]
+        public void RelationDbStorageTransactionContextRollbackTest()
+        {
+            StorageTests.RelationDbStorageTransactionContextRollbackTest();
+        }
+
+        [Fact]
+        public void RelationDbStorageTransactionContextDisposeTest()
+        {
+            StorageTests.RelationDbStorageTransactionContextDisposeTest();
+        }
+
+        [Fact]
+        public void XaTransactionContextCommitTest()
+        {
+            StorageTests.XaTransactionContextCommitTest();
+        }
+
+        [Fact]
+        public void XaTransactionContextRollbackTest()
+        {
+            StorageTests.XaTransactionContextRollbackTest();
+        }
+
+        [Fact]
+        public void XaTransactionContextDisposeTest()
+        {
+            StorageTests.XaTransactionContextDisposeTest();
         }
     }
 }

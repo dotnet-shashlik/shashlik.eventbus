@@ -91,5 +91,41 @@ namespace Shashlik.EventBus.SqlServer.Tests
         {
             await StorageTests.QueryReceivedTests();
         }
+
+        [Fact]
+        public void RelationDbStorageTransactionContextCommitTest()
+        {
+            StorageTests.RelationDbStorageTransactionContextCommitTest();
+        }
+
+        [Fact]
+        public void RelationDbStorageTransactionContextRollbackTest()
+        {
+            StorageTests.RelationDbStorageTransactionContextRollbackTest();
+        }
+
+        [Fact]
+        public void RelationDbStorageTransactionContextDisposeTest()
+        {
+            StorageTests.RelationDbStorageTransactionContextDisposeTest();
+        }
+
+        [Fact]
+        public void XaTransactionContextCommitTest()
+        {
+            StorageTests.XaTransactionContextCommitTest();
+        }
+
+        [Fact]
+        public void XaTransactionContextRollbackTest()
+        {
+            StorageTests.XaTransactionContextRollbackTest();
+        }
+
+        [Fact]
+        public void XaTransactionContextDisposeTest()
+        {
+            StorageTests.XaTransactionContextDisposeTest();
+        }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using CommonTestLogical.EfCore;
 using CommonTestLogical.TestEvents;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -635,6 +637,60 @@ namespace CommonTestLogical
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
+        }
+
+        public void RelationDbStorageTransactionContextCommitTest()
+        {
+            using var tran = DbContext.Database.BeginTransaction();
+            var transactionContext = DbContext.GetTransactionContext();
+            transactionContext!.IsDone().ShouldBeFalse();
+            tran.Commit();
+            transactionContext!.IsDone().ShouldBeTrue();
+        }
+
+        public void RelationDbStorageTransactionContextRollbackTest()
+        {
+            using var tran = DbContext.Database.BeginTransaction();
+            var transactionContext = DbContext.GetTransactionContext();
+            transactionContext!.IsDone().ShouldBeFalse();
+            tran.Rollback();
+            transactionContext!.IsDone().ShouldBeTrue();
+        }
+
+        public void RelationDbStorageTransactionContextDisposeTest()
+        {
+            using var tran = DbContext.Database.BeginTransaction();
+            var transactionContext = DbContext.GetTransactionContext();
+            transactionContext!.IsDone().ShouldBeFalse();
+            tran.Dispose();
+            transactionContext!.IsDone().ShouldBeTrue();
+        }
+
+        public void XaTransactionContextCommitTest()
+        {
+            using var tran = new TransactionScope();
+            var transactionContext = new XaTransactionContext(Transaction.Current!);
+            transactionContext!.IsDone().ShouldBeFalse();
+            tran.Complete();
+            transactionContext!.IsDone().ShouldBeTrue();
+        }
+
+        public void XaTransactionContextRollbackTest()
+        {
+            using var tran = new TransactionScope();
+            var transactionContext = new XaTransactionContext(Transaction.Current!);
+            transactionContext!.IsDone().ShouldBeFalse();
+            Transaction.Current.Rollback();
+            transactionContext!.IsDone().ShouldBeTrue();
+        }
+
+        public void XaTransactionContextDisposeTest()
+        {
+            using var tran = new TransactionScope();
+            var transactionContext = new XaTransactionContext(Transaction.Current!);
+            transactionContext!.IsDone().ShouldBeFalse();
+            tran.Complete();
+            transactionContext!.IsDone().ShouldBeTrue();
         }
     }
 }
