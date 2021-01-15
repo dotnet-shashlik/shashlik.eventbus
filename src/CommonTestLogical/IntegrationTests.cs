@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Transactions;
 using CommonTestLogical.EfCore;
 using CommonTestLogical.TestEvents;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,9 +21,10 @@ namespace CommonTestLogical
     public class IntegrationTests
     {
         public IntegrationTests(IOptions<EventBusOptions> eventBusOptions,
-            IServiceProvider serviceProvider, IEventPublisher eventPublisher)
+            IServiceProvider serviceProvider, IEventPublisher eventPublisher, IMessageStorage messageStorage)
         {
             EventPublisher = eventPublisher;
+            MessageStorage = messageStorage;
             Options = eventBusOptions.Value;
             DbContext = serviceProvider.GetService<DemoDbContext>();
         }
@@ -28,9 +32,13 @@ namespace CommonTestLogical
         private EventBusOptions Options { get; }
         private DemoDbContext DbContext { get; }
         private IEventPublisher EventPublisher { get; }
+        private IMessageStorage MessageStorage { get; }
 
         public async Task DoTests()
         {
+            await XaTransactionCommitTest();
+            await XaTransactionRollBackTest();
+            
             var beginTime = DateTimeOffset.Now;
             var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
             var testDelayEvent = new TestDelayEvent {Name = Guid.NewGuid().ToString("n")};
@@ -163,6 +171,35 @@ namespace CommonTestLogical
                 TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
                     .ShouldBe($"{nameof(TestExceptionEvent)}.{Options.Environment}");
             }
+        }
+
+        public async Task XaTransactionRollBackTest()
+        {
+            var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
+            try
+            {
+                using var scope = new TransactionScope();
+                await EventPublisher.PublishAsync(testEvent, null, null, default);
+                throw new Exception();
+            }
+            catch
+            {
+                // ignored
+            }
+
+            var msgs = await MessageStorage.SearchPublishedAsync("", "", 0, 10000, default);
+            msgs.Any(r => r.EventName == testEvent.Name).ShouldBeFalse();
+        }
+
+        public async Task XaTransactionCommitTest()
+        {
+            var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
+            using var scope = new TransactionScope();
+            await EventPublisher.PublishAsync(testEvent, null, null, default);
+            scope.Complete();
+
+            var msgs = await MessageStorage.SearchPublishedAsync("", "", 0, 10000, default);
+            msgs.Any(r => r.EventName == testEvent.Name).ShouldBeTrue();
         }
     }
 }

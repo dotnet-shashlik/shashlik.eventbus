@@ -69,11 +69,9 @@ namespace Shashlik.EventBus.DefaultImpl
                     if (Transaction.Current != null)
                         transactionContext = new XaTransactionContext(Transaction.Current);
                 }
-                catch (ObjectDisposedException)
+                catch
                 {
-                }
-                catch (InvalidOperationException)
-                {
+                    // ignored
                 }
             }
 
