@@ -659,7 +659,7 @@ namespace CommonTestLogical
 
         public void RelationDbStorageTransactionContextDisposeTest()
         {
-            using var tran = DbContext.Database.BeginTransaction();
+            var tran = DbContext.Database.BeginTransaction();
             var transactionContext = DbContext.GetTransactionContext();
             transactionContext!.IsDone().ShouldBeFalse();
             tran.Dispose();
@@ -686,10 +686,11 @@ namespace CommonTestLogical
 
         public void XaTransactionContextDisposeTest()
         {
-            using var tran = new TransactionScope();
+            var tran = new TransactionScope();
             var transactionContext = new XaTransactionContext(Transaction.Current!);
             transactionContext!.IsDone().ShouldBeFalse();
             tran.Complete();
+            tran.Dispose();
             transactionContext!.IsDone().ShouldBeTrue();
         }
     }
