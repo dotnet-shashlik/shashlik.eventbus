@@ -36,9 +36,12 @@ namespace Shashlik.EventBus.DefaultImpl
             _ = Task.Run(async () =>
             {
                 // 等待事务完成，循环间隔10毫秒
-                while (transactionContext is null || !transactionContext.IsDone())
+                // 存在事务上下文并且没完成，一直等待事务完成
+                //TODO: 加入事务提交超时机制
+                while (!cancellationToken.IsCancellationRequested && transactionContext != null && !transactionContext.IsDone())
                     // ReSharper disable once MethodSupportsCancellation
                     await Task.Delay(10);
+
                 try
                 {
                     // 消息未提交, 不执行任何操作
