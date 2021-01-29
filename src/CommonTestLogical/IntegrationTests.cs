@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using CommonTestLogical.EfCore;
 using CommonTestLogical.TestEvents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Shashlik.EventBus;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.Kernel.Dependency;
@@ -38,7 +40,7 @@ namespace CommonTestLogical
         {
             await XaTransactionCommitTest();
             await XaTransactionRollBackTest();
-            
+
             var beginTime = DateTimeOffset.Now;
             var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
             var testDelayEvent = new TestDelayEvent {Name = Guid.NewGuid().ToString("n")};
@@ -175,31 +177,28 @@ namespace CommonTestLogical
 
         public async Task XaTransactionRollBackTest()
         {
-            var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
-            try
+            var testEvent = new XaEvent {Name = Guid.NewGuid().ToString("n")};
+
             {
                 using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                 await EventPublisher.PublishAsync(testEvent, null, null, default);
-                throw new Exception();
-            }
-            catch
-            {
-                // ignored
+                // rollback
             }
 
+
             var msgs = await MessageStorage.SearchPublishedAsync("", "", 0, 10000, default);
-            msgs.Any(r => r.EventName == testEvent.Name).ShouldBeFalse();
+            msgs.Any(r => r.EventBody.DeserializeJson<JObject>()["Name"]!.Value<string>() == testEvent.Name).ShouldBeFalse();
         }
 
         public async Task XaTransactionCommitTest()
         {
-            var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
+            var testEvent = new XaEvent {Name = Guid.NewGuid().ToString("n")};
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             await EventPublisher.PublishAsync(testEvent, null, null, default);
             scope.Complete();
 
             var msgs = await MessageStorage.SearchPublishedAsync("", "", 0, 10000, default);
-            msgs.Any(r => r.EventName == testEvent.Name).ShouldBeTrue();
+            msgs.Any(r => r.EventBody.DeserializeJson<JObject>()["Name"]!.Value<string>() == testEvent.Name).ShouldBeTrue();
         }
     }
 }
