@@ -206,6 +206,7 @@ public class UserManager
 - `IMessageStorageInitializer`：存储介质初始化。
 - `IMessageStorage`：消息存储、读取等操作。
 - `IMessageSender`：消息发送器。
+- `IMessageListener`：消息监听处理器。
 - `IEventSubscriber`：事件订阅器。
 
 例：
