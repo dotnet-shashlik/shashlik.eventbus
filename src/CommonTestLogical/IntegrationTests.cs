@@ -193,9 +193,12 @@ namespace CommonTestLogical
         public async Task XaTransactionCommitTest()
         {
             var testEvent = new XaEvent {Name = Guid.NewGuid().ToString("n")};
-            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            await EventPublisher.PublishAsync(testEvent, null, null, default);
-            scope.Complete();
+            
+            {
+                using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                await EventPublisher.PublishAsync(testEvent, null, null, default);
+                scope.Complete();
+            }
 
             var msgs = await MessageStorage.SearchPublishedAsync("", "", 0, 10000, default);
             msgs.Any(r => r.EventBody.DeserializeJson<JObject>()["Name"]!.Value<string>() == testEvent.Name).ShouldBeTrue();
