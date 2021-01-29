@@ -142,10 +142,12 @@ namespace Shashlik.EventBus.Tests
                 {"age", "18"}
             });
 
+
             // 重试器开始前必须被执行
             while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfterSeconds)
             {
-                if (TestEventHandler.Instance is null || TestEventGroup2Handler.Instance is null)
+                if (TestEventHandler.Instance is null || TestEventGroup2Handler.Instance is null
+                                                      || TestEventHandler.Items is null || TestEventGroup2Handler.Items is null)
                     continue;
                 TestEventHandler.Instance.Name.ShouldBe(@event.Name);
                 TestEventHandler.Items["age"].ShouldBe("18");
@@ -193,7 +195,10 @@ namespace Shashlik.EventBus.Tests
             {
                 if (TestDelayEventHandler.Instance is null
                     || TestDelayEventGroup2Handler.Instance is null
-                    || TestDelayEventGroup3Handler.Instance is null)
+                    || TestDelayEventGroup3Handler.Instance is null
+                    || TestDelayEventHandler.Items is null
+                    || TestDelayEventGroup2Handler.Items is null
+                    || TestDelayEventGroup3Handler.Items is null)
                     continue;
 
                 TestDelayEventHandler.Instance.Name.ShouldBe(@event.Name);
@@ -243,7 +248,9 @@ namespace Shashlik.EventBus.Tests
             // 1分钟之内必须被执行
             while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfterSeconds)
             {
-                if (TestCustomNameEventHandler.Instance is null || TestCustomNameEventGroup2Handler.Instance is null)
+                if (TestCustomNameEventHandler.Instance is null || TestCustomNameEventGroup2Handler.Instance is null
+                                                                || TestCustomNameEventHandler.Items is null ||
+                                                                TestCustomNameEventGroup2Handler.Items is null)
                     continue;
                 TestCustomNameEventHandler.Instance.Name.ShouldBe(@event.Name);
                 TestCustomNameEventHandler.Items["age"].ShouldBe("20");
