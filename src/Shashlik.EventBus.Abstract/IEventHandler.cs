@@ -11,8 +11,8 @@ namespace Shashlik.EventBus
         /// 执行事件处理
         /// </summary>
         /// <param name="event">事件实例</param>
-        /// <param name="items">附加数据</param>
+        /// <param name="additionalItems">附加数据</param>
         /// <returns></returns>
-        Task Execute(TEvent @event, IDictionary<string, string> items);
+        Task Execute(TEvent @event, IDictionary<string, string> additionalItems);
     }
 }
