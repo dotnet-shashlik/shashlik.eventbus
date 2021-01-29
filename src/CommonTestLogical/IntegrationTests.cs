@@ -178,7 +178,7 @@ namespace CommonTestLogical
             var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
             try
             {
-                using var scope = new TransactionScope();
+                using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                 await EventPublisher.PublishAsync(testEvent, null, null, default);
                 throw new Exception();
             }
@@ -194,7 +194,7 @@ namespace CommonTestLogical
         public async Task XaTransactionCommitTest()
         {
             var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
-            using var scope = new TransactionScope();
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             await EventPublisher.PublishAsync(testEvent, null, null, default);
             scope.Complete();
 
