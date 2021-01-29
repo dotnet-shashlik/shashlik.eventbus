@@ -668,19 +668,21 @@ namespace CommonTestLogical
 
         public void XaTransactionContextCommitTest()
         {
-            using var tran = new TransactionScope();
+            var tran = new TransactionScope();
             var transactionContext = new XaTransactionContext(Transaction.Current!);
             transactionContext!.IsDone().ShouldBeFalse();
             tran.Complete();
+            tran.Dispose();
             transactionContext!.IsDone().ShouldBeTrue();
         }
 
         public void XaTransactionContextRollbackTest()
         {
-            using var tran = new TransactionScope();
+            var tran = new TransactionScope();
             var transactionContext = new XaTransactionContext(Transaction.Current!);
             transactionContext!.IsDone().ShouldBeFalse();
             Transaction.Current.Rollback();
+            tran.Dispose();
             transactionContext!.IsDone().ShouldBeTrue();
         }
 
@@ -689,7 +691,6 @@ namespace CommonTestLogical
             var tran = new TransactionScope();
             var transactionContext = new XaTransactionContext(Transaction.Current!);
             transactionContext!.IsDone().ShouldBeFalse();
-            tran.Complete();
             tran.Dispose();
             transactionContext!.IsDone().ShouldBeTrue();
         }

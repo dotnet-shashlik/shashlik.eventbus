@@ -1,39 +1,22 @@
-﻿using System;
-using System.Transactions;
+﻿using System.Transactions;
 
 namespace Shashlik.EventBus
 {
     /// <summary>
-    /// xa transaction context
+    /// xa transaction context,**Dispose后才能得到最新的状态**
     /// </summary>
     public class XaTransactionContext : ITransactionContext
     {
-        public XaTransactionContext(Transaction current)
+        public XaTransactionContext(Transaction original)
         {
-            Original = current;
-            current.TransactionCompleted += (s, e) => { _isDone = true; };
+            Information = original.TransactionInformation;
         }
 
-        private Transaction Original { get; }
-        private volatile bool _isDone;
+        private TransactionInformation Information { get; }
 
         public bool IsDone()
         {
-            try
-            {
-                if (_isDone)
-                    return true;
-                if (Original.TransactionInformation.Status == TransactionStatus.Aborted
-                    || Original.TransactionInformation.Status == TransactionStatus.Committed)
-                    return true;
-            }
-            catch (ObjectDisposedException)
-            {
-                // 事务对象已释放
-                return true;
-            }
-
-            return false;
+            return Information.Status == TransactionStatus.Aborted || Information.Status == TransactionStatus.Committed;
         }
     }
 }
