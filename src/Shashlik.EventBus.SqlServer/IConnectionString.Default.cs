@@ -22,7 +22,7 @@ namespace Shashlik.EventBus.SqlServer
         {
             if (Options.DbContextType is null && string.IsNullOrWhiteSpace(Options.ConnectionString))
                 throw new InvalidOperationException($"DbContextType or ConnectionString can't be always empty");
-            if (Options.DbContextType == null) return Options.ConnectionString!;
+            if (Options.DbContextType is null) return Options.ConnectionString!;
             using var scope = ServiceScopeFactory.CreateScope();
             using var dbContext = scope.ServiceProvider.GetRequiredService(Options.DbContextType) as DbContext;
             return dbContext!.Database.GetDbConnection().ConnectionString;

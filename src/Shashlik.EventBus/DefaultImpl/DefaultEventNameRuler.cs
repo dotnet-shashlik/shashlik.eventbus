@@ -4,15 +4,14 @@ using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
-    public class DefaultEventNameRuler : IEventNameRuler
+    public class DefaultNameRuler : IEventNameRuler, IEventHandlerNameRuler
     {
-        public DefaultEventNameRuler(IOptions<EventBusOptions> options)
+        public DefaultNameRuler(IOptions<EventBusOptions> options)
         {
             Options = options;
         }
 
         private IOptions<EventBusOptions> Options { get; }
-
 
         public string GetName(Type eventType)
         {

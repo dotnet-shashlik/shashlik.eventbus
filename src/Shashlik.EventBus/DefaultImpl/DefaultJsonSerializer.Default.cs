@@ -10,7 +10,7 @@ namespace Shashlik.EventBus.DefaultImpl
     {
         public string Serialize(object instance)
         {
-            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            if (instance is null) throw new ArgumentNullException(nameof(instance));
             return JsonConvert.SerializeObject(instance);
         }
 

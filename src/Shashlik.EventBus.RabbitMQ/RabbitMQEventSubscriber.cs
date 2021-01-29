@@ -59,7 +59,7 @@ namespace Shashlik.EventBus.RabbitMQ
                     return;
                 }
 
-                if (message == null)
+                if (message is null)
                 {
                     Logger.LogError("[EventBus-RabbitMQ] deserialize message from rabbit error.");
                     return;

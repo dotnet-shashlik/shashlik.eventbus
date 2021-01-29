@@ -98,7 +98,7 @@ namespace Shashlik.EventBus.Kafka
                 return;
             }
 
-            if (message == null)
+            if (message is null)
             {
                 Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
                 return;

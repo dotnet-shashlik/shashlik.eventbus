@@ -35,33 +35,33 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task PublishAsync<TEvent>(
             TEvent @event,
             ITransactionContext? transactionContext,
-            IDictionary<string, string>? items = null,
+            IDictionary<string, string>? additionalItems = null,
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            await Publish(@event, null, transactionContext, items, cancellationToken).ConfigureAwait(false);
+            await Publish(@event, null, transactionContext, additionalItems, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,
             DateTimeOffset delayAt,
             ITransactionContext? transactionContext,
-            IDictionary<string, string>? items = null,
+            IDictionary<string, string>? additionalItems = null,
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            await Publish(@event, delayAt, transactionContext, items, cancellationToken).ConfigureAwait(false);
+            await Publish(@event, delayAt, transactionContext, additionalItems, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task Publish<TEvent>(
             TEvent @event,
             DateTimeOffset? delayAt,
             ITransactionContext? transactionContext,
-            IDictionary<string, string>? items = null,
+            IDictionary<string, string>? additionalItems = null,
             CancellationToken cancellationToken = default
         )
         {
-            if (@event == null) throw new ArgumentNullException(nameof(@event));
+            if (@event is null) throw new ArgumentNullException(nameof(@event));
             if (transactionContext is null)
             {
                 try
@@ -78,16 +78,16 @@ namespace Shashlik.EventBus.DefaultImpl
             var now = DateTimeOffset.Now;
             var eventName = EventNameRuler.GetName(typeof(TEvent));
             var msgId = MsgIdGenerator.GenerateId();
-            items ??= new Dictionary<string, string>();
-            items.Add(EventBusConsts.SendAtHeaderKey, now.ToString());
-            items.Add(EventBusConsts.EventNameHeaderKey, eventName);
-            items.Add(EventBusConsts.MsgIdHeaderKey, msgId);
+            additionalItems ??= new Dictionary<string, string>();
+            additionalItems.Add(EventBusConsts.SendAtHeaderKey, now.ToString());
+            additionalItems.Add(EventBusConsts.EventNameHeaderKey, eventName);
+            additionalItems.Add(EventBusConsts.MsgIdHeaderKey, msgId);
             if (delayAt.HasValue)
             {
                 if (delayAt.Value <= DateTimeOffset.Now)
                     delayAt = null;
                 else
-                    items.Add(EventBusConsts.DelayAtHeaderKey, delayAt.ToString());
+                    additionalItems.Add(EventBusConsts.DelayAtHeaderKey, delayAt.ToString());
             }
 
             MessageStorageModel messageStorageModel = new MessageStorageModel
@@ -102,7 +102,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 Status = MessageStatus.Scheduled,
                 IsLocking = false,
                 LockEnd = null,
-                EventItems = MessageSerializer.Serialize(items),
+                EventItems = MessageSerializer.Serialize(additionalItems),
                 EventBody = MessageSerializer.Serialize(@event),
                 DelayAt = delayAt,
             };
@@ -113,7 +113,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 Environment = Options.Value.Environment,
                 MsgId = messageStorageModel.MsgId,
                 MsgBody = messageStorageModel.EventBody,
-                Items = items,
+                Items = additionalItems,
                 SendAt = now,
                 DelayAt = delayAt
             };

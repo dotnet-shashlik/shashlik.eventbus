@@ -18,7 +18,7 @@ namespace Shashlik.EventBus.Kafka
         public static IEventBusBuilder AddKafka(this IEventBusBuilder eventBusBuilder,
             IConfigurationSection configurationSection)
         {
-            if (configurationSection == null) throw new ArgumentNullException(nameof(configurationSection));
+            if (configurationSection is null) throw new ArgumentNullException(nameof(configurationSection));
             eventBusBuilder.Services.Configure<EventBusKafkaOptions>(configurationSection);
             return eventBusBuilder.AddKafkaCore();
         }
@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.Kafka
         public static IEventBusBuilder AddKafka(this IEventBusBuilder eventBusBuilder,
             Action<EventBusKafkaOptions> action)
         {
-            if (action == null) throw new ArgumentNullException(nameof(action));
+            if (action is null) throw new ArgumentNullException(nameof(action));
             eventBusBuilder.Services.Configure(action);
             return eventBusBuilder.AddKafkaCore();
         }

@@ -21,7 +21,7 @@ namespace Shashlik.EventBus.MySql
 
         private string GetConnectionString()
         {
-            if (Options.DbContextType == null)
+            if (Options.DbContextType is null)
             {
                 if (Options.ConnectionString!.IsNullOrWhiteSpace())
                     throw new OptionsValidationException(

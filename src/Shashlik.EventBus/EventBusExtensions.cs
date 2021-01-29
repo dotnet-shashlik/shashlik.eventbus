@@ -38,8 +38,8 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IMessageSendQueueProvider, DefaultMessageSendQueueProvider>();
             serviceCollection.TryAddSingleton<IMessageReceiveQueueProvider, DefaultMessageReceiveQueueProvider>();
             serviceCollection.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
-            serviceCollection.TryAddSingleton<IEventNameRuler, DefaultEventNameRuler>();
-            serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultEventHandlerNameRuler>();
+            serviceCollection.TryAddSingleton<IEventNameRuler, DefaultNameRuler>();
+            serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
             serviceCollection.TryAddSingleton<IReceivedDelayEventProvider, DefaultReceivedDelayEventProvider>();
             serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
@@ -101,10 +101,10 @@ namespace Shashlik.EventBus
         /// <returns></returns>
         public static T GetRowValue<T>(this DataRow row, string col)
         {
-            if (row == null) throw new ArgumentNullException(nameof(row));
+            if (row is null) throw new ArgumentNullException(nameof(row));
             if (string.IsNullOrWhiteSpace(col)) throw new ArgumentException("Value cannot be null or whitespace.", nameof(col));
             var v = row[col];
-            if (v == null || v == DBNull.Value)
+            if (v is null || v == DBNull.Value)
                 return default;
             return v.ParseTo<T>();
         }
