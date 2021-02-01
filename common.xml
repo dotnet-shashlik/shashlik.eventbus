@@ -7,7 +7,7 @@
         <PackageTags>shashlik</PackageTags>
         <Nullable>enable</Nullable>
         <Authors>dotnet-shashlik</Authors>
-        <Version>1.0.0-rc4</Version>
+        <Version>1.0.0-rc5</Version>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <IncludeSymbols>true</IncludeSymbols>
         <IncludeSource>true</IncludeSource>
@@ -25,11 +25,6 @@
         <!-- 本地构建，也许没有记得 commit 就构建，此时的 nuget 包的源代码是不对的，上传上去会让调试诡异 -->
         <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
-
-        <!-- 本地等不需要创建符号文件 -->
-        <!-- Optional: Build symbol package (.snupkg) to distribute the PDB containing Source Link -->
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">

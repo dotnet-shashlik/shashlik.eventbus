@@ -9,7 +9,7 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-        <PackageReference Include="Shashlik.Utils" Version="1.0.0-rc4" />
+        <PackageReference Include="Shashlik.Utils" Version="1.0.0-rc5" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="5.0.0" />
         <ProjectReference Include="..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
     </ItemGroup>
