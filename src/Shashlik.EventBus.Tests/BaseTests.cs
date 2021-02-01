@@ -146,9 +146,12 @@ namespace Shashlik.EventBus.Tests
             // 重试器开始前必须被执行
             while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfterSeconds)
             {
-                if (TestEventHandler.Instance is null || TestEventGroup2Handler.Instance is null
-                                                      || TestEventHandler.Items is null || TestEventGroup2Handler.Items is null)
+                if (TestEventHandler.Instance is null
+                    || TestEventGroup2Handler.Instance is null
+                    || TestEventHandler.Items is null
+                    || TestEventGroup2Handler.Items is null)
                     continue;
+                
                 TestEventHandler.Instance.Name.ShouldBe(@event.Name);
                 TestEventHandler.Items["age"].ShouldBe("18");
                 TestEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
