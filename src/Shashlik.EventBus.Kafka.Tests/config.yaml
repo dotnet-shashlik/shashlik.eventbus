@@ -1,7 +1,7 @@
 ﻿ConnectionStrings:
-  Default: server=192.168.50.178;database=kafkatest;user id=testuser;password=123123;
+  Default: server=localhost;database=kafkatest;user id=root;password=123123;
 EventBus:
   Kafka:
     Properties:
-      "bootstrap.servers": "192.168.50.178"
+      "bootstrap.servers": "localhost"
       "allow.auto.create.topics": "true"
