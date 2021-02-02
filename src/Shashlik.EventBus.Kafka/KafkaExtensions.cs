@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.Utils.Extensions;
@@ -38,6 +39,21 @@ namespace Shashlik.EventBus.Kafka
         }
 
         /// <summary>
+        /// add kafka services, properties see: https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
+        /// </summary>
+        /// <param name="eventBusBuilder"></param>
+        /// <param name="kafkaConfigs">自定义kafka配置</param>
+        /// <returns></returns>
+        public static IEventBusBuilder AddKafka(this IEventBusBuilder eventBusBuilder,
+            IDictionary<string, string> kafkaConfigs)
+        {
+            if (eventBusBuilder == null) throw new ArgumentNullException(nameof(eventBusBuilder));
+            if (kafkaConfigs == null) throw new ArgumentNullException(nameof(kafkaConfigs));
+            eventBusBuilder.Services.Configure<EventBusKafkaOptions>(r => r.AddOrUpdate(kafkaConfigs));
+            return eventBusBuilder.AddKafkaCore();
+        }
+
+        /// <summary>
         /// add kafka services
         /// </summary>
         /// <param name="eventBusBuilder"></param>
@@ -47,7 +63,7 @@ namespace Shashlik.EventBus.Kafka
         {
             if (string.IsNullOrWhiteSpace(server))
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(server));
-            return eventBusBuilder.AddKafka(r => { r.Properties.Add(new[] {"bootstrap.servers", server}); });
+            return eventBusBuilder.AddKafka(r => r.AddOrUpdate("bootstrap.servers", server));
         }
 
         /// <summary>
@@ -63,34 +79,6 @@ namespace Shashlik.EventBus.Kafka
             eventBusBuilder.Services.AddSingleton<IKafkaConnection, DefaultKafkaConnection>();
 
             return eventBusBuilder;
-        }
-
-        /// <summary>
-        /// convert to List to Dictionary
-        /// </summary>
-        /// <param name="list"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidCastException"></exception>
-        internal static IDictionary<string, string> ConvertToDictionary(this List<string[]> list)
-        {
-            var dic = list.ToDictionary(r =>
-            {
-                if (r.IsNullOrEmpty() || r.Length != 2)
-                    throw new InvalidCastException(
-                        $"[EventBus-Kafka] kafka configuration must be two element, e.g. \"['allow.auto.create.topics', 'true']\"");
-                return r[0];
-            }, r => r[1]);
-
-            // // 允许自动创建topic
-            // 自行配置
-            // dic["allow.auto.create.topics"] = "true";
-            // 禁止自动保存offset
-            dic["enable.auto.offset.store"] = "false";
-            // 启用自动提交
-            dic["enable.auto.commit"] = "true";
-            dic["auto.offset.reset"] = "earliest";
-
-            return dic;
         }
     }
 }

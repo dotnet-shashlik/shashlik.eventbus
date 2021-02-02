@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using Confluent.Kafka;
 using Microsoft.Extensions.Options;
@@ -24,13 +25,13 @@ namespace Shashlik.EventBus.Kafka
         {
             var id = Thread.CurrentThread.ManagedThreadId;
             return Producers.GetOrAdd(id, r =>
-                new ProducerBuilder<string, byte[]>(Options.CurrentValue.Properties.ConvertToDictionary()).Build()
+                new ProducerBuilder<string, byte[]>(Options.CurrentValue.Properties).Build()
             );
         }
 
         public IConsumer<string, byte[]> CreateConsumer(string groupId)
         {
-            var dic = Options.CurrentValue.Properties.ConvertToDictionary();
+            var dic = Options.CurrentValue.Properties;
             dic["group.id"] = groupId;
             return Consumers.GetOrAdd(groupId, r =>
                 new ConsumerBuilder<string, byte[]>(dic).Build()
@@ -39,27 +40,34 @@ namespace Shashlik.EventBus.Kafka
 
         public void Dispose()
         {
-            try
+            foreach (var value in Producers.Values)
             {
-                foreach (var value in Producers.Values)
+                try
                 {
                     value.Dispose();
                 }
+                catch (Exception e)
+                {
+                    // ignored
+                }
+            }
 
-                Producers.Clear();
-                foreach (var value in Consumers.Values)
+            Producers.Clear();
+            foreach (var value in Consumers.Values)
+            {
+                try
                 {
                     value.Unsubscribe();
                     value.Close();
                     value.Dispose();
                 }
+                catch (Exception e)
+                {
+                    // ignored
+                }
+            }
 
-                Consumers.Clear();
-            }
-            catch
-            {
-                // ignored
-            }
+            Consumers.Clear();
         }
     }
 }

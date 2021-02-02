@@ -3,4 +3,5 @@
 EventBus:
   Kafka:
     Properties:
-      - [ "bootstrap.servers", "192.168.50.178:9092" ]
+      "bootstrap.servers": "192.168.50.178"
+      "allow.auto.create.topics": "true"
