@@ -6,9 +6,9 @@
 
     <ItemGroup>
         <PackageReference Include="xunit.abstractions" Version="2.0.3" />
-        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="5.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.0" />
-        <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="5.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.2" />
+        <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.1.0" />
         <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.1.0" />
         <PackageReference Include="xunit.extensibility.core" Version="2.4.1" />
 
@@ -19,7 +19,7 @@
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
         
         <PackageReference Include="Shashlik.Kernel" Version="1.0.0-rc5" />
-        <PackageReference Include="Shouldly" Version="4.0.1" />
+        <PackageReference Include="Shouldly" Version="4.0.3" />
     </ItemGroup>
 
 </Project>
