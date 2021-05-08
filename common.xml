@@ -7,7 +7,7 @@
     <PackageTags>shashlik</PackageTags>
     <Nullable>enable</Nullable>
     <Authors>dotnet-shashlik</Authors>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
     <IncludeSource>true</IncludeSource>
