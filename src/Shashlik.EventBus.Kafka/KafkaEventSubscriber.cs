@@ -33,9 +33,8 @@ namespace Shashlik.EventBus.Kafka
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            var consumer = Connection.CreateConsumer(eventHandlerDescriptor.EventHandlerName);
+            var consumer = Connection.CreateConsumer(eventHandlerDescriptor.EventHandlerName, eventHandlerDescriptor.EventName);
             consumer.Subscribe(eventHandlerDescriptor.EventName);
-
             var eventName = eventHandlerDescriptor.EventName;
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
 

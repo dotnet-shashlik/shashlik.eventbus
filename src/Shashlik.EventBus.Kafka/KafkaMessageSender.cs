@@ -26,7 +26,7 @@ namespace Shashlik.EventBus.Kafka
 
         public async Task SendAsync(MessageTransferModel message)
         {
-            var producer = Connection.GetProducer();
+            var producer = Connection.GetProducer(message.EventName);
 
             var result = await producer.ProduceAsync(message.EventName, new Message<string, byte[]>
             {
