@@ -32,7 +32,9 @@ namespace Shashlik.EventBus.Kafka.Tests
             services.AddAuthorization();
             services.AddDbContextPool<DemoDbContext>(r =>
             {
-                r.UseMySql(Configuration.GetConnectionString("Default"), ServerVersion.FromString("5.7"),
+                var conn = Configuration.GetConnectionString("Default");
+
+                r.UseMySql(conn, ServerVersion.AutoDetect(conn),
                     db => { db.MigrationsAssembly(GetType().Assembly.GetName().FullName); });
             }, 5);
 

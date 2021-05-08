@@ -23,7 +23,8 @@ namespace Shashlik.EventBus.MySql.Tests
         {
             services.AddDbContextPool<DemoDbContext>(r =>
             {
-                r.UseMySql(Configuration.GetConnectionString("Default"), ServerVersion.FromString("5.7"),
+                var conn = Configuration.GetConnectionString("Default");
+                r.UseMySql(conn, ServerVersion.AutoDetect(conn),
                     db => { db.MigrationsAssembly(this.GetType().Assembly.GetName().FullName); });
             }, 5);
 

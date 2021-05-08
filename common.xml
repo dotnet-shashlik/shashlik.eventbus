@@ -1,33 +1,33 @@
 <Project>
-    <PropertyGroup>
-        <PackageProjectUrl>https://github.com/dotnet-shashlik/shashlik.eventbus</PackageProjectUrl>
-        <PackageLicense>https://github.com/dotnet-shashlik/shashlik.eventbus/blob/master/LICENSE</PackageLicense>
-        <RepositoryType>git</RepositoryType>
-        <RepositoryUrl>https://github.com/dotnet-shashlik/shashlik.eventbus</RepositoryUrl>
-        <PackageTags>shashlik</PackageTags>
-        <Nullable>enable</Nullable>
-        <Authors>dotnet-shashlik</Authors>
-        <Version>1.0.0-rc5</Version>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <IncludeSymbols>true</IncludeSymbols>
-        <IncludeSource>true</IncludeSource>
-    </PropertyGroup>
+  <PropertyGroup>
+    <PackageProjectUrl>https://github.com/dotnet-shashlik/shashlik.eventbus</PackageProjectUrl>
+    <PackageLicense>https://github.com/dotnet-shashlik/shashlik.eventbus/blob/master/LICENSE</PackageLicense>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/dotnet-shashlik/shashlik.eventbus</RepositoryUrl>
+    <PackageTags>shashlik</PackageTags>
+    <Nullable>enable</Nullable>
+    <Authors>dotnet-shashlik</Authors>
+    <Version>1.0.0</Version>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+  </PropertyGroup>
 
-    <!--    see: https://lindexi.gitee.io/post/dotnet-%E4%BD%BF%E7%94%A8-SourceLink-%E5%B0%86-NuGet-%E9%93%BE%E6%8E%A5%E6%BA%90%E4%BB%A3%E7%A0%81%E5%88%B0-GitHub-%E7%AD%89%E4%BB%93%E5%BA%93.html    -->
-    <!-- 在 GitHub 的 Action 构建会添加 GITHUB_ACTIONS 变量 -->
-    <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-        <!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
-        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  <!--    see: https://lindexi.gitee.io/post/dotnet-%E4%BD%BF%E7%94%A8-SourceLink-%E5%B0%86-NuGet-%E9%93%BE%E6%8E%A5%E6%BA%90%E4%BB%A3%E7%A0%81%E5%88%B0-GitHub-%E7%AD%89%E4%BB%93%E5%BA%93.html    -->
+  <!-- 在 GitHub 的 Action 构建会添加 GITHUB_ACTIONS 变量 -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
 
-        <!-- 只有在 GitHub 的 Action 构建才能使用源代码链接 -->
-        <!-- 源代码链接需要使用 commit 号，而在 GitHub 的 Action 构建的 commit 才是对的 -->
-        <!-- 本地构建，也许没有记得 commit 就构建，此时的 nuget 包的源代码是不对的，上传上去会让调试诡异 -->
-        <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
-        <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    </PropertyGroup>
+    <!-- 只有在 GitHub 的 Action 构建才能使用源代码链接 -->
+    <!-- 源代码链接需要使用 commit 号，而在 GitHub 的 Action 构建的 commit 才是对的 -->
+    <!-- 本地构建，也许没有记得 commit 就构建，此时的 nuget 包的源代码是不对的，上传上去会让调试诡异 -->
+    <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
 
-    <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
-    </ItemGroup>
+  <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+  </ItemGroup>
 </Project>

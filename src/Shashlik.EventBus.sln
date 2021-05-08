@@ -53,13 +53,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.Kafka.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.RabbitMQ.Tests", "Shashlik.EventBus.RabbitMQ.Tests\Shashlik.EventBus.RabbitMQ.Tests.csproj", "{CC9F82FF-DFB4-4509-8D1E-354958F56ECF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonTestLogical", "CommonTestLogical\CommonTestLogical.csproj", "{EB0AAF0B-1DFF-4629-A841-9B8B471E0411}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonTestLogical", "CommonTestLogical\CommonTestLogical.csproj", "{EB0AAF0B-1DFF-4629-A841-9B8B471E0411}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests", "Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests\Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests.csproj", "{4B8141D9-AF48-4D97-84A7-61D33A7FAA3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests", "Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests\Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests.csproj", "{4B8141D9-AF48-4D97-84A7-61D33A7FAA3E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests", "Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests\Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests.csproj", "{8216FE05-055B-49A2-958F-F6FC9E010791}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests", "Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests\Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests.csproj", "{8216FE05-055B-49A2-958F-F6FC9E010791}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.SendMsgWithoutLosing.Tests", "Shashlik.EventBus.SendMsgWithoutLosing.Tests\Shashlik.EventBus.SendMsgWithoutLosing.Tests.csproj", "{0E9DA5D0-90E3-459A-ABEB-9B94AB5B21E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.SendMsgWithoutLosing.Tests", "Shashlik.EventBus.SendMsgWithoutLosing.Tests\Shashlik.EventBus.SendMsgWithoutLosing.Tests.csproj", "{0E9DA5D0-90E3-459A-ABEB-9B94AB5B21E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

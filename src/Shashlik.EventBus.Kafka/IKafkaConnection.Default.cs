@@ -46,7 +46,7 @@ namespace Shashlik.EventBus.Kafka
                 {
                     value.Dispose();
                 }
-                catch (Exception e)
+                catch
                 {
                     // ignored
                 }
@@ -61,7 +61,7 @@ namespace Shashlik.EventBus.Kafka
                     value.Close();
                     value.Dispose();
                 }
-                catch (Exception e)
+                catch
                 {
                     // ignored
                 }

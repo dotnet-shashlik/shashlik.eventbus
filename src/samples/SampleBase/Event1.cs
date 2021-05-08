@@ -6,8 +6,8 @@ namespace SampleBase
     {
         public string Name { get; set; }
     }
-    
-    public class DelayEvent : IDelayEvent
+
+    public class DelayEvent : IEvent
     {
         public string Name { get; set; }
     }

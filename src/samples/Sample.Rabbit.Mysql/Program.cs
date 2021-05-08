@@ -44,7 +44,7 @@ namespace Sample.Rabbit.Mysql
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(connectionString, ServerVersion.FromString("5.7"),
+                        r.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     }, 5);
 
@@ -87,27 +87,27 @@ namespace Sample.Rabbit.Mysql
 
                 for (var i = 0; i < 30000; i++)
                 {
-                    Console.WriteLine($"Memory Usage: {GC.GetTotalMemory(false)/1024}KB");
-                    
+                    Console.WriteLine($"Memory Usage: {GC.GetTotalMemory(false) / 1024}KB");
+
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
 
                     if (i % 3 == 0)
                     {
-                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, null, cancellationToken);
                         await transaction.RollbackAsync(cancellationToken);
                         await Task.Delay(5, cancellationToken);
                         continue;
                     }
 
                     if (i % 2 == 0)
-                        await DbContext.PublishEventAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null, cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, null, cancellationToken);
                     else
-                        await DbContext.PublishEventAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
+                        await DbContext.PublishEventAsync(new DelayEvent { Name = $"【ClusterId: {ClusterId}】李四: {i}" },
                             DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null, cancellationToken);
 
                     await transaction.CommitAsync(cancellationToken);
                     await Task.Delay(5, cancellationToken);
-                    
+
                     // GC.WaitForPendingFinalizers();
                     // GC.Collect();
                 }
