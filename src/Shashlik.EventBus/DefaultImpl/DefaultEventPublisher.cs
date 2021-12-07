@@ -87,7 +87,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 if (delayAt.Value <= DateTimeOffset.Now)
                     delayAt = null;
                 else
-                    additionalItems.Add(EventBusConsts.DelayAtHeaderKey, delayAt.ToString());
+                    additionalItems.Add(EventBusConsts.DelayAtHeaderKey, delayAt.ToString() ?? "");
             }
 
             MessageStorageModel messageStorageModel = new MessageStorageModel

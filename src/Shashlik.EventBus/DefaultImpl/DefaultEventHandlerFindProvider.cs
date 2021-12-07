@@ -51,7 +51,7 @@ namespace Shashlik.EventBus.DefaultImpl
             if (_cache is null)
                 FindAll();
 
-            return _cache.GetOrDefault(eventHandlerName);
+            return _cache!.GetOrDefault(eventHandlerName);
         }
 
         private static Type GetEventType(Type type)

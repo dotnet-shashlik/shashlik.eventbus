@@ -41,7 +41,7 @@ namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
         public void Configure(IApplicationBuilder app)
         {
             app.ApplicationServices.UseShashlik()
-                .AutowireServiceProvider()
+                .AssembleServiceProvider()
                 ;
         }
     }

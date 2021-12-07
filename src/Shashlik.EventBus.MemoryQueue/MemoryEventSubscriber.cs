@@ -43,7 +43,7 @@ namespace Shashlik.EventBus.MemoryQueue
                     return;
                 }
 
-                Parallel.ForEach(listeners, async descriptor =>
+                Parallel.ForEach(listeners!, async descriptor =>
                 {
                     if (HostedStopToken.StopCancellationToken.IsCancellationRequested)
                         return;

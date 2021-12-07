@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30523.141
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.MySql", "Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj", "{D2D076C2-FCC0-4908-9007-19E87BF7A644}"
 EndProject
@@ -60,6 +60,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests", "Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests\Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests.csproj", "{8216FE05-055B-49A2-958F-F6FC9E010791}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.SendMsgWithoutLosing.Tests", "Shashlik.EventBus.SendMsgWithoutLosing.Tests\Shashlik.EventBus.SendMsgWithoutLosing.Tests.csproj", "{0E9DA5D0-90E3-459A-ABEB-9B94AB5B21E6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.Sms.EventBus", "Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj", "{35B3DF7D-6B3C-48C4-B005-B5BB94E03AB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -155,6 +157,10 @@ Global
 		{0E9DA5D0-90E3-459A-ABEB-9B94AB5B21E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E9DA5D0-90E3-459A-ABEB-9B94AB5B21E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0E9DA5D0-90E3-459A-ABEB-9B94AB5B21E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35B3DF7D-6B3C-48C4-B005-B5BB94E03AB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35B3DF7D-6B3C-48C4-B005-B5BB94E03AB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35B3DF7D-6B3C-48C4-B005-B5BB94E03AB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35B3DF7D-6B3C-48C4-B005-B5BB94E03AB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

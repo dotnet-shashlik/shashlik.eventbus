@@ -52,7 +52,7 @@ namespace Shashlik.EventBus.SqlServer.Tests
         public void Configure(IApplicationBuilder app)
         {
             app.ApplicationServices.UseShashlik()
-                .AutowireServiceProvider()
+                .AssembleServiceProvider()
                 ;
         }
     }

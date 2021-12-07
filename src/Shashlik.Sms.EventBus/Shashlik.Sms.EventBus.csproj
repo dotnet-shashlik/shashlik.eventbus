@@ -1,14 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <Import Project="..\..\common.xml" />
     <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <Nullable>enable</Nullable>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Shashlik.Kernel" Version="1.0.0-rc4" />
-        <PackageReference Include="Shashlik.Sms" Version="1.0.0-rc4" />
-        <PackageReference Include="Shashlik.Utils" Version="1.0.0-rc4" />
+        <PackageReference Include="Shashlik.Kernel" Version="2.0.0-preview1" />
+        <PackageReference Include="Shashlik.Sms" Version="2.0.0-preview1" />
+        <PackageReference Include="Shashlik.Utils" Version="2.0.0-preview1" />
     </ItemGroup>
 
     <ItemGroup>

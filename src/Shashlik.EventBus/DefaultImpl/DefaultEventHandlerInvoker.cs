@@ -23,7 +23,7 @@ namespace Shashlik.EventBus.DefaultImpl
             EventHandlerDescriptor eventHandlerDescriptor)
         {
             using var scope = ServiceScopeFactory.CreateScope();
-            var eventHandlerInstance =
+            object? eventHandlerInstance =
                 scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
             if (messageStorageModel.EventBody is null)
                 throw new InvalidCastException($"[EventBus] event body content is null, msgId: {messageStorageModel.MsgId}");
@@ -34,10 +34,10 @@ namespace Shashlik.EventBus.DefaultImpl
 
             var method =
                 eventHandlerDescriptor.EventHandlerType.GetMethod("Execute",
-                    new Type[] {eventHandlerDescriptor.EventType, typeof(IDictionary<string, string>)});
+                    new Type[] { eventHandlerDescriptor.EventType, typeof(IDictionary<string, string>) });
 
-            var task = (Task) method!.Invoke(eventHandlerInstance, new object[] {eventBody, items});
-            await task.ConfigureAwait(false);
+            var task = (Task?)method!.Invoke(eventHandlerInstance, new object[] { eventBody, items });
+            await task!.ConfigureAwait(false);
         }
     }
 }

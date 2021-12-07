@@ -60,7 +60,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
         public void Configure(IApplicationBuilder app)
         {
             app.ApplicationServices.UseShashlik()
-                .AutowireServiceProvider()
+                .AssembleServiceProvider()
                 ;
         }
     }

@@ -7,6 +7,11 @@ namespace Shashlik.Sms.EventBus
     public class SendSmsEvent : IEvent
     {
         /// <summary>
+        /// 是不是验证码
+        /// </summary>
+        public bool IsCaptcha { get; set; }
+
+        /// <summary>
         /// 手机号码
         /// </summary>
         public List<string> Phones { get; set; }

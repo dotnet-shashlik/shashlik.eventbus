@@ -28,6 +28,6 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="2.0.0-preview1" PrivateAssets="All"/>
   </ItemGroup>
 </Project>

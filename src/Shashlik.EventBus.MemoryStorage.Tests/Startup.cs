@@ -39,7 +39,7 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         public void Configure(IApplicationBuilder app)
         {
             app.ApplicationServices.UseShashlik()
-                .AutowireServiceProvider()
+                .AssembleServiceProvider()
                 ;
         }
     }

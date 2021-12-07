@@ -65,7 +65,7 @@ namespace Shashlik.EventBus.Kafka.Tests
         {
             ClearTestData(app.ApplicationServices);
             app.ApplicationServices.UseShashlik()
-                .AutowireServiceProvider()
+                .AssembleServiceProvider()
                 ;
 
 

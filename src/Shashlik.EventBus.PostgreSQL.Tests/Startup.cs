@@ -53,7 +53,7 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
         public void Configure(IApplicationBuilder app)
         {
             app.ApplicationServices.UseShashlik()
-                .AutowireServiceProvider()
+                .AssembleServiceProvider()
                 ;
         }
     }
