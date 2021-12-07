@@ -18,7 +18,7 @@
         <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
         
-        <PackageReference Include="Shashlik.Kernel" Version="2.0.0-preview1" />
+        <PackageReference Include="Shashlik.Kernel" Version="2.0.0-preview2" />
         <PackageReference Include="Shouldly" Version="4.0.3" />
     </ItemGroup>
 

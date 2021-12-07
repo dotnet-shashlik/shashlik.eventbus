@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Shashlik.EventBus;
@@ -31,8 +30,7 @@ namespace Shashlik.Sms.EventBus
             {
                 Phones = phones.ToList(),
                 Subject = subject,
-                Args = args.ToList(),
-                IsCaptcha = false,
+                Args = args.ToList()
             }, transactionContext);
         }
 
@@ -41,17 +39,14 @@ namespace Shashlik.Sms.EventBus
             await SendAsync(new[] { phone }, subject, transactionContext, args);
         }
 
-        public async Task SendCaptchaAsync(string phone, string subject, ITransactionContext? transactionContext, params string[] args)
+        public async Task SendWithCheckAsync(string phone, string subject, ITransactionContext? transactionContext, params string[] args)
         {
-            if (!SmsSender.SendCaptchaLimitCheck(phone))
-                throw new Sms.Exceptions.SmsLimitException();
-
+            await SmsSender.SendWithCheckAsync(phone, subject);
             await EventPublisher.PublishAsync(new SendSmsEvent
             {
                 Phones = { phone },
                 Subject = subject,
-                Args = args.ToList(),
-                IsCaptcha = true
+                Args = args.ToList()
             }, transactionContext);
         }
     }

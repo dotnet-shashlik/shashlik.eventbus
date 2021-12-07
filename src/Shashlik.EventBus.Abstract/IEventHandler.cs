@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Shashlik.EventBus
 {
-    public interface IEventHandler<in TEvent> where TEvent : IEvent
+    public interface IEventHandler<TEvent> where TEvent : IEvent
     {
         /// <summary>
         /// 执行事件处理

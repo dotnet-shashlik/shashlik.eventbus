@@ -5,9 +5,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Shashlik.Kernel" Version="2.0.0-preview1" />
-        <PackageReference Include="Shashlik.Sms" Version="2.0.0-preview1" />
-        <PackageReference Include="Shashlik.Utils" Version="2.0.0-preview1" />
+        <PackageReference Include="Shashlik.Kernel" Version="2.0.0-preview2" />
+        <PackageReference Include="Shashlik.Sms" Version="2.0.0-preview2" />
+        <PackageReference Include="Shashlik.Utils" Version="2.0.0-preview2" />
     </ItemGroup>
 
     <ItemGroup>

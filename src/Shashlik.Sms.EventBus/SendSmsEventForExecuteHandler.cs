@@ -1,12 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shashlik.EventBus;
 using Shashlik.Kernel.Attributes;
 using Shashlik.Kernel.Dependency;
-using Shashlik.Sms.Exceptions;
-using Shashlik.Utils.Extensions;
 
 namespace Shashlik.Sms.EventBus
 {
@@ -14,9 +12,10 @@ namespace Shashlik.Sms.EventBus
     /// 发送短信事件,执行真正的短信发送
     /// </summary>
     [ConditionDependsOn(typeof(IEventSmsSender), typeof(ISmsSender))]
+    [ConditionOnProperty(typeof(bool), "Shashlik.Sms.EventBus.Enable", true, DefaultValue = true)]
+    [Transient]
     public class SendSmsEventForExecuteHandler : IEventHandler<SendSmsEvent>
     {
-
         public SendSmsEventForExecuteHandler(ISmsSender smsSender, ILogger<SendSmsEventForExecuteHandler> logger)
         {
             SmsSender = smsSender;
@@ -30,28 +29,12 @@ namespace Shashlik.Sms.EventBus
         {
             try
             {
-                if (@event.IsCaptcha)
-                {
-                    await SmsSender.SendCaptchaAsync(@event.Phones.First(), @event.Subject, @event.Args.ToArray());
-                }
-                else
-                {
-                    await SmsSender.SendAsync(@event.Phones, @event.Subject, @event.Args.ToArray());
-                }
+                await SmsSender.SendAsync(@event.Phones, @event.Subject, @event.Args.ToArray());
             }
-            catch (SmsLimitException e)
+            catch (Exception e)
             {
-                Logger.LogError(e, "Sms send failed of limited.");
+                Logger.LogWarning(e, "Sms send failed.");
             }
-            catch (SmsTemplateException e)
-            {
-                Logger.LogError(e, $"Sms send failed, arguments error: {@event.ToJson()}");
-            }
-            catch (SmsServerException e)
-            {
-                Logger.LogError(e, $"Sms send failed, sms server error: {@event.ToJson()}");
-            }
-            //TODO:  检查是否可重试
         }
     }
 }
