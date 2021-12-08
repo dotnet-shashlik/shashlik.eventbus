@@ -18,7 +18,7 @@ jobs:
       - name: Setup MySql
         uses: mirromutth/mysql-action@v1.1
         with:
-          mysql version: '5.7'
+          mysql version: '8.0'
           mysql root password: '123123'
           mysql user: 'testuser'
           mysql password: '123123'
@@ -26,7 +26,7 @@ jobs:
       - name: Setup PostgreSql
         uses: harmon758/postgresql-action@v1
         with:
-          postgresql version: '11'
+          postgresql version: '12.9'
           postgresql user: 'testuser'
           postgresql password: '123123'
 
