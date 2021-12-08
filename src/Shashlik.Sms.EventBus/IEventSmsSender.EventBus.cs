@@ -34,11 +34,6 @@ namespace Shashlik.Sms.EventBus
             }, transactionContext);
         }
 
-        public async Task SendAsync(string phone, string subject, ITransactionContext? transactionContext, params string[] args)
-        {
-            await SendAsync(new[] { phone }, subject, transactionContext, args);
-        }
-
         public async Task SendWithCheckAsync(string phone, string subject, ITransactionContext? transactionContext, params string[] args)
         {
             await SmsSender.SendWithCheckAsync(phone, subject);

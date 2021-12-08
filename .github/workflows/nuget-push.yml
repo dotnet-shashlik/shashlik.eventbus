@@ -44,12 +44,12 @@ jobs:
         uses: 280780363/kafka-action@v1.0
 
       - name: Install dependencies
-        run: dotnet restore ./src/Shashlik.EventBus.Packages.sln
+        run: dotnet restore ./src/Shashlik.EventBus.sln
       - name: Test
         run: dotnet test ./src/Shashlik.EventBus.sln
       - name: Build
-        run: dotnet build ./src/Shashlik.EventBus.Packages.sln --configuration Release --no-restore
+        run: dotnet build ./src/Shashlik.EventBus.sln --configuration Release --no-restore
       - name: Pack
-        run: dotnet pack ./src/Shashlik.EventBus.Packages.sln --configuration Release --no-restore --output ./nugetPackages
+        run: dotnet pack ./src/Shashlik.EventBus.sln --configuration Release --no-restore --output ./nugetPackages
       - name: Publish
         run: dotnet nuget push "./nugetPackages/*.nupkg" -k ${{ secrets.NUGET }} -s https://api.nuget.org/v3/index.json
