@@ -1,8 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.RabbitMQ
 {
@@ -32,16 +32,15 @@ namespace Shashlik.EventBus.RabbitMQ
         {
             // 交换机定义,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
-
             var basicProperties = Channel.CreateBasicProperties();
             basicProperties.MessageId = message.MsgId;
             // 启用消息持久化
             basicProperties.Persistent = true;
-
             Channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
                 MessageSerializer.SerializeToBytes(message));
-
-            Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message.ToJson()}.");
+            // 等待消费端ack消息
+            Channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(Options.CurrentValue.ConfirmTimeout));
+            Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message}.");
 
             await Task.CompletedTask;
         }

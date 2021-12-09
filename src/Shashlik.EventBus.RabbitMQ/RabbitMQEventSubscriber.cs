@@ -73,7 +73,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 }
 
                 Logger.LogDebug(
-                    $"[EventBus-RabbitMQ] received msg: {message.ToJson()}.");
+                    $"[EventBus-RabbitMQ] received msg: {message}.");
 
                 // 处理消息
                 var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);

@@ -3,7 +3,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
-using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.Kafka
 {
@@ -35,10 +34,10 @@ namespace Shashlik.EventBus.Kafka
             }).ConfigureAwait(false);
 
             if (result.Status == PersistenceStatus.Persisted || result.Status == PersistenceStatus.PossiblyPersisted)
-                Logger.LogDebug($"[EventBus-Kafka] send msg success: {message.ToJson()}.");
+                Logger.LogDebug($"[EventBus-Kafka] send msg success: {message}.");
             else
-                throw new InvalidOperationException(
-                    $"[EventBus-Kafka] send msg fail, produce status \"{result.Status}\", message: {message.ToJson()}.");
+                throw new EventBusException(
+                    $"[EventBus-Kafka] send msg fail, produce status \"{result.Status}\", message: {message}.");
         }
     }
 }

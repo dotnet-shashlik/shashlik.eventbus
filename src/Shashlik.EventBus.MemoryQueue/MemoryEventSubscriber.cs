@@ -48,7 +48,7 @@ namespace Shashlik.EventBus.MemoryQueue
                     if (HostedStopToken.StopCancellationToken.IsCancellationRequested)
                         return;
 
-                    Logger.LogDebug($"[EventBus-Memory: {descriptor.EventHandlerName}] received msg: {msg.ToJson()}.");
+                    Logger.LogDebug($"[EventBus-Memory: {descriptor.EventHandlerName}] received msg: {msg}-{msg.MsgBody}.");
 
                     // 处理消息
                     var res = await MessageListener.OnReceiveAsync(descriptor.EventHandlerName, msg, HostedStopToken.StopCancellationToken)
