@@ -668,7 +668,7 @@ namespace CommonTestLogical
 
         public void XaTransactionContextCommitTest()
         {
-            var tran = new TransactionScope();
+            var tran = new TransactionScope();            
             var transactionContext = new XaTransactionContext(Transaction.Current!);
             transactionContext!.IsDone().ShouldBeFalse();
             tran.Complete();

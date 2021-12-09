@@ -1,5 +1,4 @@
-﻿#nullable disable
-using System;
+﻿using System;
 using System.Data;
 using System.Text;
 using Microsoft.Extensions.Configuration;
@@ -44,6 +43,7 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IReceivedDelayEventProvider, DefaultReceivedDelayEventProvider>();
             serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
             serviceCollection.TryAddSingleton<IMessageListener, DefaultMessageListener>();
+            serviceCollection.AddSingleton<ITransactionContextDiscoverProvider, XATransactionContextDiscoverProvider>();
             serviceCollection.AddSingleton<IHostedStopToken, InternalHostedStopToken>();
             serviceCollection.AddHostedService<EventBusStartup>();
 
@@ -63,9 +63,9 @@ namespace Shashlik.EventBus
         /// <param name="text"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Deserialize<T>(this IMessageSerializer messageSerializer, string text)
+        public static T? Deserialize<T>(this IMessageSerializer messageSerializer, string text)
         {
-            return (T) messageSerializer.Deserialize(text, typeof(T));
+            return (T?)messageSerializer.Deserialize(text, typeof(T));
         }
 
         /// <summary>
@@ -75,9 +75,9 @@ namespace Shashlik.EventBus
         /// <param name="bytes"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Deserialize<T>(this IMessageSerializer messageSerializer, byte[] bytes)
+        public static T? Deserialize<T>(this IMessageSerializer messageSerializer, byte[] bytes)
         {
-            return (T) messageSerializer.Deserialize(Encoding.UTF8.GetString(bytes), typeof(T));
+            return (T?)messageSerializer.Deserialize(Encoding.UTF8.GetString(bytes), typeof(T));
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace Shashlik.EventBus
         /// <param name="col">column name</param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T GetRowValue<T>(this DataRow row, string col)
+        public static T? GetRowValue<T>(this DataRow row, string col)
         {
             if (row is null) throw new ArgumentNullException(nameof(row));
             if (string.IsNullOrWhiteSpace(col)) throw new ArgumentException("Value cannot be null or whitespace.", nameof(col));

@@ -1,9 +1,8 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.DefaultImpl
@@ -15,7 +14,9 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageSerializer messageSerializer,
             IEventNameRuler eventNameRuler,
             IOptions<EventBusOptions> options,
-            IMessageSendQueueProvider messageSendQueueProvider, IMsgIdGenerator msgIdGenerator)
+            IMessageSendQueueProvider messageSendQueueProvider,
+            IMsgIdGenerator msgIdGenerator,
+            IEnumerable<ITransactionContextDiscoverProvider> transactionContextDiscoverProviders)
         {
             MessageStorage = messageStorage;
             MessageSerializer = messageSerializer;
@@ -23,6 +24,7 @@ namespace Shashlik.EventBus.DefaultImpl
             Options = options;
             MessageSendQueueProvider = messageSendQueueProvider;
             MsgIdGenerator = msgIdGenerator;
+            TransactionContextDiscoverProviders = transactionContextDiscoverProviders.OrderBy(r => r.Priority).ToList();
         }
 
         private IMessageStorage MessageStorage { get; }
@@ -31,6 +33,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventNameRuler EventNameRuler { get; }
         private IMsgIdGenerator MsgIdGenerator { get; }
         private IOptions<EventBusOptions> Options { get; }
+        private IEnumerable<ITransactionContextDiscoverProvider> TransactionContextDiscoverProviders { get; }
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,
@@ -64,14 +67,14 @@ namespace Shashlik.EventBus.DefaultImpl
             if (@event is null) throw new ArgumentNullException(nameof(@event));
             if (transactionContext is null)
             {
-                try
+                foreach (var item in TransactionContextDiscoverProviders)
                 {
-                    if (Transaction.Current != null)
-                        transactionContext = new XaTransactionContext(Transaction.Current);
-                }
-                catch
-                {
-                    // ignored
+                    var current = item.Current();
+                    if (current is not null)
+                    {
+                        transactionContext = current;
+                        break;
+                    }
                 }
             }
 
