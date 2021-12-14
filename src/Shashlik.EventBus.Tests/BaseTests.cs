@@ -176,14 +176,14 @@ namespace Shashlik.EventBus.Tests
             });
 
             // 时间没到，不能被执行
-            while (DateTimeOffset.Now < delayAt)
+            while (DateTimeOffset.Now < delayAt.AddSeconds(-1))
             {
                 TestDelayEventHandler.Instance.ShouldBeNull();
                 TestDelayEventGroup2Handler.Instance.ShouldBeNull();
                 TestDelayEventGroup3Handler.Instance.ShouldBeNull();
             }
 
-            await Task.Delay(60 * 1000);
+            await Task.Delay(Options.StartRetryAfter * 1000);
 
 
             TestDelayEventHandler.Instance.ShouldNotBeNull();
