@@ -39,13 +39,16 @@ namespace Sample.Kafka.Mysql
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
 
-                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
+                    services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Debug); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
                         r.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
                             db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
                     }, 5);
+                    using var serviceProvider2 = services.BuildServiceProvider();
+                    using var scope = serviceProvider2.CreateScope();
+                    scope.ServiceProvider.GetRequiredService<DemoDbContext>().Database.Migrate();
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaMySql34"; })
                         .AddMySql<DemoDbContext>()
@@ -77,8 +80,6 @@ namespace Sample.Kafka.Mysql
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                await Task.CompletedTask;
-
                 for (var i = 0; i < 30000; i++)
                 {
                     var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);

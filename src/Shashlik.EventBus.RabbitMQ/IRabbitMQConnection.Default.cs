@@ -26,11 +26,17 @@ namespace Shashlik.EventBus.RabbitMQ
         public IModel GetChannel()
         {
             var id = Thread.CurrentThread.ManagedThreadId;
-            var channel = _channels.GetOrAdd(id, r => Connection.CreateModel());
+            var channel = _channels.GetOrAdd(id, r =>
+            {
+                var c = Connection.CreateModel();
+                c.ConfirmSelect();
+                return c;
+            });
             if (channel.IsClosed)
             {
                 channel.Dispose();
                 channel = _channels[id] = Connection.CreateModel();
+                channel.ConfirmSelect();
             }
 
             return channel;

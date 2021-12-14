@@ -32,9 +32,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="config.yaml">
+      <Content Include="..\config.test.yaml">
+        <Link>config.test.yaml</Link>
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+      </Content>
     </ItemGroup>
 
 </Project>

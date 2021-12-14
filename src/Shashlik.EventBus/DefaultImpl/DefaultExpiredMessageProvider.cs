@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Shashlik.Utils.Helpers;
 
+// ReSharper disable AsyncVoidLambda
+
 namespace Shashlik.EventBus.DefaultImpl
 {
     /// <summary>

@@ -11,22 +11,23 @@ namespace Shashlik.EventBus.Kafka
         /// </summary>
         public IDictionary<string, string> Properties { get; set; } = new Dictionary<string, string>
         {
-            {"bootstrap.servers", "localhost"},
-            {"enable.auto.offset.store", "false"},
-            {"enable.auto.commit", "true"},
-            {"auto.offset.reset", "earliest"},
+            { "bootstrap.servers", "localhost" },
+            // 这几项配置不要覆盖,否则会影响消息的接收确认
+            { "enable.auto.offset.store", "false" },
+            { "enable.auto.commit", "true" },
+            { "auto.offset.reset", "earliest" },
         };
 
         public void AddOrUpdate(string key, string value)
         {
-            if (key is null) throw new ArgumentNullException(nameof(key));
-            if (value is null) throw new ArgumentNullException(nameof(value));
+            ArgumentNullException.ThrowIfNull(key);
+            ArgumentNullException.ThrowIfNull(value);
             Properties[key] = value;
         }
 
         public void AddOrUpdate(IEnumerable<KeyValuePair<string, string>> values)
         {
-            if (values is null) throw new ArgumentNullException(nameof(values));
+            ArgumentNullException.ThrowIfNull(values);
             values.ForEachItem(r => AddOrUpdate(r.Key, r.Value));
         }
     }

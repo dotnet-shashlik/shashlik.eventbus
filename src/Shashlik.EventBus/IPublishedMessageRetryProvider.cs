@@ -16,11 +16,11 @@ namespace Shashlik.EventBus
         Task StartupAsync(CancellationToken cancellationToken);
 
         /// <summary>
-        /// 重试消息发送
+        /// 重试已发布的消息, 一般用于手动执行某条消息的重试，将忽略重试次数
         /// </summary>
         /// <param name="id">存储id</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task RetryAsync(long id, CancellationToken cancellationToken);
+        Task<HandleResult> RetryAsync(long id, CancellationToken cancellationToken);
     }
 }

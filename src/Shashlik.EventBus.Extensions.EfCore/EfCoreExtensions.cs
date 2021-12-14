@@ -31,11 +31,12 @@ namespace Shashlik.EventBus
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            if (dbContext is null) throw new ArgumentNullException(nameof(dbContext));
-            if (@event is null) throw new ArgumentNullException(nameof(@event));
+            ArgumentNullException.ThrowIfNull(dbContext);
+            ArgumentNullException.ThrowIfNull(@event);
             var eventPublisher = dbContext.GetService<IEventPublisher>();
             if (eventPublisher is null)
-                throw new InvalidOperationException($"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
+                throw new InvalidOperationException(
+                    $"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
 
             if (dbContext.Database.CurrentTransaction is null)
                 await eventPublisher.PublishAsync(@event, null, additionalItems, cancellationToken).ConfigureAwait(false);
@@ -71,7 +72,8 @@ namespace Shashlik.EventBus
             if (@event is null) throw new ArgumentNullException(nameof(@event));
             var eventPublisher = dbContext.GetService<IEventPublisher>();
             if (eventPublisher is null)
-                throw new InvalidOperationException($"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
+                throw new InvalidOperationException(
+                    $"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
 
             if (dbContext.Database.CurrentTransaction is null)
                 await eventPublisher.PublishAsync(@event, delayAt, null, additionalItems, cancellationToken).ConfigureAwait(false);

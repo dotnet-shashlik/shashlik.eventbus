@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MemoryStorage;
 using Shashlik.Kernel;
+using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
 {
@@ -15,26 +16,21 @@ namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
         }
 
         private IConfiguration Configuration { get; }
+        private readonly string _env = CommonTestLogical.Utils.RandomEnv();
 
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddEventBus(r =>
                 {
-                    r.Environment = CommonTestLogical.Utils.RandomEnv();
-                    // 为了便于测试，最大重试设置为7次
-                    r.RetryFailedMax = 7;
-                    // 重试开始工作的时间为2分钟后
-                    r.StartRetryAfterSeconds = 30;
-                    // 确认是否是否已提交时间为1分钟
-                    r.ConfirmTransactionSeconds = 15;
-                    // 失败重试间隔5秒
-                    r.RetryIntervalSeconds = 5;
+                    var options = Configuration.GetSection("EventBus")
+                        .Get<EventBusOptions>();
+                    options.CopyTo(r);
+                    r.Environment = _env;
                 })
                 .AddMemoryQueue()
                 .AddMemoryStorage();
 
             services.AddShashlik(Configuration);
-            
             services.AddSingleton<IMessageSender, SendMsgWithoutLosingMsgSender>();
         }
 

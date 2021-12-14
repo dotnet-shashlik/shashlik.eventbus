@@ -22,19 +22,21 @@ namespace CommonTestLogical.TestEvents
         }
 
         public static TestExceptionEvent Instance { get; private set; }
-
         public static IDictionary<string, string> Items { get; private set; }
         public static int Counter { get; private set; }
         private ILogger<TestExceptionEventHandler> Logger { get; }
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
+            Instance = @event;
+            Items = items;
             Counter++;
             throw new Exception("...111");
         }
     }
 
-    public class TestExceptionEventGroup2Handler : IEventHandler<TestExceptionEvent>
+    public class TestExceptionEventGroup2Handler
+        : IEventHandler<TestExceptionEvent>
     {
         public TestExceptionEventGroup2Handler(ILogger<TestExceptionEventHandler> logger)
         {
@@ -49,6 +51,7 @@ namespace CommonTestLogical.TestEvents
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
+            Instance = @event;
             // 模拟执行5次后，恢复正常
             if (Counter >= 5)
             {

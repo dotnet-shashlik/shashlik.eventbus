@@ -42,10 +42,10 @@ namespace CommonTestLogical
             await XaTransactionRollBackTest();
 
             var beginTime = DateTimeOffset.Now;
-            var testEvent = new TestEvent {Name = Guid.NewGuid().ToString("n")};
-            var testDelayEvent = new TestDelayEvent {Name = Guid.NewGuid().ToString("n")};
-            var testCustomNameEvent = new TestCustomNameEvent {Name = Guid.NewGuid().ToString("n")};
-            var testExceptionEvent = new TestExceptionEvent {Name = Guid.NewGuid().ToString("n")};
+            var testEvent = new TestEvent { Name = Guid.NewGuid().ToString("n") };
+            var testDelayEvent = new TestDelayEvent { Name = Guid.NewGuid().ToString("n") };
+            var testCustomNameEvent = new TestCustomNameEvent { Name = Guid.NewGuid().ToString("n") };
+            var testExceptionEvent = new TestExceptionEvent { Name = Guid.NewGuid().ToString("n") };
 
             string testEventRandomCode = RandomHelper.GetRandomCode(6);
             string testDelayEventRandomCode = RandomHelper.GetRandomCode(6);
@@ -54,43 +54,37 @@ namespace CommonTestLogical
 
             await DbContext.PublishEventAsync(testEvent, new Dictionary<string, string>
             {
-                {"code", testEventRandomCode}
+                { "code", testEventRandomCode }
             });
 
-            var delayAt = DateTimeOffset.Now.AddSeconds(10);
+            var delaySeconds = 7;
+            var delayAt = DateTimeOffset.Now.AddSeconds(delaySeconds);
             await EventPublisher.PublishAsync(testDelayEvent, delayAt, null, new Dictionary<string, string>
             {
-                {"code", testDelayEventRandomCode}
+                { "code", testDelayEventRandomCode }
             });
             await EventPublisher.PublishAsync(testCustomNameEvent, null, new Dictionary<string, string>
             {
-                {"code", testCustomNameEventRandomCode}
+                { "code", testCustomNameEventRandomCode }
             });
             await EventPublisher.PublishAsync(testExceptionEvent, null, new Dictionary<string, string>
             {
-                {"code", testExceptionEventRandomCode}
+                { "code", testExceptionEventRandomCode }
             });
 
-            // 延迟事件在到点之前不能被执行
-            while (DateTimeOffset.Now < delayAt.AddMilliseconds(-500))
-            {
-                TestDelayEventHandler.Instance.ShouldBeNull();
-                TestDelayEventGroup2Handler.Instance.ShouldBeNull();
-                TestDelayEventGroup3Handler.Instance.ShouldBeNull();
-            }
+            // // 延迟事件在到点之前不能被执行
+            // while (DateTimeOffset.Now < delayAt.AddMilliseconds(-500))
+            // {
+            //     TestDelayEventHandler.Instance.ShouldBeNull();
+            //     TestDelayEventGroup2Handler.Instance.ShouldBeNull();
+            //     TestDelayEventGroup3Handler.Instance.ShouldBeNull();
+            // }
 
-            // 1分钟之内会全部异常,未执行
-            while ((DateTimeOffset.Now - beginTime).TotalSeconds < Options.ConfirmTransactionSeconds)
-            {
-                TestExceptionEventHandler.Instance.ShouldBeNull();
-                TestExceptionEventGroup2Handler.Instance.ShouldBeNull();
-            }
-
-            // 1分钟以后，所有的正常事件处理类必须被处理
-            await Task.Delay(Options.ConfirmTransactionSeconds * 1000);
+            await Task.Delay(Options.StartRetryAfter * 1000 - 1000);
 
             // TestEvent
             {
+                TestEventHandler.Instance.ShouldNotBeNull();
                 TestEventHandler.Instance.Name.ShouldBe(testEvent.Name);
                 TestEventHandler.Items["code"].ShouldBe(testEventRandomCode);
                 TestEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
@@ -118,7 +112,8 @@ namespace CommonTestLogical
                 TestDelayEventGroup2Handler.Items["code"].ShouldBe(testDelayEventRandomCode);
                 TestDelayEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestDelayEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
+                TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
+                    .ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
                 TestDelayEventGroup2Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
                     .ShouldBe(delayAt.GetLongDate());
 
@@ -126,7 +121,8 @@ namespace CommonTestLogical
                 TestDelayEventGroup3Handler.Items["code"].ShouldBe(testDelayEventRandomCode);
                 TestDelayEventGroup3Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestDelayEventGroup3Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
+                TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey]
+                    .ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
                 TestDelayEventGroup3Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
                     .ShouldBe(delayAt.GetLongDate());
             }
@@ -154,15 +150,13 @@ namespace CommonTestLogical
                 TestExceptionEventHandler.Counter.ShouldBe(5);
                 TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
 
-                // 再过1分钟
-                await Task.Delay((Options.StartRetryAfterSeconds - Options.ConfirmTransactionSeconds) * 1000);
-                // 再等30秒
-                await Task.Delay(Options.RetryWorkingIntervalSeconds * 6 * 1000);
+                // 再等重试5次
+                await Task.Delay(Options.RetryInterval * 5 * 1000 + 3000);
 
                 // 错误次数达到最大
                 TestExceptionEventHandler.Counter.ShouldBe(Options.RetryFailedMax);
-                TestExceptionEventHandler.Instance.ShouldBeNull();
-                TestExceptionEventHandler.Items.ShouldBeNull();
+                TestExceptionEventHandler.Instance.ShouldNotBeNull();
+                TestExceptionEventHandler.Items.ShouldNotBeNull();
 
                 // 保持在5次
                 TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
@@ -177,11 +171,11 @@ namespace CommonTestLogical
 
         public async Task XaTransactionRollBackTest()
         {
-            var testEvent = new XaEvent {Name = Guid.NewGuid().ToString("n")};
+            var testEvent = new XaEvent { Name = Guid.NewGuid().ToString("n") };
 
             {
                 using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-                await EventPublisher.PublishAsync(testEvent, null, null, default);
+                await EventPublisher.PublishByAutoAsync(testEvent, null, default);
                 // rollback
             }
 
@@ -192,11 +186,11 @@ namespace CommonTestLogical
 
         public async Task XaTransactionCommitTest()
         {
-            var testEvent = new XaEvent {Name = Guid.NewGuid().ToString("n")};
-            
+            var testEvent = new XaEvent { Name = Guid.NewGuid().ToString("n") };
+
             {
                 using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-                await EventPublisher.PublishAsync(testEvent, null, null, default);
+                await EventPublisher.PublishByAutoAsync(testEvent, null, default);
                 scope.Complete();
             }
 

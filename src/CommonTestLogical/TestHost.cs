@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -30,7 +31,7 @@ namespace CommonTestLogical
                 })
                 .ConfigureAppConfiguration((host, config) =>
                 {
-                    config.AddYamlFile("config.yaml");
+                    config.AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), "config.test.yaml"));
                     config.AddEnvironmentVariables();
                 })
                 .ConfigureWebHostDefaults(x =>

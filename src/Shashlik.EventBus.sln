@@ -63,6 +63,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.SendMsgWi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.Sms.EventBus", "Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj", "{35B3DF7D-6B3C-48C4-B005-B5BB94E03AB4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{0B18BA5F-EC61-461D-A1F3-D7D5B74B68A6}"
+ProjectSection(SolutionItems) = preProject
+	config.test.yaml = config.test.yaml
+	config.test.local.yaml = config.test.local.yaml
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -177,6 +183,7 @@ Global
 		{4B8141D9-AF48-4D97-84A7-61D33A7FAA3E} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{8216FE05-055B-49A2-958F-F6FC9E010791} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{0E9DA5D0-90E3-459A-ABEB-9B94AB5B21E6} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{0B18BA5F-EC61-461D-A1F3-D7D5B74B68A6} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

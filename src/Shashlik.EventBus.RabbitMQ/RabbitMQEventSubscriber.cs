@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using Shashlik.Utils.Extensions;
+
+// ReSharper disable AsyncVoidLambda
 
 namespace Shashlik.EventBus.RabbitMQ
 {
@@ -44,36 +44,36 @@ namespace Shashlik.EventBus.RabbitMQ
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
 
             var consumer = Connection.CreateConsumer(eventHandlerName);
-            consumer.Received += async (sender, e) =>
+            consumer.Received += async (_, e) =>
             {
                 if (cancellationToken.IsCancellationRequested)
                     return;
-                MessageTransferModel message;
+                MessageTransferModel? message;
                 try
                 {
                     message = MessageSerializer.Deserialize<MessageTransferModel>(e.Body.ToArray());
                 }
                 catch (Exception exception)
                 {
-                    Logger.LogError(exception, "[EventBus-RabbitMQ] deserialize message from rabbit error.");
+                    Logger.LogError(exception, "[EventBus-RabbitMQ] deserialize message from rabbit error");
                     return;
                 }
 
                 if (message is null)
                 {
-                    Logger.LogError("[EventBus-RabbitMQ] deserialize message from rabbit error.");
+                    Logger.LogError("[EventBus-RabbitMQ] deserialize message from rabbit error");
                     return;
                 }
 
                 if (message.EventName != eventName)
                 {
                     Logger.LogError(
-                        $"[EventBus-RabbitMQ] received invalid event name \"{message.EventName}\", expect \"{eventName}\".");
+                        $"[EventBus-RabbitMQ] received invalid event name \"{message.EventName}\", expect \"{eventName}\"");
                     return;
                 }
 
                 Logger.LogDebug(
-                    $"[EventBus-RabbitMQ] received msg: {message}.");
+                    $"[EventBus-RabbitMQ] received msg: {message}");
 
                 // 处理消息
                 var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
@@ -84,15 +84,15 @@ namespace Shashlik.EventBus.RabbitMQ
                     Channel.BasicReject(e.DeliveryTag, true);
             };
 
-            consumer.Registered += (sender, e) =>
+            consumer.Registered += (_, _) =>
             {
                 Logger.LogInformation(
-                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been registered.");
+                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been registered");
             };
-            consumer.Shutdown += (sender, e) =>
+            consumer.Shutdown += (_, _) =>
             {
                 Logger.LogWarning(
-                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been shutdown.");
+                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been shutdown");
             };
             Channel.BasicConsume(eventHandlerName, false, consumer);
 

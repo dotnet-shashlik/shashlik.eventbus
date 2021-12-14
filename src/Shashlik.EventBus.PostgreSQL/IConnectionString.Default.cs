@@ -28,7 +28,7 @@ namespace Shashlik.EventBus.PostgreSQL
                     throw new OptionsValidationException(
                         nameof(Options.ConnectionString),
                         typeof(EventBusPostgreSQLOptions),
-                        new[] {"ConnectionString and DbContextType can't all be empty."});
+                        new[] {"ConnectionString and DbContextType can't all be empty"});
                 return Options.ConnectionString!;
             }
 

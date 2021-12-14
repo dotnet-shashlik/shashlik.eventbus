@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+
+// ReSharper disable RedundantExplicitArrayCreation
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -23,14 +24,15 @@ namespace Shashlik.EventBus.DefaultImpl
             EventHandlerDescriptor eventHandlerDescriptor)
         {
             using var scope = ServiceScopeFactory.CreateScope();
-            object? eventHandlerInstance =
+            object eventHandlerInstance =
                 scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
             if (messageStorageModel.EventBody is null)
                 throw new InvalidCastException($"[EventBus] event body content is null, msgId: {messageStorageModel.MsgId}");
             var eventBody =
                 MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
             if (eventBody is null)
-                throw new InvalidCastException($"[EventBus] event body content deserialize to null, msgId: {messageStorageModel.MsgId}");
+                throw new InvalidCastException(
+                    $"[EventBus] event body content deserialize to type of \"{eventHandlerDescriptor.EventType}\" occur error, body: {messageStorageModel.EventBody}");
 
             var method =
                 eventHandlerDescriptor.EventHandlerType.GetMethod("Execute",

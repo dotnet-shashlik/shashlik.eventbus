@@ -1,5 +1,0 @@
-﻿EventBus:
-  Kafka:
-    Properties:
-      "bootstrap.servers": "localhost"
-      "allow.auto.create.topics": "true"

@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.SqlServer
         public async ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken = default)
         {
             var sql = $@"
-SELECT COUNT([msgId]) FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]='{msgId}';";
+SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]='{msgId}';";
 
             var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
@@ -85,7 +85,7 @@ SELECT COUNT([msgId]) FROM {Options.CurrentValue.FullPublishedTableName} WHERE [
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string eventName, string status, int skip, int take,
+        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip, int take,
             CancellationToken cancellationToken)
         {
             var where = new StringBuilder();
@@ -107,8 +107,8 @@ ORDER BY A.createTime DESC;
 
             var parameters = new[]
             {
-                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = eventName},
-                new SqlParameter("@status", SqlDbType.VarChar) {Value = status},
+                new SqlParameter("@eventName", SqlDbType.VarChar) { Value = eventName },
+                new SqlParameter("@status", SqlDbType.VarChar) { Value = status },
             };
 
             var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -119,7 +119,8 @@ ORDER BY A.createTime DESC;
                 .ToList();
         }
 
-        public async Task<List<MessageStorageModel>> SearchReceived(string eventName, string eventHandlerName, string status, int skip, int take,
+        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName, string? status, int skip,
+            int take,
             CancellationToken cancellationToken)
         {
             var where = new StringBuilder();
@@ -142,9 +143,9 @@ ORDER BY A.createTime DESC;
 ";
             var parameters = new[]
             {
-                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = eventName},
-                new SqlParameter("@eventHandlerName", SqlDbType.VarChar) {Value = eventHandlerName},
-                new SqlParameter("@status", SqlDbType.VarChar) {Value = status},
+                new SqlParameter("@eventName", SqlDbType.VarChar) { Value = eventName },
+                new SqlParameter("@eventHandlerName", SqlDbType.VarChar) { Value = eventHandlerName },
+                new SqlParameter("@status", SqlDbType.VarChar) { Value = status },
             };
 
             var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -167,18 +168,18 @@ SELECT SCOPE_IDENTITY();
 
             var parameters = new[]
             {
-                new SqlParameter("@msgId", SqlDbType.VarChar) {Value = message.MsgId},
-                new SqlParameter("@environment", SqlDbType.VarChar) {Value = message.Environment},
-                new SqlParameter("@createTime", SqlDbType.BigInt) {Value = message.CreateTime.GetLongDate()},
-                new SqlParameter("@delayAt", SqlDbType.BigInt) {Value = message.DelayAt?.GetLongDate() ?? 0},
-                new SqlParameter("@expireTime", SqlDbType.BigInt) {Value = message.ExpireTime?.GetLongDate() ?? 0},
-                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = message.EventName},
-                new SqlParameter("@eventBody", SqlDbType.Text) {Value = message.EventBody},
-                new SqlParameter("@eventItems", SqlDbType.Text) {Value = message.EventItems},
-                new SqlParameter("@retryCount", SqlDbType.Int) {Value = message.RetryCount},
-                new SqlParameter("@status", SqlDbType.VarChar) {Value = message.Status},
-                new SqlParameter("@isLocking", SqlDbType.Bit) {Value = message.IsLocking ? 1 : 0},
-                new SqlParameter("@lockEnd", SqlDbType.BigInt) {Value = message.LockEnd?.GetLongDate() ?? 0},
+                new SqlParameter("@msgId", SqlDbType.VarChar) { Value = message.MsgId },
+                new SqlParameter("@environment", SqlDbType.VarChar) { Value = message.Environment },
+                new SqlParameter("@createTime", SqlDbType.BigInt) { Value = message.CreateTime.GetLongDate() },
+                new SqlParameter("@delayAt", SqlDbType.BigInt) { Value = message.DelayAt?.GetLongDate() ?? 0 },
+                new SqlParameter("@expireTime", SqlDbType.BigInt) { Value = message.ExpireTime?.GetLongDate() ?? 0 },
+                new SqlParameter("@eventName", SqlDbType.VarChar) { Value = message.EventName },
+                new SqlParameter("@eventBody", SqlDbType.Text) { Value = message.EventBody },
+                new SqlParameter("@eventItems", SqlDbType.Text) { Value = message.EventItems },
+                new SqlParameter("@retryCount", SqlDbType.Int) { Value = message.RetryCount },
+                new SqlParameter("@status", SqlDbType.VarChar) { Value = message.Status },
+                new SqlParameter("@isLocking", SqlDbType.Bit) { Value = message.IsLocking ? 1 : 0 },
+                new SqlParameter("@lockEnd", SqlDbType.BigInt) { Value = message.LockEnd?.GetLongDate() ?? 0 },
             };
 
             var id = await SqlScalar(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -200,20 +201,20 @@ SELECT SCOPE_IDENTITY();
 
             var parameters = new[]
             {
-                new SqlParameter("@msgId", SqlDbType.VarChar) {Value = message.MsgId},
-                new SqlParameter("@environment", SqlDbType.VarChar) {Value = message.Environment},
-                new SqlParameter("@createTime", SqlDbType.BigInt) {Value = message.CreateTime.GetLongDate()},
-                new SqlParameter("@isDelay", SqlDbType.Bit) {Value = message.DelayAt.HasValue ? 1 : 0},
-                new SqlParameter("@delayAt", SqlDbType.BigInt) {Value = message.DelayAt?.GetLongDate() ?? 0},
-                new SqlParameter("@expireTime", SqlDbType.BigInt) {Value = message.ExpireTime?.GetLongDate() ?? 0},
-                new SqlParameter("@eventName", SqlDbType.VarChar) {Value = message.EventName},
-                new SqlParameter("@eventHandlerName", SqlDbType.VarChar) {Value = message.EventHandlerName},
-                new SqlParameter("@eventBody", SqlDbType.Text) {Value = message.EventBody},
-                new SqlParameter("@eventItems", SqlDbType.Text) {Value = message.EventItems},
-                new SqlParameter("@retryCount", SqlDbType.Int) {Value = message.RetryCount},
-                new SqlParameter("@status", SqlDbType.VarChar) {Value = message.Status},
-                new SqlParameter("@isLocking", SqlDbType.Bit) {Value = message.IsLocking ? 1 : 0},
-                new SqlParameter("@lockEnd", SqlDbType.BigInt) {Value = message.LockEnd?.GetLongDate() ?? 0}
+                new SqlParameter("@msgId", SqlDbType.VarChar) { Value = message.MsgId },
+                new SqlParameter("@environment", SqlDbType.VarChar) { Value = message.Environment },
+                new SqlParameter("@createTime", SqlDbType.BigInt) { Value = message.CreateTime.GetLongDate() },
+                new SqlParameter("@isDelay", SqlDbType.Bit) { Value = message.DelayAt.HasValue ? 1 : 0 },
+                new SqlParameter("@delayAt", SqlDbType.BigInt) { Value = message.DelayAt?.GetLongDate() ?? 0 },
+                new SqlParameter("@expireTime", SqlDbType.BigInt) { Value = message.ExpireTime?.GetLongDate() ?? 0 },
+                new SqlParameter("@eventName", SqlDbType.VarChar) { Value = message.EventName },
+                new SqlParameter("@eventHandlerName", SqlDbType.VarChar) { Value = message.EventHandlerName },
+                new SqlParameter("@eventBody", SqlDbType.Text) { Value = message.EventBody },
+                new SqlParameter("@eventItems", SqlDbType.Text) { Value = message.EventItems },
+                new SqlParameter("@retryCount", SqlDbType.Int) { Value = message.RetryCount },
+                new SqlParameter("@status", SqlDbType.VarChar) { Value = message.Status },
+                new SqlParameter("@isLocking", SqlDbType.Bit) { Value = message.IsLocking ? 1 : 0 },
+                new SqlParameter("@lockEnd", SqlDbType.BigInt) { Value = message.LockEnd?.GetLongDate() ?? 0 }
             };
 
             var id = await SqlScalar(sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -248,6 +249,20 @@ WHERE [id] = {id};
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
+        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        {
+            if (lockEndAt <= DateTimeOffset.Now)
+                throw new ArgumentOutOfRangeException(nameof(lockEndAt));
+            var nowLong = DateTime.Now.GetLongDate();
+
+            var sql = $@"
+            UPDATE {Options.CurrentValue.FullPublishedTableName}
+            SET [isLocking] = 1, [lockEnd] = {lockEndAt.GetLongDate()}
+            WHERE [id] = {id} AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
+            ";
+            return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
+        }
+
         public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -272,12 +287,11 @@ DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE [expireTime] > 0 
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAndLockAsync(
+        public async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAsync(
             int count,
             int delayRetrySecond,
             int maxFailedRetryCount,
             string environment,
-            int lockSecond,
             CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
@@ -297,35 +311,15 @@ WHERE
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0) return new List<MessageStorageModel>();
-            var idsBuilder = new StringBuilder();
-            var list = table.AsEnumerable()
-                .Select(row =>
-                {
-                    var id = row.GetRowValue<long>("id");
-                    idsBuilder.Append(id.ToString());
-                    idsBuilder.Append(",");
-
-                    return RowToPublishedModel(row);
-                }).ToList();
-            var ids = idsBuilder.ToString();
-            ids = ids.TrimEnd(',');
-
-            var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
-            var updateSql = $@"
-UPDATE {Options.CurrentValue.FullPublishedTableName}
-SET [isLocking] = 1, [lockEnd] = {lockEnd}
-WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
-";
-            var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
-            return rows != list.Count ? new List<MessageStorageModel>() : list;
+            return table.AsEnumerable()
+                .Select(RowToPublishedModel).ToList();
         }
 
-        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAndLockAsync(
+        public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAsync(
             int count,
             int delayRetrySecond,
             int maxFailedRetryCount,
             string environment,
-            int lockSecond,
             CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
@@ -345,27 +339,8 @@ WHERE
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0) return new List<MessageStorageModel>();
-            var idsBuilder = new StringBuilder();
-            var list = table.AsEnumerable()
-                .Select(row =>
-                {
-                    var id = row.GetRowValue<long>("id");
-                    idsBuilder.Append(id.ToString());
-                    idsBuilder.Append(",");
-
-                    return RowToReceivedModel(row);
-                }).ToList();
-            var ids = idsBuilder.ToString();
-            ids = ids.TrimEnd(',');
-
-            var lockEnd = now.AddSeconds(lockSecond).GetLongDate();
-            var updateSql = $@"
-UPDATE {Options.CurrentValue.FullReceivedTableName}
-SET [isLocking] = 1, [lockEnd] = {lockEnd}
-WHERE [id] IN ({ids}) AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
-";
-            var rows = await NonQuery(updateSql, null, cancellationToken).ConfigureAwait(false);
-            return rows != list.Count ? new List<MessageStorageModel>() : list;
+            return table.AsEnumerable()
+                .Select(RowToReceivedModel).ToList();
         }
 
         private async Task<DataTable> SqlQuery(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default)

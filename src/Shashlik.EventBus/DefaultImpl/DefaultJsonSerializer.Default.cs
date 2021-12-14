@@ -10,14 +10,14 @@ namespace Shashlik.EventBus.DefaultImpl
     {
         public string Serialize(object instance)
         {
-            if (instance is null) throw new ArgumentNullException(nameof(instance));
+            ArgumentNullException.ThrowIfNull(instance);
             return JsonConvert.SerializeObject(instance);
         }
 
         public object? Deserialize(string str, Type type)
         {
-            if (string.IsNullOrWhiteSpace(str))
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(str));
+            ArgumentNullException.ThrowIfNull(str);
+            ArgumentNullException.ThrowIfNull(type);
             return JsonConvert.DeserializeObject(str, type);
         }
     }

@@ -44,6 +44,12 @@ namespace Shashlik.EventBus.MySql.Tests
         }
 
         [Fact]
+        public async Task TryLockPublishedTests()
+        {
+            await StorageTests.TryLockPublishedTests();
+        }
+
+        [Fact]
         public async Task TryLockReceivedTests()
         {
             await StorageTests.TryLockReceivedTests();
@@ -74,11 +80,10 @@ namespace Shashlik.EventBus.MySql.Tests
         }
 
         [Fact]
-        public async Task GetReceivedMessagesOfNeedRetryAndLockTests()
+        public async Task GetReceivedMessagesOfNeedRetryTests()
         {
-            await StorageTests.GetReceivedMessagesOfNeedRetryAndLockTests();
+            await StorageTests.GetReceivedMessagesOfNeedRetryTests();
         }
-
 
         [Fact]
         public async Task QueryPublishedTests()

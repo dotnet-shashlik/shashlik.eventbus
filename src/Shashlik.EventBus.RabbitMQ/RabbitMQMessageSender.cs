@@ -40,7 +40,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 MessageSerializer.SerializeToBytes(message));
             // 等待消费端ack消息
             Channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(Options.CurrentValue.ConfirmTimeout));
-            Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message}.");
+            Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message}");
 
             await Task.CompletedTask;
         }

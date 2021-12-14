@@ -1,3 +1,0 @@
-﻿EventBus:
-  RabbitMQ:
-    Host: "localhost"

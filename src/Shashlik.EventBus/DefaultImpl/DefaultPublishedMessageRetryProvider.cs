@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.Utils.Extensions;
 using Shashlik.Utils.Helpers;
@@ -13,110 +12,70 @@ namespace Shashlik.EventBus.DefaultImpl
     /// </summary>
     public class DefaultPublishedMessageRetryProvider : IPublishedMessageRetryProvider
     {
-        public DefaultPublishedMessageRetryProvider(IMessageStorage messageStorage, IMessageSender messageSender,
-            IOptions<EventBusOptions> options, ILogger<DefaultPublishedMessageRetryProvider> logger,
-            IMessageSerializer messageSerializer)
+        public DefaultPublishedMessageRetryProvider(
+            IMessageStorage messageStorage,
+            IOptions<EventBusOptions> options,
+            IMessageSerializer messageSerializer,
+            IPublishHandler publishHandler, IRetryProvider retryProvider)
         {
             MessageStorage = messageStorage;
-            MessageSender = messageSender;
             Options = options;
-            Logger = logger;
             MessageSerializer = messageSerializer;
+            PublishHandler = publishHandler;
+            RetryProvider = retryProvider;
         }
 
         private IMessageStorage MessageStorage { get; }
-        private IMessageSender MessageSender { get; }
         private IOptions<EventBusOptions> Options { get; }
-        private ILogger<DefaultPublishedMessageRetryProvider> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
+        private IPublishHandler PublishHandler { get; }
+        private IRetryProvider RetryProvider { get; }
 
         public async Task StartupAsync(CancellationToken cancellationToken)
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
-            // 重试器执行间隔为5秒
+            async void Action() => await Retry(cancellationToken).ConfigureAwait(false);
+
             TimerHelper.SetInterval(
-                async () => await Retry(cancellationToken).ConfigureAwait(false),
-                TimeSpan.FromSeconds(Options.Value.RetryWorkingIntervalSeconds),
+                Action,
+                TimeSpan.FromSeconds(Options.Value.RetryInterval),
                 cancellationToken);
         }
 
-        public async Task RetryAsync(long id, CancellationToken cancellationToken)
+        public async Task<HandleResult> RetryAsync(long id, CancellationToken cancellationToken)
         {
-            var item = await MessageStorage.FindPublishedByIdAsync(id, cancellationToken).ConfigureAwait(false);
-            if (item is null)
+            var messageStorageModel = await MessageStorage.FindPublishedByIdAsync(id, cancellationToken).ConfigureAwait(false);
+            if (messageStorageModel is null)
                 throw new ArgumentException($"[EventBus]Not found published message of id: {id}", nameof(id));
-
-            await Retry(item, cancellationToken, false).ConfigureAwait(false);
-        }
-
-        private async Task Retry(MessageStorageModel item, CancellationToken cancellationToken, bool checkRetryFailedMax)
-        {
-            if (checkRetryFailedMax && item.RetryCount >= Options.Value.RetryFailedMax)
-                return;
 
             var messageTransferModel = new MessageTransferModel
             {
-                EventName = item.EventName,
-                MsgId = item.MsgId,
-                MsgBody = MessageSerializer.Serialize(item),
+                EventName = messageStorageModel.EventName,
+                MsgId = messageStorageModel.MsgId,
+                MsgBody = MessageSerializer.Serialize(messageStorageModel),
                 SendAt = DateTimeOffset.Now,
-                DelayAt = item.DelayAt
+                DelayAt = messageStorageModel.DelayAt
             };
 
-            try
-            {
-                await MessageSender.SendAsync(messageTransferModel).ConfigureAwait(false);
-                await MessageStorage.UpdatePublishedAsync(
-                        item.Id,
-                        MessageStatus.Succeeded,
-                        item.RetryCount + 1,
-                        DateTime.Now.AddHours(Options.Value.SucceedExpireHour),
-                        cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex,
-                    $"[EventBus] published event retry fail, event: {item.EventName}, msgId: {item.MsgId}");
-                try
-                {
-                    // 失败的数据不过期
-                    await MessageStorage.UpdatePublishedAsync(
-                            item.Id,
-                            MessageStatus.Failed,
-                            item.RetryCount + 1,
-                            null,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                catch (Exception exInner)
-                {
-                    Logger.LogError(exInner, $"[EventBus] update published message error.");
-                }
-            }
+            return await PublishHandler.HandleAsync(messageTransferModel, messageStorageModel, cancellationToken);
         }
-
 
         private async Task Retry(CancellationToken cancellationToken)
         {
-            // 一次最多读取200条数据
-            var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(
+            var messages = await MessageStorage.GetPublishedMessagesOfNeedRetryAsync(
                 Options.Value.RetryLimitCount,
-                Options.Value.StartRetryAfterSeconds,
+                Options.Value.StartRetryAfter,
                 Options.Value.RetryFailedMax,
                 Options.Value.Environment,
-                Options.Value.RetryIntervalSeconds,
                 cancellationToken).ConfigureAwait(false);
             if (messages.IsNullOrEmpty())
                 return;
 
-            // 并行重试
-            Parallel.ForEach(
-                messages,
-                new ParallelOptions {MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism},
-                async item => await Retry(item, cancellationToken, true).ConfigureAwait(false)
-            );
+            foreach (var item in messages)
+            {
+                RetryProvider.Retry(item.Id, () => PublishHandler.HandleAsync(item.Id, cancellationToken));
+            }
         }
     }
 }

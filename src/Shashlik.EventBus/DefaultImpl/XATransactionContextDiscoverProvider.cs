@@ -2,6 +2,8 @@
 using System;
 using System.Transactions;
 
+// ReSharper disable InconsistentNaming
+
 namespace Shashlik.EventBus.DefaultImpl
 {
     /// <summary>
@@ -27,8 +29,9 @@ namespace Shashlik.EventBus.DefaultImpl
             }
             catch (Exception ex)
             {
-                Logger.LogDebug(ex, "get xa transaction conext occur error.");
+                Logger.LogDebug(ex, "[EventBus] get xa transaction context occur error");
             }
+
             return null;
         }
     }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MySql;
 using Shashlik.Kernel;
+using Shashlik.Utils.Extensions;
 
 namespace Shashlik.EventBus.RabbitMQ.Tests
 {
@@ -28,7 +29,7 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
             services.AddAuthorization();
             services.AddDbContextPool<DemoDbContext>(r =>
             {
-                var conn = Configuration.GetConnectionString("Default");
+                var conn = Configuration.GetConnectionString("MySql");
 
                 r.UseMySql(conn, ServerVersion.AutoDetect(conn),
                     db => { db.MigrationsAssembly(GetType().Assembly.GetName().FullName); });
@@ -41,15 +42,10 @@ namespace Shashlik.EventBus.RabbitMQ.Tests
 
             services.AddEventBus(r =>
                 {
+                    var options = Configuration.GetSection("EventBus")
+                        .Get<EventBusOptions>();
+                    options.CopyTo(r);
                     r.Environment = _env;
-                    // 为了便于测试，最大重试设置为7次
-                    r.RetryFailedMax = 7;
-                    // 重试开始工作的时间为2分钟后
-                    r.StartRetryAfterSeconds = 2 * 60;
-                    // 确认事务是否已提交时间为1分钟
-                    r.ConfirmTransactionSeconds = 60;
-                    // 失败重试间隔5秒
-                    r.RetryIntervalSeconds = 5;
                 })
                 .AddRabbitMQ(Configuration.GetSection("EventBus:RabbitMQ"))
                 .AddMySql<DemoDbContext>();

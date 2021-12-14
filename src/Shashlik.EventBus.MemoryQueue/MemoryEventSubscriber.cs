@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shashlik.Utils.Extensions;
+// ReSharper disable AsyncVoidLambda
 
 namespace Shashlik.EventBus.MemoryQueue
 {
@@ -14,16 +15,14 @@ namespace Shashlik.EventBus.MemoryQueue
             Logger = logger;
             MessageListener = messageListener;
             HostedStopToken = hostedStopToken;
+            Listeners = new ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>>();
             Start();
         }
 
         private IMessageListener MessageListener { get; }
         private ILogger<MemoryEventSubscriber> Logger { get; }
         private IHostedStopToken HostedStopToken { get; }
-
-        private ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>> Listeners { get; } =
-            new ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>>();
-
+        private ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>> Listeners { get; }
 
         public Task SubscribeAsync(EventHandlerDescriptor descriptor, CancellationToken token)
         {
@@ -39,7 +38,7 @@ namespace Shashlik.EventBus.MemoryQueue
                 var listeners = Listeners.GetOrDefault(msg.EventName);
                 if (listeners.IsNullOrEmpty())
                 {
-                    Logger.LogWarning($"[EventBus-Memory] received msg of {msg.EventName}, but not found associated event handlers.");
+                    Logger.LogWarning($"[EventBus-Memory] received msg of {msg.EventName}, but not found associated event handlers");
                     return;
                 }
 
@@ -48,7 +47,7 @@ namespace Shashlik.EventBus.MemoryQueue
                     if (HostedStopToken.StopCancellationToken.IsCancellationRequested)
                         return;
 
-                    Logger.LogDebug($"[EventBus-Memory: {descriptor.EventHandlerName}] received msg: {msg}-{msg.MsgBody}.");
+                    Logger.LogDebug($"[EventBus-Memory: {descriptor.EventHandlerName}] received msg: {msg}-{msg.MsgBody}");
 
                     // 处理消息
                     var res = await MessageListener.OnReceiveAsync(descriptor.EventHandlerName, msg, HostedStopToken.StopCancellationToken)

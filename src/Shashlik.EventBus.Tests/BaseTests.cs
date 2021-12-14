@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommonTestLogical;
 using CommonTestLogical.TestEvents;
@@ -65,7 +66,7 @@ namespace Shashlik.EventBus.Tests
         public void MessageSerializerTests()
         {
             var messageSerializer = GetService<IMessageSerializer>();
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var json = messageSerializer.Serialize(@event);
             messageSerializer.Deserialize<TestEvent>(json).Name.ShouldBe(@event.Name);
         }
@@ -77,7 +78,7 @@ namespace Shashlik.EventBus.Tests
             var eventHandlerFindProvider = GetService<IEventHandlerFindProvider>();
             var testEventHandlerDescriptor = eventHandlerFindProvider.FindAll().First(r => r.EventHandlerType == typeof(TestEventHandler));
             var messageSerializer = GetService<IMessageSerializer>();
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var json = messageSerializer.Serialize(@event);
 
             {
@@ -136,10 +137,10 @@ namespace Shashlik.EventBus.Tests
 
             var eventPublisher = GetService<IEventPublisher>();
             eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             await eventPublisher.PublishAsync(@event, null, new Dictionary<string, string>
             {
-                {"age", "18"}
+                { "age", "18" }
             });
 
             await Task.Delay(60 * 1000);
@@ -167,11 +168,11 @@ namespace Shashlik.EventBus.Tests
 
             var eventPublisher = GetService<IEventPublisher>();
             eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
-            var @event = new TestDelayEvent {Name = "李四"};
+            var @event = new TestDelayEvent { Name = "李四" };
             var delayAt = DateTimeOffset.Now.AddSeconds(10);
             await eventPublisher.PublishAsync(@event, delayAt, null, new Dictionary<string, string>
             {
-                {"age", "19"}
+                { "age", "19" }
             });
 
             // 时间没到，不能被执行
@@ -202,7 +203,8 @@ namespace Shashlik.EventBus.Tests
             TestDelayEventGroup2Handler.Items["age"].ShouldBe("19");
             TestDelayEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
             TestDelayEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-            TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
+            TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
+                .ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
             TestDelayEventGroup2Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
                 .ShouldBe(delayAt.GetLongDate());
 
@@ -210,7 +212,8 @@ namespace Shashlik.EventBus.Tests
             TestDelayEventGroup3Handler.Items["age"].ShouldBe("19");
             TestDelayEventGroup3Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
             TestDelayEventGroup3Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-            TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
+            TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey]
+                .ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
             TestDelayEventGroup3Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
                 .ShouldBe(delayAt.GetLongDate());
         }
@@ -222,14 +225,14 @@ namespace Shashlik.EventBus.Tests
 
             var eventPublisher = GetService<IEventPublisher>();
             eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
-            var @event = new TestCustomNameEvent {Name = "王五"};
+            var @event = new TestCustomNameEvent { Name = "王五" };
             await eventPublisher.PublishAsync(@event, null, new Dictionary<string, string>
             {
-                {"age", "20"}
+                { "age", "20" }
             });
 
             // 1分钟之内必须被执行
-            while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfterSeconds)
+            while ((DateTimeOffset.Now - beginTime).TotalSeconds <= Options.StartRetryAfter)
             {
                 if (TestCustomNameEventHandler.Instance is null || TestCustomNameEventGroup2Handler.Instance is null
                                                                 || TestCustomNameEventHandler.Items is null ||
@@ -262,33 +265,31 @@ namespace Shashlik.EventBus.Tests
             var beginTime = DateTimeOffset.Now;
             var eventPublisher = GetService<IEventPublisher>();
             eventPublisher.ShouldBeOfType<DefaultEventPublisher>();
-            var options = GetService<IOptions<EventBusOptions>>().Value;
-            var @event = new TestExceptionEvent {Name = "王麻子"};
+            var @event = new TestExceptionEvent { Name = "王麻子" };
             await eventPublisher.PublishAsync(@event, null, new Dictionary<string, string>
             {
-                {"age", "21"}
+                { "age", "21" }
             });
 
-            // 事务确认前都应该是异常
-            while ((DateTimeOffset.Now - beginTime).TotalSeconds < options.ConfirmTransactionSeconds)
-            {
-                TestExceptionEventHandler.Instance.ShouldBeNull();
-                TestExceptionEventGroup2Handler.Instance.ShouldBeNull();
-            }
+            TestExceptionEventHandler.Instance.ShouldBeNull();
+            TestExceptionEventGroup2Handler.Instance.ShouldBeNull();
+            await Task.Delay(Options.StartRetryAfter * 1000 - 1000);
+            TestExceptionEventHandler.Instance.ShouldNotBeNull();
+            TestExceptionEventGroup2Handler.Instance.ShouldNotBeNull();
 
             // 应该被执行了5次
             TestExceptionEventHandler.Counter.ShouldBe(5);
             TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
 
             // 重试器开始工作
-            await Task.Delay((options.StartRetryAfterSeconds - options.ConfirmTransactionSeconds) * 1000);
+            await Task.Delay(2000);
             // 重试器轮询6次以后
-            await Task.Delay(options.RetryWorkingIntervalSeconds * 1000 * 6);
+            await Task.Delay(Options.RetryInterval * 6 * 1000);
 
             // 错误次数达到最大
-            TestExceptionEventHandler.Counter.ShouldBe(options.RetryFailedMax);
-            TestExceptionEventHandler.Instance.ShouldBeNull();
-            TestExceptionEventHandler.Items.ShouldBeNull();
+            TestExceptionEventHandler.Counter.ShouldBe(Options.RetryFailedMax);
+            TestExceptionEventHandler.Instance.ShouldNotBeNull();
+            TestExceptionEventHandler.Items.ShouldNotBeNull();
 
             // 保持在5次
             TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
@@ -296,18 +297,98 @@ namespace Shashlik.EventBus.Tests
             TestExceptionEventGroup2Handler.Items["age"].ShouldBe("21");
             TestExceptionEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
             TestExceptionEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-            TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey].ShouldBe($"{nameof(TestExceptionEvent)}.{Options.Environment}");
+            TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
+                .ShouldBe($"{nameof(TestExceptionEvent)}.{Options.Environment}");
+        }
 
-            // 手动retry test
+        /// <summary>
+        /// 手动retry
+        /// </summary>
+        [Fact]
+        public async Task ManualRetryTestSuccess()
+        {
+            var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
+            var messageStorage = GetService<IMessageStorage>();
+            var eventNameRuler = GetService<IEventNameRuler>();
+            var eventHandlerNameRuler = GetService<IEventHandlerNameRuler>();
+            var id = await messageStorage.SaveReceivedAsync(new MessageStorageModel
             {
-                var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
-                var messageStorage = GetService<IMessageStorage>();
-                var list = await messageStorage.SearchReceived(null, null, null, 0, 100, default);
-                var storageModel = list.First(r => r.EventHandlerName.StartsWith(nameof(TestExceptionEventHandler)));
-                var retryCount = storageModel.RetryCount;
-                await receivedMessageRetryProvider.RetryAsync(storageModel.Id, default);
-                storageModel.RetryCount.ShouldBe(retryCount + 1);
-            }
+                MsgId = Guid.NewGuid().ToString(),
+                Environment = "dev",
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = eventHandlerNameRuler.GetName(typeof(TestEventHandler)),
+                EventName = eventNameRuler.GetName(typeof(TestEvent)),
+                EventBody = "{Name:\"张三\"}",
+                EventItems = "{}",
+                RetryCount = Options.RetryFailedMax + 1,
+                Status = MessageStatus.Failed,
+                IsLocking = false,
+                LockEnd = null
+            }, default);
+            await receivedMessageRetryProvider.RetryAsync(id, default);
+            var messageStorageModel = await messageStorage.FindReceivedByIdAsync(id, default);
+            messageStorageModel.ShouldNotBeNull();
+            messageStorageModel.RetryCount.ShouldBe(Options.RetryFailedMax + 1);
+        }
+
+        /// <summary>
+        /// 手动retry
+        /// </summary>
+        [Fact]
+        public async Task ManualRetryTestException()
+        {
+            var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
+            var messageStorage = GetService<IMessageStorage>();
+            var eventNameRuler = GetService<IEventNameRuler>();
+            var eventHandlerNameRuler = GetService<IEventHandlerNameRuler>();
+            var eventBusOptions = GetService<IOptions<EventBusOptions>>().Value;
+            var id = await messageStorage.SaveReceivedAsync(new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString(),
+                Environment = "dev",
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = eventHandlerNameRuler.GetName(typeof(TestExceptionEventHandler)),
+                EventName = eventNameRuler.GetName(typeof(TestExceptionEvent)),
+                EventBody = "{Name:\"张三\"}",
+                EventItems = "{}",
+                RetryCount = eventBusOptions.RetryFailedMax + 1,
+                Status = MessageStatus.Failed,
+                IsLocking = false,
+                LockEnd = null
+            }, default);
+            var count = TestExceptionEventHandler.Counter;
+            await receivedMessageRetryProvider.RetryAsync(id, default);
+            var messageStorageModel = await messageStorage.FindReceivedByIdAsync(id, default);
+            messageStorageModel.ShouldNotBeNull();
+            messageStorageModel.RetryCount.ShouldBe(eventBusOptions.RetryFailedMax + 2);
+            TestExceptionEventHandler.Counter.ShouldBe(count + 1);
+        }
+
+        [Fact]
+        public async Task RetryProviderMaxFailedTest()
+        {
+            var retryProvider = GetService<IRetryProvider>();
+            var counter = 0;
+            retryProvider.Retry(1, () => Task.FromResult(new HandleResult(false, new MessageStorageModel
+            {
+                RetryCount = ++counter
+            })));
+            await Task.Delay(Options.RetryInterval * Options.RetryFailedMax * 1000 + 3000);
+            counter.ShouldBe(Options.RetryFailedMax);
+        }
+
+        [Fact]
+        public async Task RetryProviderMaxSuccessTest()
+        {
+            var retryProvider = GetService<IRetryProvider>();
+            var counter = 0;
+            retryProvider.Retry(1, () => Task.FromResult(new HandleResult(true, new MessageStorageModel { RetryCount = ++counter })));
+            await Task.Delay(Options.RetryInterval * 1000 + 1000);
+            counter.ShouldBe(1);
         }
     }
 }

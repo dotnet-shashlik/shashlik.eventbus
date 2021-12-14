@@ -8,7 +8,7 @@ namespace Shashlik.EventBus
     public interface IMessageSender
     {
         /// <summary>
-        /// 发送消息
+        /// 发送消息,没有异常就是发送成功
         /// </summary>
         /// <param name="message">消息传输模型</param>
         /// <returns></returns>

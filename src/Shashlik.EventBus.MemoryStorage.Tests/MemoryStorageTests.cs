@@ -7,7 +7,8 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
 {
     public class MemoryStorageTests : TestBase<Startup>
     {
-        public MemoryStorageTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public MemoryStorageTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory,
+            testOutputHelper)
         {
         }
 
@@ -23,6 +24,12 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         public async Task SaveReceivedTest()
         {
             await StorageTests.SaveReceivedTest();
+        }
+
+        [Fact]
+        public async Task TryLockPublishedTests()
+        {
+            await StorageTests.TryLockPublishedTests();
         }
 
         [Fact]
@@ -56,9 +63,9 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         }
 
         [Fact]
-        public async Task GetReceivedMessagesOfNeedRetryAndLockTests()
+        public async Task GetReceivedMessagesOfNeedRetryTests()
         {
-            await StorageTests.GetReceivedMessagesOfNeedRetryAndLockTests();
+            await StorageTests.GetReceivedMessagesOfNeedRetryTests();
         }
 
 

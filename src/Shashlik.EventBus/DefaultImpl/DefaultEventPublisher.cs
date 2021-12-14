@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.DefaultImpl
@@ -14,26 +15,31 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageSerializer messageSerializer,
             IEventNameRuler eventNameRuler,
             IOptions<EventBusOptions> options,
-            IMessageSendQueueProvider messageSendQueueProvider,
             IMsgIdGenerator msgIdGenerator,
-            IEnumerable<ITransactionContextDiscoverProvider> transactionContextDiscoverProviders)
+            IEnumerable<ITransactionContextDiscoverProvider> transactionContextDiscoverProviders,
+            IPublishHandler publishHandler,
+            ILogger<DefaultEventPublisher> logger, IRetryProvider retryProvider)
         {
             MessageStorage = messageStorage;
             MessageSerializer = messageSerializer;
             EventNameRuler = eventNameRuler;
             Options = options;
-            MessageSendQueueProvider = messageSendQueueProvider;
             MsgIdGenerator = msgIdGenerator;
             TransactionContextDiscoverProviders = transactionContextDiscoverProviders.OrderBy(r => r.Priority).ToList();
+            PublishHandler = publishHandler;
+            Logger = logger;
+            RetryProvider = retryProvider;
         }
 
         private IMessageStorage MessageStorage { get; }
         private IMessageSerializer MessageSerializer { get; }
-        private IMessageSendQueueProvider MessageSendQueueProvider { get; }
         private IEventNameRuler EventNameRuler { get; }
         private IMsgIdGenerator MsgIdGenerator { get; }
         private IOptions<EventBusOptions> Options { get; }
         private IEnumerable<ITransactionContextDiscoverProvider> TransactionContextDiscoverProviders { get; }
+        private IPublishHandler PublishHandler { get; }
+        private ILogger<DefaultEventPublisher> Logger { get; }
+        private IRetryProvider RetryProvider { get; }
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,
@@ -42,7 +48,7 @@ namespace Shashlik.EventBus.DefaultImpl
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            await Publish(@event, null, transactionContext, additionalItems, cancellationToken).ConfigureAwait(false);
+            await InnerPublish(@event, null, transactionContext, additionalItems, false, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task PublishAsync<TEvent>(
@@ -53,19 +59,33 @@ namespace Shashlik.EventBus.DefaultImpl
             CancellationToken cancellationToken = default
         ) where TEvent : IEvent
         {
-            await Publish(@event, delayAt, transactionContext, additionalItems, cancellationToken).ConfigureAwait(false);
+            await InnerPublish(@event, delayAt, transactionContext, additionalItems, false, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task Publish<TEvent>(
+        public async Task PublishByAutoAsync<TEvent>(TEvent @event, IDictionary<string, string>? additionalItems = null,
+            CancellationToken cancellationToken = default) where TEvent : IEvent
+        {
+            await InnerPublish(@event, null, null, additionalItems, true, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task PublishByAutoAsync<TEvent>(TEvent @event, DateTimeOffset delayAt,
+            IDictionary<string, string>? additionalItems = null,
+            CancellationToken cancellationToken = default) where TEvent : IEvent
+        {
+            await InnerPublish(@event, delayAt, null, additionalItems, true, cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task InnerPublish<TEvent>(
             TEvent @event,
             DateTimeOffset? delayAt,
             ITransactionContext? transactionContext,
             IDictionary<string, string>? additionalItems = null,
+            bool useDiscover = false,
             CancellationToken cancellationToken = default
         )
         {
             if (@event is null) throw new ArgumentNullException(nameof(@event));
-            if (transactionContext is null)
+            if (transactionContext is null && useDiscover)
             {
                 foreach (var item in TransactionContextDiscoverProviders)
                 {
@@ -110,7 +130,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 DelayAt = delayAt,
             };
 
-            MessageTransferModel messageTransferModel = new MessageTransferModel
+            MessageTransferModel messageTransferModel = new()
             {
                 EventName = messageStorageModel.EventName,
                 Environment = Options.Value.Environment,
@@ -123,8 +143,80 @@ namespace Shashlik.EventBus.DefaultImpl
 
             // 消息持久化
             await MessageStorage.SavePublishedAsync(messageStorageModel, transactionContext, cancellationToken).ConfigureAwait(false);
-            // 进入消息发送队列
-            MessageSendQueueProvider.Enqueue(transactionContext, messageTransferModel, messageStorageModel, cancellationToken);
+            // 先持久化,持久化没有错误,异步发送消息
+            // 异步发送消息,启动时如果失败,最多循环5次
+            _ = Task.Run(
+                async () => await Start(transactionContext, messageStorageModel, messageTransferModel, cancellationToken)
+                    .ConfigureAwait(false)
+                , cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task Start(
+            ITransactionContext? transactionContext,
+            MessageStorageModel messageStorageModel,
+            MessageTransferModel messageTransferModel,
+            CancellationToken cancellationToken)
+        {
+            // 等待事务完成
+            var now = DateTime.Now;
+            while (!cancellationToken.IsCancellationRequested && transactionContext != null && !transactionContext.IsDone())
+            {
+                if ((DateTime.Now - now).TotalSeconds > Options.Value.TransactionCommitTimeout)
+                {
+                    Logger.LogDebug($"[EventBus] message \"{messageStorageModel}\" transaction commit timeout");
+                    return;
+                }
+
+                await Task.Delay(10, cancellationToken);
+            }
+
+            // 事务提交了,判断消息数据是否已提交
+            try
+            {
+                // 消息未提交, 不执行任何操作
+                if (!await MessageStorage
+                    .IsCommittedAsync(messageStorageModel.MsgId, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    Logger.LogDebug($"[EventBus] message \"{messageStorageModel.Id}\" has been rollback");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogDebug(ex, $"[EventBus] query message \"{messageStorageModel.Id}\" commit state occur error");
+                // 查询异常，将由重试器处理
+                return;
+            }
+
+            // 执行失败的次数
+            var failCount = 1;
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.Value.TransactionCommitTimeout))
+                    // 超过时间了,就不管了,状态还是SCHEDULED
+                    return;
+
+                // 执行真正的消息发送
+                var handleResult = await PublishHandler.HandleAsync(messageTransferModel, messageStorageModel, cancellationToken)
+                    .ConfigureAwait(false);
+                if (!handleResult.Success)
+                    failCount++;
+                else
+                    return;
+
+                if (failCount > 5)
+                {
+                    await Task.Delay(Options.Value.StartRetryAfter * 1000, cancellationToken);
+                    // 5次都失败了,进入重试器执行
+                    RetryProvider.Retry(
+                        messageStorageModel.Id,
+                        () => PublishHandler.HandleAsync(messageTransferModel, messageStorageModel, cancellationToken)
+                    );
+
+                    return;
+                }
+            }
         }
     }
 }

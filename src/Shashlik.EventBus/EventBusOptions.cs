@@ -12,19 +12,14 @@ namespace Shashlik.EventBus
         public string Environment { get; set; } = "Production";
 
         /// <summary>
-        /// 确认事务是否已提交的时间,单位秒,默认3分钟,必须小于<see cref="StartRetryAfterSeconds"/>
+        /// 确认事务是否已提交的时间,单位秒,默认60s,必须小于<see cref="StartRetryAfter"/>
         /// </summary>
-        public int ConfirmTransactionSeconds { get; set; } = 60 * 3;
+        public int TransactionCommitTimeout { get; set; } = 60;
 
         /// <summary>
-        /// 重试器在消息处理失败多久之后开始执行,单位秒,默认5分钟
+        /// 重试器在消息处理失败多久之后开始执行,单位秒,默认300s
         /// </summary>
-        public int StartRetryAfterSeconds { get; set; } = 60 * 5;
-
-        /// <summary>
-        /// 重试机制并行数量,默认5
-        /// </summary>
-        public int RetryMaxDegreeOfParallelism { get; set; } = 5;
+        public int StartRetryAfter { get; set; } = 60 * 5;
 
         /// <summary>
         /// 重试器单次执行数量,默认100
@@ -37,14 +32,14 @@ namespace Shashlik.EventBus
         public int RetryFailedMax { get; set; } = 60;
 
         /// <summary>
-        /// 失败重试间隔,单位秒,默认120秒
+        /// 失败重试间隔,单位秒,默认120s
         /// </summary>
-        public int RetryIntervalSeconds { get; set; } = 60 * 2;
+        public int RetryInterval { get; set; } = 60 * 2;
 
         /// <summary>
-        /// 重试器工作间隔,单位秒,默认5秒
+        /// 执行重试操作时,锁定时长,秒,默认110s,需要小于<see cref="RetryInterval"/>
         /// </summary>
-        public int RetryWorkingIntervalSeconds { get; set; } = 5;
+        public int LockTime { get; set; } = 60 * 2 - 10;
 
         /// <summary>
         /// 成功的消息多久后删除,单位小时,默认3天

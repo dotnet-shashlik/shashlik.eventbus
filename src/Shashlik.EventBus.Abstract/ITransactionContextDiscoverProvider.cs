@@ -1,4 +1,6 @@
-﻿namespace Shashlik.EventBus
+﻿// ReSharper disable CheckNamespace
+
+namespace Shashlik.EventBus
 {
     /// <summary>
     /// 自动发现当前环境的事务上下文提供器

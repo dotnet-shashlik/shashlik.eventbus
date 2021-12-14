@@ -1,8 +1,4 @@
 ﻿using Shashlik.EventBus;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Shashlik.Sms.EventBus
@@ -17,7 +13,8 @@ namespace Shashlik.Sms.EventBus
         /// <param name="transactionContext">事务上下文</param>
         /// <param name="args">短信参数</param>
         /// <returns></returns>
-        public static async Task SendCaptchaAsync(this IEventSmsSender sender, string phone, ITransactionContext? transactionContext, params string[] args)
+        public static async Task SendCaptchaAsync(this IEventSmsSender sender, string phone, ITransactionContext? transactionContext,
+            params string[] args)
         {
             await sender.SendWithCheckAsync(phone, SmsConstants.SubjectCaptcha, transactionContext, args);
         }

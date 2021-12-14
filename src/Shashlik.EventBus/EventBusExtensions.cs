@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.Utils.Extensions;
 
+// ReSharper disable ConditionIsAlwaysTrueOrFalse
+
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace Shashlik.EventBus
@@ -34,15 +36,16 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IMessageSerializer, DefaultJsonSerializer>();
             serviceCollection.TryAddSingleton<IReceivedMessageRetryProvider, DefaultReceivedMessageRetryProvider>();
             serviceCollection.TryAddSingleton<IPublishedMessageRetryProvider, DefaultPublishedMessageRetryProvider>();
-            serviceCollection.TryAddSingleton<IMessageSendQueueProvider, DefaultMessageSendQueueProvider>();
-            serviceCollection.TryAddSingleton<IMessageReceiveQueueProvider, DefaultMessageReceiveQueueProvider>();
             serviceCollection.TryAddSingleton<IEventHandlerInvoker, DefaultEventHandlerInvoker>();
             serviceCollection.TryAddSingleton<IEventNameRuler, DefaultNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerNameRuler, DefaultNameRuler>();
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
-            serviceCollection.TryAddSingleton<IReceivedDelayEventProvider, DefaultReceivedDelayEventProvider>();
             serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
             serviceCollection.TryAddSingleton<IMessageListener, DefaultMessageListener>();
+            serviceCollection.TryAddSingleton<IRetryProvider, DefaultRetryProvider>();
+            serviceCollection.TryAddSingleton<IPublishHandler, DefaultPublishHandler>();
+            serviceCollection.TryAddSingleton<IReceivedHandler, DefaultReceivedHandler>();
+
             serviceCollection.AddSingleton<ITransactionContextDiscoverProvider, XATransactionContextDiscoverProvider>();
             serviceCollection.AddSingleton<IHostedStopToken, InternalHostedStopToken>();
             serviceCollection.AddHostedService<EventBusStartup>();
@@ -89,6 +92,7 @@ namespace Shashlik.EventBus
         /// <returns></returns>
         public static byte[] SerializeToBytes<T>(this IMessageSerializer messageSerializer, T obj)
         {
+            ArgumentNullException.ThrowIfNull(obj);
             return Encoding.UTF8.GetBytes(messageSerializer.Serialize(obj));
         }
 

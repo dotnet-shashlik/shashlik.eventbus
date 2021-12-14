@@ -25,17 +25,18 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="config.yaml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\CommonTestLogical\CommonTestLogical.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj" />
         <ProjectReference Include="..\Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\config.test.yaml">
+        <Link>config.test.yaml</Link>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

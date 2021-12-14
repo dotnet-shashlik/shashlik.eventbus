@@ -7,7 +7,7 @@ namespace Shashlik.EventBus.MemoryQueue
 {
     internal static class InternalMemoryQueue
     {
-        private static ConcurrentQueue<MessageTransferModel> Queue { get; } = new ConcurrentQueue<MessageTransferModel>();
+        private static ConcurrentQueue<MessageTransferModel> Queue { get; } = new();
         public static event Action<MessageTransferModel>? OnReceived;
 
         public static void Send(MessageTransferModel messageTransferModel)

@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Shashlik.Utils.Extensions;
-using Shashlik.Utils.Helpers;
 
 // ReSharper disable SimplifyLinqExpressionUseAll
 
@@ -52,7 +50,7 @@ namespace Shashlik.EventBus.Kafka
                     }
                     catch (Exception e)
                     {
-                        Logger.LogError(e, $"[EventBus] consume message occur error.");
+                        Logger.LogError(e, $"[EventBus-Kafka] consume message occur error");
                     }
 
                     // ReSharper disable once MethodSupportsCancellation
@@ -61,7 +59,8 @@ namespace Shashlik.EventBus.Kafka
             }, cancellationToken);
         }
 
-        private async Task Consume(IConsumer<string, byte[]> consumer, string eventName, string eventHandlerName, CancellationToken cancellationToken)
+        private async Task Consume(IConsumer<string, byte[]> consumer, string eventName, string eventHandlerName,
+            CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -72,7 +71,7 @@ namespace Shashlik.EventBus.Kafka
             try
             {
                 consumerResult = consumer.Consume(cancellationToken);
-                if (consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
+                if (consumerResult is null || consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
                     return;
             }
             catch (OperationCanceledException)
@@ -82,36 +81,36 @@ namespace Shashlik.EventBus.Kafka
             catch (Exception ex)
             {
                 Logger.LogError(ex,
-                    $"[EventBus-Kafka] consume message occur error, event: {eventName}, handler: {eventHandlerName}.");
+                    $"[EventBus-Kafka] consume message occur error, event: {eventName}, handler: {eventHandlerName}");
                 return;
             }
 
-            MessageTransferModel message;
+            MessageTransferModel? message;
             try
             {
                 message = MessageSerializer.Deserialize<MessageTransferModel>(consumerResult.Message.Value);
             }
             catch (Exception e)
             {
-                Logger.LogError(e, "[EventBus-Kafka] deserialize message from kafka error.");
+                Logger.LogError(e, "[EventBus-Kafka] deserialize message from kafka error");
                 return;
             }
 
             if (message is null)
             {
-                Logger.LogError("[EventBus-Kafka] deserialize message from kafka error.");
+                Logger.LogError("[EventBus-Kafka] deserialize message from kafka error");
                 return;
             }
 
             if (message.EventName != eventName)
             {
                 Logger.LogError(
-                    $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{eventName}\".");
+                    $"[EventBus-Kafka] received invalid event name \"{message.EventName}\", expect \"{eventName}\"");
                 return;
             }
 
             Logger.LogDebug(
-                $"[EventBus-Kafka] received msg: {message.ToJson()}.");
+                $"[EventBus-Kafka] received msg: {message}");
 
             // 执行消息监听处理
             var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);

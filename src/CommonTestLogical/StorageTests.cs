@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using CommonTestLogical.EfCore;
@@ -36,7 +35,7 @@ namespace CommonTestLogical
         public async Task SavePublishedNoTransactionTest()
         {
             // 正常的已发布消息写入，查询测试, 不带事务
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -66,10 +65,10 @@ namespace CommonTestLogical
         public async Task SavePublishedWithTransactionCommitTest()
         {
             await using var tran = await DbContext.Database.BeginTransactionAsync();
-            DbContext.Add(new Users {Name = "张三"});
+            DbContext.Add(new Users { Name = "张三" });
             await DbContext.SaveChangesAsync();
 
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -113,9 +112,9 @@ namespace CommonTestLogical
         public async Task SavePublishedWithTransactionRollBackTest()
         {
             await using var tran = await DbContext.Database.BeginTransactionAsync();
-            DbContext.Add(new Users {Name = "张三"});
+            DbContext.Add(new Users { Name = "张三" });
             await DbContext.SaveChangesAsync();
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -153,9 +152,9 @@ namespace CommonTestLogical
         public async Task SavePublishedWithTransactionDisposeTest()
         {
             var tran = await DbContext.Database.BeginTransactionAsync();
-            DbContext.Add(new Users {Name = "张三"});
+            DbContext.Add(new Users { Name = "张三" });
             await DbContext.SaveChangesAsync();
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -192,7 +191,7 @@ namespace CommonTestLogical
 
         public async Task SaveReceivedTest()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -218,9 +217,42 @@ namespace CommonTestLogical
             }, default))!.Id.ShouldBe(id);
         }
 
+        public async Task TryLockPublishedTests()
+        {
+            var @event = new TestEvent { Name = "张三" };
+            var msg = new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString("n"),
+                Environment = EventBusOptions.Environment,
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = "TestEventHandlerName1",
+                EventName = "TestEventName1",
+                EventBody = @event.ToJson(),
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Scheduled,
+                IsLocking = false,
+                LockEnd = null
+            };
+            var id = await MessageStorage.SavePublishedAsync(msg, null, default);
+            msg.Id.ShouldBe(id);
+
+            // 锁5秒
+            (await MessageStorage.TryLockPublishedAsync(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeTrue();
+            // 再锁失败
+            (await MessageStorage.TryLockPublishedAsync(id, DateTimeOffset.Now.AddSeconds(5), default)).ShouldBeFalse();
+
+            // 6秒后再锁成功
+            await Task.Delay(6000);
+            (await MessageStorage.TryLockPublishedAsync(id, DateTimeOffset.Now.AddSeconds(6), default)).ShouldBeTrue();
+        }
+
+
         public async Task TryLockReceivedTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -252,7 +284,7 @@ namespace CommonTestLogical
 
         public async Task UpdatePublishedTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -283,7 +315,7 @@ namespace CommonTestLogical
 
         public async Task UpdateReceivedTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -317,7 +349,7 @@ namespace CommonTestLogical
 
         public async Task DeleteExpiresTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             Func<DateTimeOffset, string, bool, long> addMsg = (expire, status, isReceive) =>
             {
                 var model = new MessageStorageModel
@@ -375,7 +407,7 @@ namespace CommonTestLogical
 
         public async Task GetPublishedMessagesOfNeedRetryAndLockTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
 
             Func<DateTimeOffset, string, long> addMsg = (createTime, status) =>
             {
@@ -400,45 +432,30 @@ namespace CommonTestLogical
                 return model.Id;
             };
 
-            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Scheduled);
-            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Failed);
-            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Succeeded);
+            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
+                MessageStatus.Scheduled);
+            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
+                MessageStatus.Failed);
+            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
+                MessageStatus.Succeeded);
             var msg4 = addMsg(DateTimeOffset.Now, MessageStatus.Failed);
 
             // 正常数据操作测试
             {
-                var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+                var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAsync(100,
+                    this.EventBusOptions.StartRetryAfter, this
+                        .EventBusOptions
+                        .RetryFailedMax, this.EventBusOptions.Environment, default);
                 list1.Any(r => r.Id == msg1).ShouldBeTrue();
                 list1.Any(r => r.Id == msg2).ShouldBeTrue();
                 list1.Any(r => r.Id == msg3).ShouldBeFalse();
                 list1.Any(r => r.Id == msg4).ShouldBeFalse();
-
-                // 马上 再获取并锁定，必须不包含
-                var list2 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list2.Any(r => r.Id == msg1).ShouldBeFalse();
-                list2.Any(r => r.Id == msg2).ShouldBeFalse();
-                list2.Any(r => r.Id == msg3).ShouldBeFalse();
-                list2.Any(r => r.Id == msg4).ShouldBeFalse();
-
-                // 延迟6秒后，应该可以拿到数据了
-                await Task.Delay(6000);
-                var list3 = await MessageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list3.Any(r => r.Id == msg1).ShouldBeTrue();
-                list3.Any(r => r.Id == msg2).ShouldBeTrue();
-                list3.Any(r => r.Id == msg3).ShouldBeFalse();
-                list3.Any(r => r.Id == msg4).ShouldBeFalse();
             }
         }
 
-        public async Task GetReceivedMessagesOfNeedRetryAndLockTests()
+        public async Task GetReceivedMessagesOfNeedRetryTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
 
             Func<DateTimeOffset, string, long> addMsg = (createTime, status) =>
             {
@@ -463,46 +480,33 @@ namespace CommonTestLogical
                 return model.Id;
             };
 
-            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Scheduled);
-            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Failed);
-            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfterSeconds).AddSeconds(-10), MessageStatus.Succeeded);
+            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
+                MessageStatus.Scheduled);
+            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
+                MessageStatus.Failed);
+            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
+                MessageStatus.Succeeded);
             var msg4 = addMsg(DateTimeOffset.Now, MessageStatus.Failed);
 
             // 正常数据操作测试
             {
-                var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
+                var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAsync(
+                    EventBusOptions.RetryLimitCount,
+                    EventBusOptions.StartRetryAfter,
+                    EventBusOptions.RetryFailedMax,
+                    EventBusOptions.Environment,
+                    default);
                 list1.Any(r => r.Id == msg1).ShouldBeTrue();
                 list1.Any(r => r.Id == msg2).ShouldBeTrue();
                 list1.Any(r => r.Id == msg3).ShouldBeFalse();
                 list1.Any(r => r.Id == msg4).ShouldBeFalse();
-
-                // 马上 再获取并锁定，必须不包含
-                var list2 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list2.Any(r => r.Id == msg1).ShouldBeFalse();
-                list2.Any(r => r.Id == msg2).ShouldBeFalse();
-                list2.Any(r => r.Id == msg3).ShouldBeFalse();
-                list2.Any(r => r.Id == msg4).ShouldBeFalse();
-
-                // 延迟6秒后，应该可以拿到数据了
-                await Task.Delay(6000);
-                var list3 = await MessageStorage.GetReceivedMessagesOfNeedRetryAndLockAsync(100, this.EventBusOptions.StartRetryAfterSeconds, this
-                    .EventBusOptions
-                    .RetryFailedMax, this.EventBusOptions.Environment, 5, default);
-                list3.Any(r => r.Id == msg1).ShouldBeTrue();
-                list3.Any(r => r.Id == msg2).ShouldBeTrue();
-                list3.Any(r => r.Id == msg3).ShouldBeFalse();
-                list3.Any(r => r.Id == msg4).ShouldBeFalse();
             }
         }
 
 
         public async Task QueryPublishedTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -553,7 +557,7 @@ namespace CommonTestLogical
 
         public async Task QueryReceivedTests()
         {
-            var @event = new TestEvent {Name = "张三"};
+            var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
@@ -668,7 +672,7 @@ namespace CommonTestLogical
 
         public void XaTransactionContextCommitTest()
         {
-            var tran = new TransactionScope();            
+            var tran = new TransactionScope();
             var transactionContext = new XaTransactionContext(Transaction.Current!);
             transactionContext!.IsDone().ShouldBeFalse();
             tran.Complete();

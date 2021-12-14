@@ -1,2 +1,0 @@
-﻿ConnectionStrings:
-  Default: server=localhost;database=sqlservertest;user id=sa;password=Shashlik123123;Encrypt=True;TrustServerCertificate=True;

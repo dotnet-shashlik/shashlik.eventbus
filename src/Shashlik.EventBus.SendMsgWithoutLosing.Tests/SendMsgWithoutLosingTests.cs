@@ -10,7 +10,8 @@ namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
 {
     public class SendMsgWithoutLosingTests : TestBase<SendMsgWithoutLosingTestStartup>
     {
-        public SendMsgWithoutLosingTests(TestWebApplicationFactory<SendMsgWithoutLosingTestStartup> factory, ITestOutputHelper testOutputHelper) :
+        public SendMsgWithoutLosingTests(TestWebApplicationFactory<SendMsgWithoutLosingTestStartup> factory,
+            ITestOutputHelper testOutputHelper) :
             base(factory, testOutputHelper)
         {
         }
@@ -22,29 +23,27 @@ namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
             var publishedMessageRetryProvider = GetService<IPublishedMessageRetryProvider>();
             var eventPublisher = GetService<IEventPublisher>();
             var messageStorage = GetService<IMessageStorage>();
+            var eventNameRuler = GetService<IEventNameRuler>();
 
             var name = Guid.NewGuid().ToString();
-            await eventPublisher.PublishAsync(new SendMsgWithoutLosingTestEvent {Name = name}, null);
-            await Task.Delay(5000);
+            await eventPublisher.PublishAsync(new SendMsgWithoutLosingTestEvent { Name = name }, null);
 
-            var list = await messageStorage.GetPublishedMessagesOfNeedRetryAndLockAsync(100, options.RetryIntervalSeconds,
-                options.RetryFailedMax, options.Environment, 100, default);
+            await Task.Delay(options.StartRetryAfter * 1000 + 500);
+            var list = await messageStorage.SearchPublishedAsync(eventNameRuler.GetName(typeof(SendMsgWithoutLosingTestEvent)), null, 0, 20,
+                default);
             list.Count.ShouldBe(1);
             var item = list[0];
             var id = item.Id;
 
-            await publishedMessageRetryProvider.RetryAsync(id, default);
-            await publishedMessageRetryProvider.RetryAsync(id, default);
-
-            // 再过1分钟
-            await Task.Delay((options.StartRetryAfterSeconds - options.ConfirmTransactionSeconds) * 1000);
-            // 再等30秒
-            await Task.Delay(options.RetryWorkingIntervalSeconds * 6 * 1000);
+            // 再等重试器循环6次
+            await Task.Delay(options.RetryInterval * 6 * 1000);
+            item = await messageStorage.FindPublishedByIdAsync(id, default);
             item.RetryCount.ShouldBe(options.RetryFailedMax);
 
             await publishedMessageRetryProvider.RetryAsync(id, default);
             await publishedMessageRetryProvider.RetryAsync(id, default);
 
+            item = await messageStorage.FindPublishedByIdAsync(id, default);
             item.RetryCount.ShouldBe(options.RetryFailedMax + 2);
         }
     }

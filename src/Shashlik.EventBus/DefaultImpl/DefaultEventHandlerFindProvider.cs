@@ -27,7 +27,7 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 var types = ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>));
 
-                List<EventHandlerDescriptor> list = new List<EventHandlerDescriptor>();
+                List<EventHandlerDescriptor> list = new();
                 foreach (var typeInfo in types)
                 {
                     var eventType = GetEventType(typeInfo);

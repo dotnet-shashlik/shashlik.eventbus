@@ -341,3 +341,4 @@ upload
 /src/Health.Api/internal-nlog.txt
 /src/Health.Api/nlog.config
 /nugetPackages
+/src/config.test.local.yaml

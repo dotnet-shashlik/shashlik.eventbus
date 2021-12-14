@@ -1,0 +1,30 @@
+﻿ConnectionStrings:
+  MySql: server=localhost;database=mysqltest;user id=root;password=123123;
+  PostgreSql: server=localhost;database=postgretest;user id=testuser;password=123123;
+  SqlServer: server=localhost;database=sqlservertest;user id=sa;password=Shashlik123123;Encrypt=True;TrustServerCertificate=True;
+
+EventBus:
+  # 最大重试次数
+  RetryFailedMax: 7
+  # 启动重试的延迟时间,单位秒
+  StartRetryAfter: 20
+  # 事务提交超时时间,单位秒
+  TransactionCommitTimeout: 10
+  # 重试间隔时间,单位秒
+  RetryInterval: 5
+  # 重试锁定时长,单位秒
+  LockTime: 2
+  # 重试器但此处理数量
+  RetryLimitCount: 100
+  # 成功的消息过期时长 小时
+  SucceedExpireHour: 72
+  Kafka:
+    Properties:
+      "bootstrap.servers": "localhost"
+      "allow.auto.create.topics": "true"
+  RabbitMQ:
+    Host: localhost
+    #UserName: gucao
+    #Password: localhost  
+    #Port: 5672
+

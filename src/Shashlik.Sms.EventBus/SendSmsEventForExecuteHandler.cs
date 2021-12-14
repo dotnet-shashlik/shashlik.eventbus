@@ -33,7 +33,7 @@ namespace Shashlik.Sms.EventBus
             }
             catch (Exception e)
             {
-                Logger.LogWarning(e, "Sms send failed.");
+                Logger.LogError(e, "Sms send failed");
             }
         }
     }

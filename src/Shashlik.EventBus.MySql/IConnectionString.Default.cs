@@ -27,7 +27,7 @@ namespace Shashlik.EventBus.MySql
                     throw new OptionsValidationException(
                         nameof(Options.ConnectionString),
                         typeof(EventBusMySqlOptions),
-                        new[] {"ConnectionString and DbContextType can't all be empty."});
+                        new[] {"ConnectionString and DbContextType can't all be empty"});
                 return Options.ConnectionString!;
             }
 
