@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
+// ReSharper disable MethodSupportsCancellation
+
 namespace Shashlik.EventBus.DefaultImpl
 {
     public class DefaultEventPublisher : IEventPublisher
@@ -167,7 +169,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     return;
                 }
 
-                await Task.Delay(10, cancellationToken);
+                await Task.Delay(10).ConfigureAwait(false);
             }
 
             // 事务提交了,判断消息数据是否已提交
@@ -207,7 +209,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 if (failCount > 5)
                 {
-                    await Task.Delay(Options.Value.StartRetryAfter * 1000, cancellationToken);
+                    await Task.Delay(Options.Value.StartRetryAfter * 1000).ConfigureAwait(false);
                     // 5次都失败了,进入重试器执行
                     RetryProvider.Retry(
                         messageStorageModel.Id,

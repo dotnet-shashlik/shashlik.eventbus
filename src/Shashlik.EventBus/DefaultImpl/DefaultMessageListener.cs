@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.Utils.Helpers;
 
+// ReSharper disable MethodSupportsCancellation
+
 namespace Shashlik.EventBus.DefaultImpl
 {
     public class DefaultMessageListener : IMessageListener
@@ -95,6 +97,7 @@ namespace Shashlik.EventBus.DefaultImpl
             }
             catch (Exception ex)
             {
+                Logger.LogError(ex, $"[EventBus] message listener handle message occur error");
                 return MessageReceiveResult.Failed;
             }
         }
@@ -117,7 +120,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 if (failCount > 5)
                 {
-                    await Task.Delay(Options.Value.StartRetryAfter * 1000, cancellationToken);
+                    await Task.Delay(Options.Value.StartRetryAfter * 1000);
                     // 5次都失败了,进入重试器执行
                     RetryProvider.Retry(
                         messageStorageModel.Id,
@@ -127,7 +130,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     return;
                 }
 
-                await Task.Delay(10, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(10).ConfigureAwait(false);
             }
         }
     }
