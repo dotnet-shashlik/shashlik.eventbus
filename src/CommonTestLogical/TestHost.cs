@@ -27,7 +27,7 @@ namespace CommonTestLogical
                 .ConfigureLogging(r =>
                 {
                     r.ClearProviders();
-                    r.AddXUnit(Output).SetMinimumLevel(LogLevel.Debug);
+                    r.AddXUnit(Output).SetMinimumLevel(LogLevel.Error);
                 })
                 .ConfigureAppConfiguration((host, config) =>
                 {
