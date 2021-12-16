@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.RabbitMQ
         public int Port { get; set; } = 5672;
 
         /// <summary>
-        /// 发送消息确认超时时间,单位秒,defualt:5
+        /// 发送消息确认超时时间,单位秒,default:5s
         /// </summary>
         public int ConfirmTimeout { get; set; } = 5;
 
