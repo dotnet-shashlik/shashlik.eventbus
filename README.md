@@ -183,6 +183,8 @@ public class UserManager
     }    
 ```
 
+5. 更多[samples](https://github.com/dotnet-shashlik/shashlik.eventbus/tree/main/src/samples)
+
 ## 扩展
 
 如果默认实现不能满足你的需求，可以自行实现可扩展接口，并注册即可。
