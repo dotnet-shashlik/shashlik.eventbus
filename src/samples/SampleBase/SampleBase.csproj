@@ -11,6 +11,8 @@
         
         <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.1.0" />
         
+        <PackageReference Include="Shashlik.Utils" Version="2.0.0-preview9" />
+        
         <ProjectReference Include="..\..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
