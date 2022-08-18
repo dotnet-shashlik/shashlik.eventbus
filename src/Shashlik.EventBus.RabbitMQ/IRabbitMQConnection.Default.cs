@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Threading;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -12,7 +11,7 @@ namespace Shashlik.EventBus.RabbitMQ
         public DefaultRabbitMQConnection(IOptionsMonitor<EventBusRabbitMQOptions> options)
         {
             Options = options;
-            _connection = new Lazy<IConnection>(Get);
+            _connection = new Lazy<IConnection>(Get, true);
             _channels = new ConcurrentDictionary<int, IModel>();
             _consumers = new ConcurrentDictionary<string, EventingBasicConsumer>();
         }
@@ -25,18 +24,24 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public IModel GetChannel()
         {
-            var id = Thread.CurrentThread.ManagedThreadId;
+            var id = Environment.CurrentManagedThreadId;
             var channel = _channels.GetOrAdd(id, r =>
             {
                 var c = Connection.CreateModel();
-                c.ConfirmSelect();
                 return c;
             });
             if (channel.IsClosed)
             {
-                channel.Dispose();
+                try
+                {
+                    channel.Dispose();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+
                 channel = _channels[id] = Connection.CreateModel();
-                channel.ConfirmSelect();
             }
 
             return channel;

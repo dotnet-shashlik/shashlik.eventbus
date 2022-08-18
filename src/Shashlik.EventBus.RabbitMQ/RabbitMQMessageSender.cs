@@ -21,29 +21,30 @@ namespace Shashlik.EventBus.RabbitMQ
             IMessageSerializer messageSerializer)
         {
             Options = options;
+            Connection = connection;
             Logger = logger;
             MessageSerializer = messageSerializer;
-            Channel = connection.GetChannel();
         }
 
         private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
-        private IModel Channel { get; }
         private ILogger<RabbitMQMessageSender> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
+        private IRabbitMQConnection Connection { get; }
 
         public async Task SendAsync(MessageTransferModel message)
         {
+            var channel = Connection.GetChannel();
+            channel.ConfirmSelect();
             // 交换机定义,类型topic
-            Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
-            Channel.ConfirmSelect();
-            var basicProperties = Channel.CreateBasicProperties();
+            channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
+            var basicProperties = channel.CreateBasicProperties();
             basicProperties.MessageId = message.MsgId;
             // 启用消息持久化
             basicProperties.Persistent = true;
-            Channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
+            channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
                 MessageSerializer.SerializeToBytes(message));
             // 等待消费端ack消息
-            Channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(Options.CurrentValue.ConfirmTimeout));
+            channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(Options.CurrentValue.ConfirmTimeout));
             Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message}");
 
             await Task.CompletedTask;

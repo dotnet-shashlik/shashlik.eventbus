@@ -50,14 +50,14 @@ namespace Sample.Rabbit.Mysql
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitMySql"; })
                         .AddMySql<DemoDbContext>()
-                        .AddRabbitMQ(r =>
-                        {
-                            r.Host = "192.168.50.178";
-                            r.UserName = "rabbit";
-                            r.Password = "8NnT2nUNoOwpBAue";
-                        });
+                        .AddRabbitMQ(configuration.GetSection("EventBus:RabbitMQ"));
 
                     services.AddHostedService<TestService>();
+
+                    using var serviceProvider2 = services.BuildServiceProvider();
+                    using var serviceScope = serviceProvider2.CreateScope();
+                    serviceScope.ServiceProvider.GetRequiredService<DemoDbContext>()
+                        .Database.Migrate();
                 })
                 .UseConsoleLifetime()
                 .Build();
@@ -93,14 +93,16 @@ namespace Sample.Rabbit.Mysql
 
                     if (i % 3 == 0)
                     {
-                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, null, cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" },
+                            null, cancellationToken);
                         await transaction.RollbackAsync(cancellationToken);
                         await Task.Delay(5, cancellationToken);
                         continue;
                     }
 
                     if (i % 2 == 0)
-                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, null, cancellationToken);
+                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" },
+                            null, cancellationToken);
                     else
                         await DbContext.PublishEventAsync(new DelayEvent { Name = $"【ClusterId: {ClusterId}】李四: {i}" },
                             DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null, cancellationToken);

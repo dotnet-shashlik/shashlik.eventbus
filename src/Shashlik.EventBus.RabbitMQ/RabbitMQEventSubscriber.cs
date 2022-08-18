@@ -23,11 +23,9 @@ namespace Shashlik.EventBus.RabbitMQ
             Logger = logger;
             MessageSerializer = messageSerializer;
             MessageListener = messageListener;
-            Channel = connection.GetChannel();
         }
 
         private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
-        private IModel Channel { get; }
         private ILogger<RabbitMQEventSubscriber> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IMessageListener MessageListener { get; }
@@ -35,12 +33,13 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken cancellationToken)
         {
+            var channel = Connection.GetChannel();
             // 注册基础通信交换机,类型topic
-            Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
+            channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
             // 定义队列
-            Channel.QueueDeclare(eventHandlerDescriptor.EventHandlerName, true, false, false);
+            channel.QueueDeclare(eventHandlerDescriptor.EventHandlerName, true, false, false);
             // 绑定队列到交换机以及routing key
-            Channel.QueueBind(eventHandlerDescriptor.EventHandlerName, Options.CurrentValue.Exchange,
+            channel.QueueBind(eventHandlerDescriptor.EventHandlerName, Options.CurrentValue.Exchange,
                 eventHandlerDescriptor.EventName);
 
             var eventName = eventHandlerDescriptor.EventName;
@@ -84,9 +83,9 @@ namespace Shashlik.EventBus.RabbitMQ
                     .ConfigureAwait(false);
                 if (res == MessageReceiveResult.Success)
                     // 一定要在消息接收处理完成后才确认ack
-                    Channel.BasicAck(e.DeliveryTag, false);
+                    channel.BasicAck(e.DeliveryTag, false);
                 else
-                    Channel.BasicReject(e.DeliveryTag, true);
+                    channel.BasicReject(e.DeliveryTag, true);
             };
 
             consumer.Registered += (_, _) =>
@@ -99,7 +98,7 @@ namespace Shashlik.EventBus.RabbitMQ
                 Logger.LogWarning(
                     $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been shutdown");
             };
-            Channel.BasicConsume(eventHandlerName, false, consumer);
+            channel.BasicConsume(eventHandlerName, false, consumer);
 
             return Task.CompletedTask;
         }
