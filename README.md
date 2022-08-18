@@ -11,18 +11,12 @@ Shashlik.EventBus 顾名思义，.NET 事件总线，同时也是分布式事务
 ## 开发背景
 
 说起.NET
-分布式事务和事件总线，首先应该提到必须就是[CAP](https://github.com/dotnetcore/CAP)，诚然`CAP`是一款优秀的框架，采用基于本地消息表的异步确保来达到最终一致性的的分布式事务解决方案也是非常经典，被广泛应用的方案。我也是从`CAP
-2.0`版本就开始使用，也算是半个忠实用户。那我为什么还是吃饱了撑的要开发 Shashlik.EventBus 呢？这得在`CAP`使用的过程中产生的问题说起，PS：这里不是要数落`CAP`，希望杨大别怪罪，只是对`
-CAP`的一些设计思路不太认同。Shashlik.EventBus 也不是`CAP`的弥补，更不是`CAP`的副本，而且基于本地消息表的分布式事务的另一个实现。
+分布式事务和事件总线，首先应该提到必须就是[CAP](https://github.com/dotnetcore/CAP)，诚然`CAP`是一款优秀的框架，采用基于本地消息表的异步确保来达到最终一致性的的分布式事务解决方案也是非常经典，被广泛应用的方案。Shashlik.EventBus 也不是`CAP`的弥补，更不是`CAP`的副本，而且基于本地消息表的分布式事务的另一个实现。基于以下才`CAP`的考虑才诞生了此项目。
 
 - `CAP`对事务的入侵太强。
 - 比较繁琐的生产与消费定义（基于特性）。
 - 缺少必要的测试，我在生产环境经历过几个比较严重的 BUG，具体不细谈。
-- 缺少延迟事件功能，`CAP`也有issue提过此功能，但杨大的解释是可以集成`Hangfire+CAP`的方式，这个我持保留意见。
-
-基于这几个方面决定自行开发，并完全开源，为.NET 社区贡献一份力量。再次强调，Shashlik.EventBus 的目标不是为了替换`CAP`，只是为了大家多一个选择，事实上Shashlik也有对`CAP`
-的集成，详见[Shashlik](https://github.com/dotnet-shashlik/shashlik)。Shashlik 承诺会一直维护下去（虽然目前只有 2 个人，同时希望大家积极参与进来）。已集成 github action
-来执行每次版本发布前的完整测试，当前测试覆盖率已达到 85%，尽量保证不出现低级 BUG。
+- 缺少延迟事件功能。
 
 ## Nuget
 
@@ -49,9 +43,9 @@ CAP`的一些设计思路不太认同。Shashlik.EventBus 也不是`CAP`的弥�
 
 ## Getting Started
 
-场景如下：一个新用户注册以后有以下需求：1.发送欢迎注册短信；2.发放新用户消费券；3.30分钟后推送新用户优惠活动信息。
+场景如下：一个新用户注册以后有以下需求：1. 发送欢迎注册短信；2. 发放新用户优惠券；3. 30分钟后推送新用户优惠活动信息。
 
-1. 服务配置，这里以MySql+RabbitMQ为例：
+1. 服务配置，这里以`MySql` + `RabbitMQ`为例：
 
 ```c#
     services.AddEventBus(r =>
@@ -165,26 +159,26 @@ public class UserManager
 ```c#
     
     // 一个事件可以有多个处理类，可以分布在不同的微服务中
-    // 用于发送短信
-    public class NewUserEventForSmsHandler : IEventHandler<NormalEvent>
+    // 用于发送短信的事件处理类
+    public class NewUserEventForSmsHandler : IEventHandler<NewUserEvent>
     {
-        public async Task Execute(NormalEvent @event, IDictionary<string, string> items)
+        public async Task Execute(NewUserEvent @event, IDictionary<string, string> items)
         {
             // 发送短信...
         }
     }
 
 
-    // 用于发放消费券
-    public class NewUserEventForCouponsHandler : IEventHandler<NormalEvent>
+    // 用于发放消费券的事件处理类
+    public class NewUserEventForCouponsHandler : IEventHandler<NewUserEvent>
     {
-        public async Task Execute(NormalEvent @event, IDictionary<string, string> items)
+        public async Task Execute(NewUserEvent @event, IDictionary<string, string> items)
         {
             // 业务处理...
         }
     }
 
-    // 事件处理类不区分普通事件和延迟事件
+    // 用于新用户延迟活动的事件处理类,将在指定时间自行
     public class NewUserPromotionEventHandler : IEventHandler<NewUserPromotionEvent>
     {
         public async Task Execute(NewUserPromotionEvent @event, IDictionary<string, string> items)
@@ -198,25 +192,22 @@ public class UserManager
 
 如果默认实现不能满足你的需求，可以自行实现可扩展接口，并注册即可。
 
-- `IMsgIdGenerator`：消息Id生成器，是指传输的全局唯一id，不是指存储的id。
-- `IEventPublisher`：事件发布处理类。
+- `IMsgIdGenerator`：消息Id生成器，是指传输的全局唯一id，不是指存储的id。默认guid
+- `IEventPublisher`：事件发布处理器。
 - `IMessageSerializer`：消息序列化、反序列化处理类。
 - `IReceivedMessageRetryProvider`：已接收消息重试器。
 - `IPublishedMessageRetryProvider`：已发布消息重试器。
+- `IEventHandlerInvoker`: 事件处理执行器
+- `IEventNameRuler`：事件名称规则生成(对应消息队topic)。
+- `IEventHandlerNameRuler`：事件处理名称规则生成(对应消息队列queue)。
+- `IEventHandlerFindProvider`：事件处理类查找器
+- `IExpiredMessageProvider`：已过期消息删除处理。
+- `IMessageListener`：消息监听处理器。
+- `IRetryProvider`：重试执行器。
 - `IPublishHandler`：消息发布处理器。
 - `IReceivedHandler`：消息接收处理器。
-- `IEventHandlerInvoker`：事件处理执行器。
-- `IEventNameRuler`：事件名称规则生成。
-- `IEventHandlerNameRuler`：事件处理名称规则生成。
-- `IEventHandlerFindProvider`：事件处理类查找器
-- `IMessageListener`：消息监听处理器。
-- `IReceivedDelayEventProvider`：已接收的延迟事件处理。
-- `IExpiredMessageProvider`：已过期消息删除处理。
 - `IMessageStorageInitializer`：存储介质初始化。
 - `IMessageStorage`：消息存储、读取等操作。
-- `IMessageSender`：消息发送器。
-- `IMessageListener`：消息监听处理器。
-- `IEventSubscriber`：事件订阅器。
 
 例：
 
@@ -230,6 +221,6 @@ public class UserManager
 
 ```
 
-## Wiki
+## 更多详见Wiki
 
 [Wiki](https://github.com/dotnet-shashlik/shashlik.eventbus/wiki)
