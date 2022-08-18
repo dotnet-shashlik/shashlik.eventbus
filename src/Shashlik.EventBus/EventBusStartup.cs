@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Shashlik.EventBus.DefaultImpl;
-using Shashlik.Utils.Helpers;
 
 namespace Shashlik.EventBus
 {

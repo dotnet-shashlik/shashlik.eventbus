@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MySqlConnector;
 using Shashlik.EventBus.RelationDbStorage;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 
 // ReSharper disable ConvertIfStatementToSwitchExpression
 // ReSharper disable ConvertIfStatementToSwitchStatement
@@ -58,7 +58,8 @@ SELECT 1 FROM `{Options.CurrentValue.PublishedTableName}` WHERE `msgId`='{msgId}
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
+        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId,
+            EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken = default)
         {
             var sql =
@@ -83,7 +84,8 @@ SELECT 1 FROM `{Options.CurrentValue.PublishedTableName}` WHERE `msgId`='{msgId}
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip, int take,
+        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip,
+            int take,
             CancellationToken cancellationToken)
         {
             var where = new StringBuilder();
@@ -114,7 +116,8 @@ LIMIT {skip},{take};
                 .ToList();
         }
 
-        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName, string? status, int skip,
+        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName,
+            string? status, int skip,
             int take,
             CancellationToken cancellationToken)
         {
@@ -182,7 +185,8 @@ SELECT LAST_INSERT_ID();
             return longId;
         }
 
-        public async Task<long> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken = default)
+        public async Task<long> SaveReceivedAsync(MessageStorageModel message,
+            CancellationToken cancellationToken = default)
         {
             var sql = $@"
 INSERT INTO `{Options.CurrentValue.ReceivedTableName}`
@@ -241,7 +245,8 @@ WHERE `id` = {id}
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
@@ -255,7 +260,8 @@ WHERE `id` = {id} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
             return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
 
-        public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
@@ -391,13 +397,14 @@ LIMIT {count};
             return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql, MySqlParameter[] parameter,
+        private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql,
+            MySqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
-            if (transactionContext is null || transactionContext is XaTransactionContext)
+            if (transactionContext is null or XaTransactionContext)
                 return await SqlScalar(sql, parameter, cancellationToken).ConfigureAwait(false);
 
-            if (!(transactionContext is RelationDbStorageTransactionContext relationDbStorageTransactionContext))
+            if (transactionContext is not RelationDbStorageTransactionContext relationDbStorageTransactionContext)
                 throw new InvalidCastException(
                     $"[EventBus-MySql]Storage only support transaction context of {typeof(RelationDbStorageTransactionContext)}");
 

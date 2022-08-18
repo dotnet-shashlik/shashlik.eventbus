@@ -2,6 +2,9 @@
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
+using Shashlik.EventBus.Utils;
+
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace Shashlik.EventBus.Kafka
 {
@@ -29,10 +32,10 @@ namespace Shashlik.EventBus.Kafka
             var result = await producer.ProduceAsync(message.EventName, new Message<string, byte[]>
             {
                 Key = message.MsgId,
-                Value = Encoding.UTF8.GetBytes(MessageSerializer.Serialize(message))
+                Value = MessageSerializer.SerializeToBytes(message)
             }).ConfigureAwait(false);
 
-            if (result.Status == PersistenceStatus.Persisted || result.Status == PersistenceStatus.PossiblyPersisted)
+            if (result.Status is PersistenceStatus.Persisted or PersistenceStatus.PossiblyPersisted)
                 Logger.LogDebug($"[EventBus-Kafka] send msg success: {message}");
             else
                 throw new EventBusException(

@@ -7,6 +7,8 @@ namespace Shashlik.EventBus.PostgreSQL
     {
         /// <summary>
         /// 模式名
+        /// <para></para>
+        /// 9.2及以下不支持CREATE SCHEMA IF NOT EXISTS，只能使用public
         /// </summary>
         public string Schema { get; set; } = "eventbus";
 

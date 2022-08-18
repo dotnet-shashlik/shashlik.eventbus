@@ -7,6 +7,5 @@ namespace Shashlik.EventBus
     /// </summary>
     public interface IEvent
     {
-       
     }
 }

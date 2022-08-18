@@ -39,11 +39,12 @@ namespace Shashlik.EventBus
                     $"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
 
             if (dbContext.Database.CurrentTransaction is null)
-                await eventPublisher.PublishAsync(@event, null, additionalItems, cancellationToken).ConfigureAwait(false);
+                await eventPublisher.PublishAsync(@event, null, additionalItems, cancellationToken)
+                    .ConfigureAwait(false);
             else
                 await eventPublisher.PublishAsync(
                         @event,
-                        new RelationDbStorageTransactionContext(dbContext.Database.CurrentTransaction.GetDbTransaction()),
+                        dbContext.GetTransactionContext(),
                         additionalItems,
                         cancellationToken)
                     .ConfigureAwait(false);
@@ -68,20 +69,21 @@ namespace Shashlik.EventBus
             IDictionary<string, string>? additionalItems = null,
             CancellationToken cancellationToken = default) where TEvent : IEvent
         {
-            if (dbContext is null) throw new ArgumentNullException(nameof(dbContext));
-            if (@event is null) throw new ArgumentNullException(nameof(@event));
+            ArgumentNullException.ThrowIfNull(dbContext);
+            ArgumentNullException.ThrowIfNull(@event);
             var eventPublisher = dbContext.GetService<IEventPublisher>();
             if (eventPublisher is null)
                 throw new InvalidOperationException(
                     $"Can't resolve service type of {typeof(IEventPublisher)} from DbContext {dbContext.GetType()}");
 
             if (dbContext.Database.CurrentTransaction is null)
-                await eventPublisher.PublishAsync(@event, delayAt, null, additionalItems, cancellationToken).ConfigureAwait(false);
+                await eventPublisher.PublishAsync(@event, delayAt, null, additionalItems, cancellationToken)
+                    .ConfigureAwait(false);
             else
                 await eventPublisher.PublishAsync(
                         @event,
                         delayAt,
-                        new RelationDbStorageTransactionContext(dbContext.Database.CurrentTransaction.GetDbTransaction()),
+                        dbContext.GetTransactionContext(),
                         additionalItems,
                         cancellationToken)
                     .ConfigureAwait(false);

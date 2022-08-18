@@ -2,8 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using Shashlik.Utils.Extensions;
-using Shashlik.Utils.Helpers;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.DefaultImpl
 {

@@ -26,7 +26,7 @@
         <ProjectReference Include="..\Shashlik.EventBus.Kafka\Shashlik.EventBus.Kafka.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
-        <ProjectReference Include="..\Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj" />
+        
     </ItemGroup>
 
     <ItemGroup>

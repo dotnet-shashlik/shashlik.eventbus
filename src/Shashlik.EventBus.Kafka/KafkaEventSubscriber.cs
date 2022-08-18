@@ -3,7 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 // ReSharper disable SimplifyLinqExpressionUseAll
 
@@ -25,13 +26,15 @@ namespace Shashlik.EventBus.Kafka
         private ILogger<KafkaEventSubscriber> Logger { get; }
         private IMessageListener MessageListener { get; }
 
-        public async Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken cancellationToken)
+        public async Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor,
+            CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            var consumer = Connection.CreateConsumer(eventHandlerDescriptor.EventHandlerName, eventHandlerDescriptor.EventName);
+            var consumer = Connection.CreateConsumer(eventHandlerDescriptor.EventHandlerName,
+                eventHandlerDescriptor.EventName);
             consumer.Subscribe(eventHandlerDescriptor.EventName);
             var eventName = eventHandlerDescriptor.EventName;
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
@@ -71,7 +74,8 @@ namespace Shashlik.EventBus.Kafka
             try
             {
                 consumerResult = consumer.Consume(cancellationToken);
-                if (consumerResult is null || consumerResult.IsPartitionEOF || consumerResult.Message.Value.IsNullOrEmpty())
+                if (consumerResult is null || consumerResult.IsPartitionEOF ||
+                    consumerResult.Message.Value.IsNullOrEmpty())
                     return;
             }
             catch (OperationCanceledException)
@@ -113,7 +117,8 @@ namespace Shashlik.EventBus.Kafka
                 $"[EventBus-Kafka] received msg: {message}");
 
             // 执行消息监听处理
-            var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
+            var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken)
+                .ConfigureAwait(false);
             // 存储偏移,确认消费, see: https://docs.confluent.io/current/clients/dotnet.html
             if (res == MessageReceiveResult.Success)
                 // 只有监听处理成功才提交偏移量,否则不处理即可

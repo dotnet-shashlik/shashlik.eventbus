@@ -8,7 +8,7 @@ namespace Shashlik.EventBus.RabbitMQ
         /// <summary>
         /// 交换机名称
         /// </summary>
-        public string Exchange { get; set; } = "eventbus.ex";
+        public string Exchange { get; set; } = "shashlik.eventbus";
 
         /// <summary>
         /// 主机名称

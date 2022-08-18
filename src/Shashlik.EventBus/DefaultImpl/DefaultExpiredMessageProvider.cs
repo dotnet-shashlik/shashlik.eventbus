@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Shashlik.Utils.Helpers;
+using Shashlik.EventBus.Utils;
 
 // ReSharper disable AsyncVoidLambda
 

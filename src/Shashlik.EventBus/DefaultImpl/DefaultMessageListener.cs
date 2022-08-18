@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shashlik.Utils.Helpers;
+using Shashlik.EventBus.Utils;
 
 // ReSharper disable MethodSupportsCancellation
 

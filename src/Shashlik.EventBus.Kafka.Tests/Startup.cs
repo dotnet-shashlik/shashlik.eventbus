@@ -1,12 +1,8 @@
-﻿using System;
-using CommonTestLogical.EfCore;
+﻿using CommonTestLogical.EfCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using MySqlConnector;
-using Shashlik.EventBus.Kafka.Tests.Efcore;
 using Shashlik.EventBus.MySql;
 using Shashlik.Kernel;
 using Shashlik.Utils.Extensions;

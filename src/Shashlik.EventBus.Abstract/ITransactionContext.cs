@@ -8,7 +8,7 @@ namespace Shashlik.EventBus
     public interface ITransactionContext
     {
         /// <summary>
-        /// 当前事务是否已提交或回滚或Disposed
+        /// 当前事务是否已完成(已提交/回滚/Disposed)
         /// </summary>
         /// <returns></returns>
         bool IsDone();

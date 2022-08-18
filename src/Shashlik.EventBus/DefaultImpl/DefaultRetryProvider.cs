@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
-using Shashlik.Utils.Helpers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.DefaultImpl
 {

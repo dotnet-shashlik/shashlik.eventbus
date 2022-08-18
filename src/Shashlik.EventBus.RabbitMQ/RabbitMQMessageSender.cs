@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using Shashlik.EventBus.Utils;
+
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace Shashlik.EventBus.RabbitMQ
 {
@@ -32,6 +35,7 @@ namespace Shashlik.EventBus.RabbitMQ
         {
             // 交换机定义,类型topic
             Channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
+            Channel.ConfirmSelect();
             var basicProperties = Channel.CreateBasicProperties();
             basicProperties.MessageId = message.MsgId;
             // 启用消息持久化

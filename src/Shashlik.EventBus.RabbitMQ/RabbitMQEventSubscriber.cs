@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using Shashlik.EventBus.Utils;
+
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 // ReSharper disable AsyncVoidLambda
 
@@ -76,7 +79,9 @@ namespace Shashlik.EventBus.RabbitMQ
                     $"[EventBus-RabbitMQ] received msg: {message}");
 
                 // 处理消息
-                var res = await MessageListener.OnReceiveAsync(eventHandlerName, message, cancellationToken).ConfigureAwait(false);
+                var res = await MessageListener
+                    .OnReceiveAsync(eventHandlerName, message, cancellationToken)
+                    .ConfigureAwait(false);
                 if (res == MessageReceiveResult.Success)
                     // 一定要在消息接收处理完成后才确认ack
                     Channel.BasicAck(e.DeliveryTag, false);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shashlik.EventBus;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 
 namespace CommonTestLogical.TestEvents
 {

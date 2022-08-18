@@ -5,7 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shashlik.EventBus.DefaultImpl;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
+
+// ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalse
 
@@ -46,7 +48,6 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IPublishHandler, DefaultPublishHandler>();
             serviceCollection.TryAddSingleton<IReceivedHandler, DefaultReceivedHandler>();
 
-            serviceCollection.AddSingleton<ITransactionContextDiscoverProvider, XATransactionContextDiscoverProvider>();
             serviceCollection.AddSingleton<IHostedStopToken, InternalHostedStopToken>();
             serviceCollection.AddHostedService<EventBusStartup>();
 
@@ -59,58 +60,6 @@ namespace Shashlik.EventBus
             return new DefaultEventBusBuilder(serviceCollection);
         }
 
-        /// <summary>
-        /// 反序列化
-        /// </summary>
-        /// <param name="messageSerializer"></param>
-        /// <param name="text"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static T? Deserialize<T>(this IMessageSerializer messageSerializer, string text)
-        {
-            return (T?)messageSerializer.Deserialize(text, typeof(T));
-        }
 
-        /// <summary>
-        /// 反序列化
-        /// </summary>
-        /// <param name="messageSerializer"></param>
-        /// <param name="bytes"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static T? Deserialize<T>(this IMessageSerializer messageSerializer, byte[] bytes)
-        {
-            return (T?)messageSerializer.Deserialize(Encoding.UTF8.GetString(bytes), typeof(T));
-        }
-
-        /// <summary>
-        /// 序列化为bytes数组
-        /// </summary>
-        /// <param name="messageSerializer"></param>
-        /// <param name="obj"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static byte[] SerializeToBytes<T>(this IMessageSerializer messageSerializer, T obj)
-        {
-            ArgumentNullException.ThrowIfNull(obj);
-            return Encoding.UTF8.GetBytes(messageSerializer.Serialize(obj));
-        }
-
-        /// <summary>
-        /// 获取column的值
-        /// </summary>
-        /// <param name="row">row</param>
-        /// <param name="col">column name</param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static T? GetRowValue<T>(this DataRow row, string col)
-        {
-            if (row is null) throw new ArgumentNullException(nameof(row));
-            if (string.IsNullOrWhiteSpace(col)) throw new ArgumentException("Value cannot be null or whitespace.", nameof(col));
-            var v = row[col];
-            if (v is null || v == DBNull.Value)
-                return default;
-            return v.ParseTo<T>();
-        }
     }
 }

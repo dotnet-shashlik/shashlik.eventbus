@@ -14,6 +14,8 @@ namespace Shashlik.EventBus
     {
         public EventBusNameAttribute(string name)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
             Name = name;
         }
 

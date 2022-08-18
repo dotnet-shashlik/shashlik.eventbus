@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 // ReSharper disable AsyncVoidLambda
 
 namespace Shashlik.EventBus.MemoryQueue

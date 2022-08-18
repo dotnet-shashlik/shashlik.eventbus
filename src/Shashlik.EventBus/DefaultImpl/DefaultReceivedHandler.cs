@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Shashlik.EventBus.Utils;
+
+// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -28,10 +31,12 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageSerializer = messageSerializer;
         }
 
-        public async Task<HandleResult> HandleAsync(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
+        public async Task<HandleResult> HandleAsync(MessageStorageModel messageStorageModel,
+            IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            return await HandleAsync(messageStorageModel.Id, messageStorageModel, items, descriptor, false, cancellationToken);
+            return await HandleAsync(messageStorageModel.Id, messageStorageModel, items, descriptor, false,
+                cancellationToken);
         }
 
         public async Task<HandleResult> HandleAsync(long id, CancellationToken cancellationToken = default)
@@ -53,7 +58,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 if (!requireLock || await MessageStorage.TryLockReceivedAsync(
                         id, DateTimeOffset.Now.AddSeconds(Options.Value.LockTime),
                         cancellationToken).ConfigureAwait(false)
-                )
+                   )
                 {
                     messageStorageModel ??= await MessageStorage.FindReceivedByIdAsync(id, cancellationToken);
                     if (messageStorageModel is null)

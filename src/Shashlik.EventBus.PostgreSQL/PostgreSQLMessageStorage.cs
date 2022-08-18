@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
 using Shashlik.EventBus.RelationDbStorage;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.PostgreSQL
 {

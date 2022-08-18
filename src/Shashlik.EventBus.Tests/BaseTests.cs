@@ -8,7 +8,7 @@ using CommonTestLogical;
 using CommonTestLogical.TestEvents;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.DefaultImpl;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;

@@ -4,8 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shashlik.Utils.Extensions;
-using Shashlik.Utils.Helpers;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -17,7 +16,7 @@ namespace Shashlik.EventBus.DefaultImpl
         public DefaultReceivedMessageRetryProvider(
             IMessageStorage messageStorage,
             IOptions<EventBusOptions> options,
-            ILogger<DefaultPublishedMessageRetryProvider> logger,
+            ILogger<DefaultReceivedMessageRetryProvider> logger,
             IMessageSerializer messageSerializer,
             IEventHandlerFindProvider eventHandlerFindProvider,
             IReceivedHandler receivedHandler, IRetryProvider retryProvider)
@@ -33,7 +32,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private IMessageStorage MessageStorage { get; }
         private IOptions<EventBusOptions> Options { get; }
-        private ILogger<DefaultPublishedMessageRetryProvider> Logger { get; }
+        private ILogger<DefaultReceivedMessageRetryProvider> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
         private IReceivedHandler ReceivedHandler { get; }

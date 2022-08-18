@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.PostgreSQL
 {

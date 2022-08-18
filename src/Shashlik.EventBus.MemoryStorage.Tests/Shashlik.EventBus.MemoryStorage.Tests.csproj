@@ -25,7 +25,7 @@
         <ProjectReference Include="..\CommonTestLogical\CommonTestLogical.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
         <ProjectReference Include="..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
-        <ProjectReference Include="..\Shashlik.Sms.EventBus\Shashlik.Sms.EventBus.csproj" />
+        
     </ItemGroup>
 
     <ItemGroup>

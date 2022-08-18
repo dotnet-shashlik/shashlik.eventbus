@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Data.SqlClient;
 using Shashlik.EventBus.RelationDbStorage;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 
 // ReSharper disable ConvertIfStatementToSwitchExpression
 

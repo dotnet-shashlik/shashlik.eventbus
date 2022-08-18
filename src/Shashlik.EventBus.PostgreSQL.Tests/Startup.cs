@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Shashlik.EventBus.MemoryQueue;
-using Shashlik.EventBus.PostgreSQL.Tests.Efcore;
 using Shashlik.Kernel;
 using Shashlik.Utils.Extensions;
 

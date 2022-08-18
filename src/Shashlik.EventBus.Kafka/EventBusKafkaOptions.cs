@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Shashlik.Utils.Extensions;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.Kafka
 {
