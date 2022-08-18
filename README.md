@@ -5,7 +5,7 @@
 
 ---
 
-Shashlik.EventBus 顾名思义，.NET 事件总线，同时也是分布式事务、延迟事件解决方案，Shashlik.EventBus设计的目标就是高性能、简单、易用、易扩展，且现已全面支持.NET5，采用最宽松的 MIT 开源协议。
+Shashlik.EventBus 顾名思义，.NET 事件总线，同时也是分布式事务、延迟事件解决方案，Shashlik.EventBus设计的目标就是高性能、简单、易用、易扩展，为抛弃历史包袱，仅支持NET6，采用最宽松的 MIT 开源协议。
 
 ## 开发背景
 
