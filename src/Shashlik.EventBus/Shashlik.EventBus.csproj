@@ -14,12 +14,4 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <ProjectReference Include="..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Utils\DateTimeExtensions.cs" />
-      <Compile Remove="Utils\CollectionExtensions.cs" />
-      <Compile Remove="Utils\StringExtensions.cs" />
-      <Compile Remove="Utils\TypeExtensions.cs" />
-    </ItemGroup>
-
 </Project>

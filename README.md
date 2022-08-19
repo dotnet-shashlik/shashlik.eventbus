@@ -191,14 +191,14 @@ public class UserManager
 
 - `IMsgIdGenerator`：消息Id生成器，是指传输的全局唯一id，不是指存储的id。默认guid
 - `IEventPublisher`：事件发布处理器。
-- `IMessageSerializer`：消息序列化、反序列化处理类。
+- `IMessageSerializer`：消息序列化、反序列化处理类。默认`Newtonsoft.Json`。
 - `IReceivedMessageRetryProvider`：已接收消息重试器。
 - `IPublishedMessageRetryProvider`：已发布消息重试器。
 - `IEventHandlerInvoker`: 事件处理执行器
-- `IEventNameRuler`：事件名称规则生成(对应消息队topic)。
-- `IEventHandlerNameRuler`：事件处理名称规则生成(对应消息队列queue)。
+- `IEventNameRuler`：事件名称规则生成(对应消息队列topic/route)。
+- `IEventHandlerNameRuler`：事件处理名称规则生成(对应消息队列queue/group)。
 - `IEventHandlerFindProvider`：事件处理类查找器
-- `IExpiredMessageProvider`：已过期消息删除处理。
+- `IExpiredMessageProvider`：已过期消息删除处理器。
 - `IMessageListener`：消息监听处理器。
 - `IRetryProvider`：重试执行器。
 - `IPublishHandler`：消息发布处理器。
