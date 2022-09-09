@@ -136,11 +136,11 @@ namespace Shashlik.EventBus.DefaultImpl
             CancellationToken cancellationToken)
         {
             // 等待事务完成
-            var now = DateTime.Now;
+            var now = DateTimeOffset.Now;
             while (!cancellationToken.IsCancellationRequested && transactionContext != null &&
                    !transactionContext.IsDone())
             {
-                if ((DateTime.Now - now).TotalSeconds > Options.Value.TransactionCommitTimeout)
+                if ((DateTimeOffset.Now - now).TotalSeconds > Options.Value.TransactionCommitTimeout)
                 {
                     Logger.LogDebug($"[EventBus] message \"{messageStorageModel}\" transaction commit timeout");
                     return;
@@ -172,7 +172,8 @@ namespace Shashlik.EventBus.DefaultImpl
             var failCount = 1;
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (messageStorageModel.CreateTime <= DateTime.Now.AddSeconds(-Options.Value.TransactionCommitTimeout))
+                if (messageStorageModel.CreateTime <=
+                    DateTimeOffset.Now.AddSeconds(-Options.Value.TransactionCommitTimeout))
                     // 超过时间了,就不管了,状态还是SCHEDULED
                     return;
 

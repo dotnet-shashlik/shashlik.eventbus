@@ -50,7 +50,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     return MessageReceiveResult.Failed;
                 }
 
-                var now = DateTime.Now;
+                var now = DateTimeOffset.Now;
                 message.Items ??= new Dictionary<string, string>();
                 var receiveMessageStorageModel = new MessageStorageModel
                 {

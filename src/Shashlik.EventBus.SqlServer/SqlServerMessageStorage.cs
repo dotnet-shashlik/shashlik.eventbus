@@ -253,7 +253,7 @@ WHERE [id] = {id};
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            var nowLong = DateTime.Now.GetLongDate();
+            var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
             UPDATE {Options.CurrentValue.FullPublishedTableName}
@@ -267,7 +267,7 @@ WHERE [id] = {id};
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            var nowLong = DateTime.Now.GetLongDate();
+            var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
 UPDATE {Options.CurrentValue.FullReceivedTableName}
@@ -279,7 +279,7 @@ WHERE [id] = {id} AND ([isLocking] = 0 OR [lockEnd] < {nowLong});
 
         public async Task DeleteExpiresAsync(CancellationToken cancellationToken = default)
         {
-            var now = DateTime.Now.GetLongDate();
+            var now = DateTimeOffset.Now.GetLongDate();
             var sql = $@"
 DELETE FROM {Options.CurrentValue.FullPublishedTableName} WHERE [expireTime] > 0 AND [expireTime] < {now} AND [status] = '{MessageStatus.Succeeded}';
 DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE [expireTime] > 0 AND [expireTime] < {now} AND [status] = '{MessageStatus.Succeeded}';
@@ -294,8 +294,8 @@ DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE [expireTime] > 0 
             string environment,
             CancellationToken cancellationToken = default)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
+            var now = DateTimeOffset.Now;
             var nowLong = now.GetLongDate();
 
             var sql = $@"
@@ -322,8 +322,8 @@ WHERE
             string environment,
             CancellationToken cancellationToken = default)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
+            var now = DateTimeOffset.Now;
             var nowLong = now.GetLongDate();
 
             var sql = $@"

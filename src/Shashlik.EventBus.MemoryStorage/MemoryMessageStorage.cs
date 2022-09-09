@@ -222,8 +222,8 @@ namespace Shashlik.EventBus.MemoryStorage
         public List<MessageStorageModel> GetPublishedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
             string environment)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
+            var now = DateTimeOffset.Now;
             var res = new List<MessageStorageModel>();
             int counter = 0;
             foreach (var r in _published.Values)
@@ -255,8 +255,8 @@ namespace Shashlik.EventBus.MemoryStorage
         public List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
             string environment)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond);
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
+            var now = DateTimeOffset.Now;
             var res = new List<MessageStorageModel>();
             foreach (var r in _received.Values)
             {

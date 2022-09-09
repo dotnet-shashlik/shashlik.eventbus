@@ -104,8 +104,8 @@ LIMIT {skip},{take};
 
             var parameters = new[]
             {
-                new MySqlParameter("@eventName", MySqlDbType.VarChar) { Value = eventName },
-                new MySqlParameter("@status", MySqlDbType.VarChar) { Value = status },
+                new MySqlParameter("@eventName", MySqlDbType.VarChar) {Value = eventName},
+                new MySqlParameter("@status", MySqlDbType.VarChar) {Value = status},
             };
 
             var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -138,9 +138,9 @@ LIMIT {skip},{take};
 ";
             var parameters = new[]
             {
-                new MySqlParameter("@eventName", MySqlDbType.VarChar) { Value = eventName },
-                new MySqlParameter("@eventHandlerName", MySqlDbType.VarChar) { Value = eventHandlerName },
-                new MySqlParameter("@status", MySqlDbType.VarChar) { Value = status },
+                new MySqlParameter("@eventName", MySqlDbType.VarChar) {Value = eventName},
+                new MySqlParameter("@eventHandlerName", MySqlDbType.VarChar) {Value = eventHandlerName},
+                new MySqlParameter("@status", MySqlDbType.VarChar) {Value = status},
             };
 
             var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -163,18 +163,18 @@ SELECT LAST_INSERT_ID();
 
             var parameters = new[]
             {
-                new MySqlParameter("@msgId", MySqlDbType.VarChar) { Value = message.MsgId },
-                new MySqlParameter("@environment", MySqlDbType.VarChar) { Value = message.Environment },
-                new MySqlParameter("@createTime", MySqlDbType.Int64) { Value = message.CreateTime.GetLongDate() },
-                new MySqlParameter("@delayAt", MySqlDbType.Int64) { Value = message.DelayAt?.GetLongDate() ?? 0 },
-                new MySqlParameter("@expireTime", MySqlDbType.Int64) { Value = message.ExpireTime?.GetLongDate() ?? 0 },
-                new MySqlParameter("@eventName", MySqlDbType.VarChar) { Value = message.EventName },
-                new MySqlParameter("@eventBody", MySqlDbType.LongText) { Value = message.EventBody },
-                new MySqlParameter("@eventItems", MySqlDbType.LongText) { Value = message.EventItems },
-                new MySqlParameter("@retryCount", MySqlDbType.Int32) { Value = message.RetryCount },
-                new MySqlParameter("@status", MySqlDbType.VarChar) { Value = message.Status },
-                new MySqlParameter("@isLocking", MySqlDbType.Byte) { Value = message.IsLocking ? 1 : 0 },
-                new MySqlParameter("@lockEnd", MySqlDbType.Int64) { Value = message.LockEnd?.GetLongDate() ?? 0 },
+                new MySqlParameter("@msgId", MySqlDbType.VarChar) {Value = message.MsgId},
+                new MySqlParameter("@environment", MySqlDbType.VarChar) {Value = message.Environment},
+                new MySqlParameter("@createTime", MySqlDbType.Int64) {Value = message.CreateTime.GetLongDate()},
+                new MySqlParameter("@delayAt", MySqlDbType.Int64) {Value = message.DelayAt?.GetLongDate() ?? 0},
+                new MySqlParameter("@expireTime", MySqlDbType.Int64) {Value = message.ExpireTime?.GetLongDate() ?? 0},
+                new MySqlParameter("@eventName", MySqlDbType.VarChar) {Value = message.EventName},
+                new MySqlParameter("@eventBody", MySqlDbType.LongText) {Value = message.EventBody},
+                new MySqlParameter("@eventItems", MySqlDbType.LongText) {Value = message.EventItems},
+                new MySqlParameter("@retryCount", MySqlDbType.Int32) {Value = message.RetryCount},
+                new MySqlParameter("@status", MySqlDbType.VarChar) {Value = message.Status},
+                new MySqlParameter("@isLocking", MySqlDbType.Byte) {Value = message.IsLocking ? 1 : 0},
+                new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0},
             };
 
             var id = await SqlScalar(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -197,20 +197,20 @@ SELECT LAST_INSERT_ID();
 
             var parameters = new[]
             {
-                new MySqlParameter("@msgId", MySqlDbType.VarChar) { Value = message.MsgId },
-                new MySqlParameter("@environment", MySqlDbType.VarChar) { Value = message.Environment },
-                new MySqlParameter("@createTime", MySqlDbType.Int64) { Value = message.CreateTime.GetLongDate() },
-                new MySqlParameter("@isDelay", MySqlDbType.Byte) { Value = message.DelayAt.HasValue ? 1 : 0 },
-                new MySqlParameter("@delayAt", MySqlDbType.Int64) { Value = message.DelayAt?.GetLongDate() ?? 0 },
-                new MySqlParameter("@expireTime", MySqlDbType.Int64) { Value = message.ExpireTime?.GetLongDate() ?? 0 },
-                new MySqlParameter("@eventName", MySqlDbType.VarChar) { Value = message.EventName },
-                new MySqlParameter("@eventHandlerName", MySqlDbType.VarChar) { Value = message.EventHandlerName },
-                new MySqlParameter("@eventBody", MySqlDbType.LongText) { Value = message.EventBody },
-                new MySqlParameter("@eventItems", MySqlDbType.LongText) { Value = message.EventItems },
-                new MySqlParameter("@retryCount", MySqlDbType.Int32) { Value = message.RetryCount },
-                new MySqlParameter("@status", MySqlDbType.VarChar) { Value = message.Status },
-                new MySqlParameter("@isLocking", MySqlDbType.Byte) { Value = message.IsLocking ? 1 : 0 },
-                new MySqlParameter("@lockEnd", MySqlDbType.Int64) { Value = message.LockEnd?.GetLongDate() ?? 0 }
+                new MySqlParameter("@msgId", MySqlDbType.VarChar) {Value = message.MsgId},
+                new MySqlParameter("@environment", MySqlDbType.VarChar) {Value = message.Environment},
+                new MySqlParameter("@createTime", MySqlDbType.Int64) {Value = message.CreateTime.GetLongDate()},
+                new MySqlParameter("@isDelay", MySqlDbType.Byte) {Value = message.DelayAt.HasValue ? 1 : 0},
+                new MySqlParameter("@delayAt", MySqlDbType.Int64) {Value = message.DelayAt?.GetLongDate() ?? 0},
+                new MySqlParameter("@expireTime", MySqlDbType.Int64) {Value = message.ExpireTime?.GetLongDate() ?? 0},
+                new MySqlParameter("@eventName", MySqlDbType.VarChar) {Value = message.EventName},
+                new MySqlParameter("@eventHandlerName", MySqlDbType.VarChar) {Value = message.EventHandlerName},
+                new MySqlParameter("@eventBody", MySqlDbType.LongText) {Value = message.EventBody},
+                new MySqlParameter("@eventItems", MySqlDbType.LongText) {Value = message.EventItems},
+                new MySqlParameter("@retryCount", MySqlDbType.Int32) {Value = message.RetryCount},
+                new MySqlParameter("@status", MySqlDbType.VarChar) {Value = message.Status},
+                new MySqlParameter("@isLocking", MySqlDbType.Byte) {Value = message.IsLocking ? 1 : 0},
+                new MySqlParameter("@lockEnd", MySqlDbType.Int64) {Value = message.LockEnd?.GetLongDate() ?? 0}
             };
 
             var id = await SqlScalar(sql, parameters, cancellationToken).ConfigureAwait(false);
@@ -250,7 +250,7 @@ WHERE `id` = {id}
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            var nowLong = DateTime.Now.GetLongDate();
+            var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
 UPDATE `{Options.CurrentValue.PublishedTableName}`
@@ -265,7 +265,7 @@ WHERE `id` = {id} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            var nowLong = DateTime.Now.GetLongDate();
+            var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
 UPDATE `{Options.CurrentValue.ReceivedTableName}`
@@ -277,7 +277,7 @@ WHERE `id` = {id} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
 
         public async Task DeleteExpiresAsync(CancellationToken cancellationToken = default)
         {
-            var now = DateTime.Now.GetLongDate();
+            var now = DateTimeOffset.Now.GetLongDate();
             var sql = $@"
 DELETE FROM `{Options.CurrentValue.PublishedTableName}` WHERE `expireTime` > 0 AND `expireTime` < {now} AND `status` = '{MessageStatus.Succeeded}';
 DELETE FROM `{Options.CurrentValue.ReceivedTableName}` WHERE `expireTime` > 0 AND `expireTime` < {now} AND `status` = '{MessageStatus.Succeeded}';
@@ -292,8 +292,8 @@ DELETE FROM `{Options.CurrentValue.ReceivedTableName}` WHERE `expireTime` > 0 AN
             string environment,
             CancellationToken cancellationToken = default)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
+            var now = DateTimeOffset.Now;
             var nowLong = now.GetLongDate();
 
             var sql = $@"
@@ -320,8 +320,8 @@ LIMIT {count};
             string environment,
             CancellationToken cancellationToken = default)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
+            var now = DateTimeOffset.Now;
             var nowLong = now.GetLongDate();
 
             var sql = $@"
