@@ -85,7 +85,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             messageStorageModel.Id,
                             MessageStatus.Succeeded,
                             messageStorageModel.RetryCount,
-                            DateTime.Now.AddHours(Options.Value.SucceedExpireHour),
+                            DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),
                             cancellationToken)
                         .ConfigureAwait(false);
                 }

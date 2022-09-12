@@ -249,7 +249,7 @@ WHERE ""id"" = {id}
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            var nowLong = DateTime.Now.GetLongDate();
+            var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
 UPDATE {Options.CurrentValue.FullPublishedTableName}
@@ -266,7 +266,7 @@ WHERE ""id"" = {id} AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            var nowLong = DateTime.Now.GetLongDate();
+            var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
 UPDATE {Options.CurrentValue.FullReceivedTableName}
@@ -280,7 +280,7 @@ WHERE ""id"" = {id} AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
 
         public async Task DeleteExpiresAsync(CancellationToken cancellationToken = default)
         {
-            var now = DateTime.Now.GetLongDate();
+            var now = DateTimeOffset.Now.GetLongDate();
             var sql = $@"
 DELETE FROM {Options.CurrentValue.FullPublishedTableName} WHERE ""expireTime"" > 0 AND ""expireTime"" < {now} AND ""status"" = '{MessageStatus.Succeeded}';
 DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE ""expireTime"" > 0 AND ""expireTime"" < {now} AND ""status"" = '{MessageStatus.Succeeded}';
@@ -292,8 +292,8 @@ DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE ""expireTime"" > 
             int delayRetrySecond, int maxFailedRetryCount,
             string environment, CancellationToken cancellationToken = default)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
+            var now = DateTimeOffset.Now;
             var nowLong = now.GetLongDate();
 
             var sql = $@"
@@ -316,8 +316,8 @@ LIMIT {count};
         public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAsync(int count,
             int delayRetrySecond, int maxFailedRetryCount, string environment, CancellationToken cancellationToken = default)
         {
-            var createTimeLimit = DateTime.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-            var now = DateTime.Now;
+            var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
+            var now = DateTimeOffset.Now;
             var nowLong = now.GetLongDate();
 
             var sql = $@"
