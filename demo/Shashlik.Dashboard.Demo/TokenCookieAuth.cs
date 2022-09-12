@@ -1,21 +1,20 @@
-﻿using System.Security.Principal;
-using Microsoft.AspNetCore.Authentication;
-using Shashlik.EventBus.Dashboard;
+﻿using Shashlik.EventBus.Dashboard;
 
 namespace Shashlik.Dashboard.Demo
 {
-    public class TokenCookieAuth : IEventBusDashboardAuthorize
+    public class TokenCookieAuth : IEventBusDashboardAuthentication
     {
         private const string Token = "token123";
 
-        public bool Authorize(HttpContext context)
+        public async Task<bool> AuthenticateAsync(HttpContext context)
         {
+            await Task.CompletedTask;
             var token = "";
             if (context.Request.Query.ContainsKey("token"))
             {
                 token = context.Request.Query["token"];
             }
-            else if(context.Request.Cookies.ContainsKey("token"))
+            else if (context.Request.Cookies.ContainsKey("token"))
             {
                 token = context.Request.Cookies["token"];
             }

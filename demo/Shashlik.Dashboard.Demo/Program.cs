@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Shashlik.Dashboard.Demo;
 using Shashlik.EventBus;
@@ -12,7 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 var connectionString = builder.Configuration.GetValue<string>("Mysql");
-builder.Services.AddDbContext<DataContext>(x => x.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+builder.Services.AddDbContext<DataContext>(
+    x => x.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 builder.Services.AddEventBus(r =>
     {
         // 这些都是缺省配置，可以直接services.AddEventBus()
@@ -36,9 +36,13 @@ builder.Services.AddEventBus(r =>
     // 使用ef DbContext mysql
     .AddMySql<DataContext>()
     .AddMemoryQueue()
-    .AddShashlikDashboard<TokenCookieAuth>();
+    .AddDashboard<TokenCookieAuth>()
+    ;
 
 var app = builder.Build();
+using var serviceScope = app.Services.CreateScope();
+var dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+dataContext.Database.Migrate();
 
 // Configure the HTTP request pipeline.
 

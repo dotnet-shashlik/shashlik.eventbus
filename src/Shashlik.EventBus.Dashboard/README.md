@@ -6,7 +6,7 @@ Usage
     builder.Services.AddEventBus()
     .AddMySql<DataContext>()
     .AddMemoryQueue()
-    .AddShashlikDashboard();
+    .AddDashboard();
 
     
     // after var app = builder.Build(); app.UseRouting();

@@ -7,13 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Shashlik.EventBus.Dashboard\Shashlik.EventBus.Dashboard.csproj" />
+<!--    <ProjectReference Include="..\..\src\Shashlik.EventBus.Dashboard\Shashlik.EventBus.Dashboard.csproj" />-->
     <ProjectReference Include="..\..\src\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
     <ProjectReference Include="..\..\src\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Shashlik.EventBus.Dashboard">
+      <HintPath>..\..\src\Shashlik.EventBus.Dashboard\bin\Debug\net6.0\Shashlik.EventBus.Dashboard.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
