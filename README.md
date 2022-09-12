@@ -1,11 +1,7 @@
-# 【Shashlik.EventBus】.NET 事件总线，分布式事务最终一致性
+# 【Shashlik.EventBus】
 
 
 ## 简介
-
-github https://github.com/dotnet-shashlik/shashlik.eventbus
-
-各位爷高兴了给个star呗。
 
 分布式事务、CAP定理、事件总线，在当前微服务、分布式、集群大行其道的架构前提下，是不可逃避的几个关键字，在此不会过多阐述相关的理论知识。`Shashlik.EventBus`就是一个基于.NET6的开源事件总线解决方案，同时也是分布式事务最终一致性、延迟事件解决方案。`Shashlik.EventBus`采用的是异步确保的思路（本地消息表），将消息数据与业务数据在同一事务中进行提交或回滚，以此来保证消息数据的可靠性。其设计目标是高性能、简单、易用、易扩展，为抛弃历史包袱，仅支持NET6，采用最宽松的 MIT 开源协议。
 
