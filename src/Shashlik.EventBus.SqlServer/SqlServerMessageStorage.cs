@@ -20,7 +20,8 @@ namespace Shashlik.EventBus.SqlServer
 {
     public class SqlServerMessageStorage : IMessageStorage
     {
-        public SqlServerMessageStorage(IOptionsMonitor<EventBusSqlServerOptions> options, IConnectionString connectionString)
+        public SqlServerMessageStorage(IOptionsMonitor<EventBusSqlServerOptions> options,
+            IConnectionString connectionString)
         {
             Options = options;
             ConnectionString = connectionString;
@@ -60,7 +61,8 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]=
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
+        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId,
+            EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken = default)
         {
             var sql =
@@ -85,7 +87,8 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]=
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip, int take,
+        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip,
+            int take,
             CancellationToken cancellationToken)
         {
             var where = new StringBuilder();
@@ -119,7 +122,8 @@ ORDER BY A.createTime DESC;
                 .ToList();
         }
 
-        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName, string? status, int skip,
+        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName,
+            string? status, int skip,
             int take,
             CancellationToken cancellationToken)
         {
@@ -190,7 +194,8 @@ SELECT SCOPE_IDENTITY();
             return longId;
         }
 
-        public async Task<long> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken = default)
+        public async Task<long> SaveReceivedAsync(MessageStorageModel message,
+            CancellationToken cancellationToken = default)
         {
             var sql = $@"
 INSERT INTO {Options.CurrentValue.FullReceivedTableName}
@@ -249,7 +254,8 @@ WHERE [id] = {id};
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
@@ -263,7 +269,8 @@ WHERE [id] = {id};
             return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
 
-        public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
@@ -343,7 +350,8 @@ WHERE
                 .Select(RowToReceivedModel).ToList();
         }
 
-        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(
+            CancellationToken cancellationToken)
         {
             var sql = $@"
 SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GROUP BY [status];
@@ -354,7 +362,7 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GR
             foreach (DataRow dataRow in table.Rows)
             {
                 var status = dataRow["status"].ToString();
-                if(string.IsNullOrEmpty(status)) continue;
+                if (string.IsNullOrEmpty(status)) continue;
 
                 result[status] = Convert.ToInt32(dataRow["c"]);
             }
@@ -362,7 +370,8 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GR
             return result;
         }
 
-        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(
+            CancellationToken cancellationToken)
         {
             var sql = $@"
 SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GROUP BY [status];
@@ -373,7 +382,7 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GRO
             foreach (DataRow dataRow in table.Rows)
             {
                 var status = dataRow["status"].ToString();
-                if(string.IsNullOrEmpty(status)) continue;
+                if (string.IsNullOrEmpty(status)) continue;
 
                 result[status] = Convert.ToInt32(dataRow["c"]);
             }
@@ -381,7 +390,8 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GRO
             return result;
         }
 
-        private async Task<DataTable> SqlQuery(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default)
+        private async Task<DataTable> SqlQuery(string sql, SqlParameter[]? parameters = null,
+            CancellationToken cancellationToken = default)
         {
             await using var connection = new SqlConnection(ConnectionString.ConnectionString);
             if (connection.State == ConnectionState.Closed)
@@ -435,7 +445,8 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GRO
             return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql, SqlParameter[] parameter,
+        private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql,
+            SqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
             if (transactionContext is null || transactionContext is XaTransactionContext)
@@ -469,7 +480,7 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GRO
                 Id = row.GetRowValue<long>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
-                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset(),
+                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,
                 DelayAt = row.GetRowValue<long?>("delayAt")?.LongToDateTimeOffset(),
                 ExpireTime = row.GetRowValue<long?>("expireTime")?.LongToDateTimeOffset(),
                 EventName = row.GetRowValue<string>("eventName"),
@@ -489,7 +500,7 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GRO
                 Id = row.GetRowValue<long>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
-                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset(),
+                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,
                 DelayAt = row.GetRowValue<long?>("delayAt")?.LongToDateTimeOffset(),
                 ExpireTime = row.GetRowValue<long?>("expireTime")?.LongToDateTimeOffset(),
                 EventName = row.GetRowValue<string>("eventName"),

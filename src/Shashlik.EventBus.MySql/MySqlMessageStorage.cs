@@ -341,7 +341,8 @@ LIMIT {count};
                 .Select(RowToReceivedModel).ToList();
         }
 
-        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(
+            CancellationToken cancellationToken)
         {
             var sql = $@"
 SELECT status, COUNT(1) AS c FROM `{Options.CurrentValue.PublishedTableName}` GROUP BY status;
@@ -352,7 +353,7 @@ SELECT status, COUNT(1) AS c FROM `{Options.CurrentValue.PublishedTableName}` GR
             foreach (DataRow dataRow in table.Rows)
             {
                 var status = dataRow["status"].ToString();
-                if(string.IsNullOrEmpty(status)) continue;
+                if (string.IsNullOrEmpty(status)) continue;
 
                 result[status] = Convert.ToInt32(dataRow["c"]);
             }
@@ -360,7 +361,8 @@ SELECT status, COUNT(1) AS c FROM `{Options.CurrentValue.PublishedTableName}` GR
             return result;
         }
 
-        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(
+            CancellationToken cancellationToken)
         {
             var sql = $@"
 SELECT status, COUNT(1) AS c FROM `{Options.CurrentValue.ReceivedTableName}` GROUP BY status;
@@ -371,7 +373,7 @@ SELECT status, COUNT(1) AS c FROM `{Options.CurrentValue.ReceivedTableName}` GRO
             foreach (DataRow dataRow in table.Rows)
             {
                 var status = dataRow["status"].ToString();
-                if(string.IsNullOrEmpty(status)) continue;
+                if (string.IsNullOrEmpty(status)) continue;
 
                 result[status] = Convert.ToInt32(dataRow["c"]);
             }
@@ -470,7 +472,7 @@ SELECT status, COUNT(1) AS c FROM `{Options.CurrentValue.ReceivedTableName}` GRO
                 Id = row.GetRowValue<long>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
-                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset(),
+                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,
                 DelayAt = row.GetRowValue<long?>("delayAt")?.LongToDateTimeOffset(),
                 ExpireTime = row.GetRowValue<long?>("expireTime")?.LongToDateTimeOffset(),
                 EventName = row.GetRowValue<string>("eventName"),
@@ -490,7 +492,7 @@ SELECT status, COUNT(1) AS c FROM `{Options.CurrentValue.ReceivedTableName}` GRO
                 Id = row.GetRowValue<long>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
-                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset(),
+                CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,
                 DelayAt = row.GetRowValue<long?>("delayAt")?.LongToDateTimeOffset(),
                 ExpireTime = row.GetRowValue<long?>("expireTime")?.LongToDateTimeOffset(),
                 EventName = row.GetRowValue<string>("eventName"),
