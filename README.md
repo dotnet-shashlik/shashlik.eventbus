@@ -248,7 +248,8 @@ public class UserManager
 
 ```
 ## 后续计划
-- [ ] Dashboard: 仪表板
+- 功能
+  - [ ] Dashboard
 - 消息中间件支持
     - [x] RabbitMQ
     - [x] Kafka
@@ -256,7 +257,6 @@ public class UserManager
     - [ ] ActiveMQ
     - [ ] Pulsar
     - [ ] Redis
-
 - 存储支持
     - [x] MySql
     - [x] PostgreSql
