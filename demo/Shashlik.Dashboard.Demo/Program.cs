@@ -36,14 +36,13 @@ builder.Services.AddEventBus(r =>
     //  π”√ef DbContext mysql
     .AddMySql<DataContext>()
     .AddMemoryQueue()
-    .AddShashlikDashboard();
+    .AddShashlikDashboard<TokenCookieAuth>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
 app.UseAuthorization();
-app.UseStaticFiles();
 app.UseRouting();
 app.UseEventBusDashboard();
 

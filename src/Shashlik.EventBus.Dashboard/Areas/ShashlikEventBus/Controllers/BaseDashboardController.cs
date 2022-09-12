@@ -17,11 +17,10 @@ namespace Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Controllers
             var auth = context.HttpContext.RequestServices.GetService<IEventBusDashboardAuthorize>();
             if (auth != null)
             {
-                auth.Authorize(context.HttpContext);
-                if (context.HttpContext.User.Identity == null || !context.HttpContext.User.Identity.IsAuthenticated)
+                if (!auth.Authorize(context.HttpContext))
                 {
                     context.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    context.Result = NoContent();
+                    context.Result = Content("Unauthorized");
                 }
 
                 return;
@@ -34,11 +33,10 @@ namespace Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Controllers
             var auth = context.HttpContext.RequestServices.GetService<IEventBusDashboardAuthorizeAsync>();
             if (auth != null)
             {
-                await auth.AuthorizeAsync(context.HttpContext);
-                if (context.HttpContext.User.Identity == null || !context.HttpContext.User.Identity.IsAuthenticated)
+                if (!await auth.AuthorizeAsync(context.HttpContext))
                 {
                     context.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    context.Result = NoContent();
+                    context.Result = Content("Unauthorized");
                 }
 
                 return;

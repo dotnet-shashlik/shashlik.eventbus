@@ -12,6 +12,6 @@ namespace Shashlik.EventBus.Dashboard
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        void Authorize(HttpContext context);
+        bool Authorize(HttpContext context);
     }
 }

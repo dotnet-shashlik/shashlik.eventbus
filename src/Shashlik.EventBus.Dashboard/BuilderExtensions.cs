@@ -22,7 +22,7 @@ namespace Shashlik.EventBus.Dashboard
             var option = options!.Value;
             app.UseStaticFiles(new StaticFileOptions()
             {
-                FileProvider = new PhysicalFileProvider(Path.Combine(Path.GetDirectoryName(typeof(BuilderExtensions).Assembly.Location)!, "wwwroot")),
+                FileProvider = new EmbeddedFileProvider(typeof(BuilderExtensions).Assembly, "Shashlik.EventBus.Dashboard.Resource"),
                 RequestPath = option.UrlPrefix + "/static"
             });
             app.UseEndpoints(e =>
