@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="@ViewData["UrlPrefix"]/static/css/bootstrap.min.css"/>
+</head>
+<body>
+<div>
+    <nav class="navbar navbar-expand navbar-dark bg-dark" aria-label="Second navbar example">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="@ViewData["UrlPrefix"]">EventBus Dashboard</a>
+
+            <div class="collapse navbar-collapse" id="navbarsExample02">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewBag.Page == "Published" ? "active": "")" href="@Url.Action("Index", "Published")">Published</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewBag.Page == "Received" ? "active": "")" href="@Url.Action("Index", "Received")">Received</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    @RenderBody()
+    <script src="@ViewData["UrlPrefix"]/static/js/bootstrap.min.js"></script>
+    <script src="@ViewData["UrlPrefix"]/static/js/bootstrap.bundle.min.js"></script>
+</div>
+</body>
+</html>

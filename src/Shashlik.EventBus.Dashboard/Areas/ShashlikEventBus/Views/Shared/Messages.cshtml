@@ -1,0 +1,185 @@
+﻿@using System.Reflection
+@using Shashlik.EventBus.Dashboard
+@model Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Models.MessageViewModel
+@inject UrlService _urlService
+
+<div class="container-fluid">
+  <div class="row">
+    <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+      <div class="position-sticky pt-3 sidebar-sticky">
+          <ul class="list-group">
+              @foreach (var kv in Model.StatusCount)
+              {
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <a href="@_urlService.CurrentUrl("status", kv.Key)">@kv.Key</a>
+                      <span class="badge bg-primary rounded-pill">@kv.Value</span>
+                  </li>
+              }
+          </ul>
+      </div>
+    </nav>
+
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-3">
+          <h2>@ViewBag.Title</h2>
+          
+          <div class="row">
+              <div class="col-sm-12 col-md-6">
+                  <button class="btn btn-primary" id="retryBtn">Retry</button>
+              </div>
+              <div class="col-sm-12 col-md-6">
+                  <form class="row row-cols-lg-auto g-3 justify-content-end" method="get">
+                      <div class="col-12">
+                          <div class="input-group">
+                              <input type="text" class="form-control" name="eventName" placeholder="Event Name" value="@Model.EventName">
+                          </div>
+                      </div>
+
+                      <div class="col-12">
+                          <button type="submit" class="btn btn-primary">Search</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+          <div class="table-responsive">
+              <table class="table table-striped table-sm">
+                  <thead>
+                  <tr>
+                      <th scope="col"><input type="checkbox" id="selectAll"/></th>
+                      <th scope="col">#</th>
+                      <th scope="col">EventHandlerName</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">RetryCount</th>
+                      <th scope="col">CreateTime</th>
+                      <th scope="col">DelayAt</th>
+                      <th scope="col">ExpireTime</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  @foreach (var message in Model.Messages)
+                  {
+                      <tr>
+                          <td><input type="checkbox" value="@message.Id" /></td>
+                          <td>
+                              <a href="#" data-bs-toggle="modal" data-bs-target="#modal_@message.Id">@message.ToString()</a>
+                              <div class="modal fade modal-xl" id="modal_@message.Id" tabindex="-1" aria-labelledby="modal_@(message.Id)_Label" aria-hidden="true">
+                                  <div class="modal-dialog">
+                                      <div class="modal-content">
+                                          <div class="modal-header">
+                                              <h5 class="modal-title" id="exampleModalLabel">@message.ToString()</h5>
+                                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                          </div>
+                                          <div class="modal-body">
+                                              <div class="container-fluid">
+                                                  <div class="row">
+                                                      <div class="col-12">
+                                                          <table class="table table-striped">
+                                                              <tbody>
+                                                              @foreach (var prop in message.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                                                              {
+                                                                  <tr>
+                                                                      <td>@prop.Name</td>
+                                                                      <td>@prop.GetValue(message)</td>
+                                                                  </tr>
+                                                              }
+
+                                                              </tbody>
+                                                          </table>
+                                                      </div>
+                                                  </div>
+                                                </div>
+                                          </div>
+                                          <div class="modal-footer">
+                                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div></td>
+                          <td>@message.EventHandlerName</td>
+                          <td>@message.Status</td>
+                          <td>@message.RetryCount</td>
+                          <td>@message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                          <td>@message.DelayAt?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                          <td>@message.ExpireTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                      </tr>
+                  }
+                  </tbody>
+              </table>
+          </div>
+          <nav aria-label="Page navigation example">
+              <div class="row">
+                  <div class="col-sm-12 col-md-6">
+                      
+                      <div class="dropdown">
+                          <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                              PageSize:@Model.PageSize
+                          </button>
+                          <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "10")">10</a></li>
+                              <li><a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "20")">20</a></li>
+                              <li><a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "50")">50</a></li>
+                              <li><a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "100")">100</a></li>
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="col-sm-12 col-md-6">
+                      <ul class="pagination justify-content-end">
+                          <li class="page-item @(Model.PageIndex == 1 ? "disabled" : "")">
+                              <a class="page-link"><span aria-hidden="true">&laquo;</span></a>
+                          </li>
+                          @for (var p = Model.PageIndex - 3; p <= Model.PageIndex + 3; p++)
+                          {
+                              if (p < 1 || p > Model.TotalPage)
+                              {
+                                  continue;
+                              }
+                              <li class="page-item @(Model.PageIndex == p ? "disabled" : "")"><a class="page-link" href="@_urlService.CurrentUrl("pageIndex", p.ToString())">@p</a></li>
+                          }
+
+                          <li class="page-item @(Model.PageIndex == Model.TotalPage ? "disabled" : "")">
+                              <a class="page-link" href="#"><span aria-hidden="true">&raquo;</span></a>
+                          </li>
+                      </ul>
+                  </div>
+              </div>
+          </nav>
+      </main>
+  </div>
+</div>
+<script>
+    document.getElementById("selectAll").onchange = function(evt) {
+        console.log(evt);
+        document.querySelectorAll('td input').forEach(input => {
+            input.checked = evt.srcElement.checked;
+        });
+    }
+    document.getElementById("retryBtn").onclick = function() {
+        @{
+            var url = "";
+            if (ViewBag.Page == "Published")
+            {
+                url = Url.Action("Retry", "Published");
+            } else if (ViewBag.Page == "Received")
+            {
+                url = Url.Action("Retry", "Received");
+            }
+        }
+        var ids = [];
+        document.querySelectorAll('td input').forEach(input => {
+            if (input.checked) {
+                ids.push("ids=" + input.value);
+            }
+        });
+        if (ids.length === 0) {
+            return false;
+        }
+        var query = ids.join('&');
+        window.fetch("@url?" + query).then(r => {
+            if (r.ok) {
+                alert("retry success");
+            } else {
+                alert("retry failed");
+            }
+        });
+        return false;
+    }
+</script>

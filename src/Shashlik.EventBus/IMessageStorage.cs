@@ -165,5 +165,19 @@ namespace Shashlik.EventBus
         /// <returns></returns>
         Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAsync(int count, int delayRetrySecond,
             int maxFailedRetryCount, string environment, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// 获取已发布的消息各种状态的数量
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken);
+
+        /// <summary>
+        /// 获取已接收的消息各种状态的数量
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken);
     }
 }

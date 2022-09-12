@@ -343,6 +343,44 @@ WHERE
                 .Select(RowToReceivedModel).ToList();
         }
 
+        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken)
+        {
+            var sql = $@"
+SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GROUP BY [status];
+";
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
+            var result = new Dictionary<string, int>();
+            if (table.Rows.Count == 0) return result;
+            foreach (DataRow dataRow in table.Rows)
+            {
+                var status = dataRow["status"].ToString();
+                if(string.IsNullOrEmpty(status)) continue;
+
+                result[status] = Convert.ToInt32(dataRow["c"]);
+            }
+
+            return result;
+        }
+
+        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken)
+        {
+            var sql = $@"
+SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GROUP BY [status];
+";
+            var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
+            var result = new Dictionary<string, int>();
+            if (table.Rows.Count == 0) return result;
+            foreach (DataRow dataRow in table.Rows)
+            {
+                var status = dataRow["status"].ToString();
+                if(string.IsNullOrEmpty(status)) continue;
+
+                result[status] = Convert.ToInt32(dataRow["c"]);
+            }
+
+            return result;
+        }
+
         private async Task<DataTable> SqlQuery(string sql, SqlParameter[]? parameters = null, CancellationToken cancellationToken = default)
         {
             await using var connection = new SqlConnection(ConnectionString.ConnectionString);
