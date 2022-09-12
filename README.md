@@ -30,55 +30,55 @@
 1. 服务配置，这里以`MySql` + `RabbitMQ`为例：
 
 ```c#
-    services.AddEventBus(r =>
-        {
-            // 这些都是缺省配置，可以直接services.AddEventBus()
-            // 运行环境，注册到MQ的事件名称和事件处理名称会带上此后缀
-            r.Environment = "Production";
-            // 最大失败重试次数，默认60次
-            r.RetryFailedMax = 60;
-            // 消息重试间隔，默认2分钟
-            r.RetryInterval = 60 * 2;
-            // 单次重试消息数量限制，默认100
-            r.RetryLimitCount = 100;
-            // 成功的消息过期时间，默认3天，失败的消息永不过期，必须处理
-            r.SucceedExpireHour = 24 * 3;            
-            // 消息处理失败后，重试器介入时间，默认5分钟后
-            r.StartRetryAfter = 60 * 5;            
-            // 事务提交超时时间,单位秒,默认60秒
-            r.TransactionCommitTimeout = 60;
-            // 重试器执行时消息锁定时长
-            r.LockTime = 110;
-        })
-        // 使用ef DbContext mysql
-        .AddMySql<DemoDbContext>()
-        // 配置RabbitMQ
-        .AddRabbitMQ(r =>
-        {
-            r.Host = "localhost";
-            r.UserName = "rabbit";
-            r.Password = "123123";
-        });
+  services.AddEventBus(r =>
+      {
+          // 这些都是缺省配置，可以直接services.AddEventBus()
+          // 运行环境，注册到MQ的事件名称和事件处理名称会带上此后缀
+          r.Environment = "Production";
+          // 最大失败重试次数，默认60次
+          r.RetryFailedMax = 60;
+          // 消息重试间隔，默认2分钟
+          r.RetryInterval = 60 * 2;
+          // 单次重试消息数量限制，默认100
+          r.RetryLimitCount = 100;
+          // 成功的消息过期时间，默认3天，失败的消息永不过期，必须处理
+          r.SucceedExpireHour = 24 * 3;            
+          // 消息处理失败后，重试器介入时间，默认5分钟后
+          r.StartRetryAfter = 60 * 5;            
+          // 事务提交超时时间,单位秒,默认60秒
+          r.TransactionCommitTimeout = 60;
+          // 重试器执行时消息锁定时长
+          r.LockTime = 110;
+      })
+      // 使用ef DbContext mysql
+      .AddMySql<DemoDbContext>()
+      // 配置RabbitMQ
+      .AddRabbitMQ(r =>
+      {
+          r.Host = "localhost";
+          r.UserName = "rabbit";
+          r.Password = "123123";
+      });
 ```
 
 2. 定义事件
 
 ```c#
 
-    // 新用户注册完成事件，实现接口IEvent
-    public class NewUserEvent : IEvent
-    {
-        public string Id { get;set; }
-        public string Name { get; set; }
-    }
-    
-    // 定义新用户注册延迟活动推送事件
-    public class NewUserPromotionEvent : IEvent
-    {
-        public string Id { get;set; }
-        public string Name { get; set; }
-        public string PromotionId { get; set; }
-    }
+  // 新用户注册完成事件，实现接口IEvent
+  public class NewUserEvent : IEvent
+  {
+      public string Id { get;set; }
+      public string Name { get; set; }
+  }
+  
+  // 定义新用户注册延迟活动推送事件
+  public class NewUserPromotionEvent : IEvent
+  {
+      public string Id { get;set; }
+      public string Name { get; set; }
+      public string PromotionId { get; set; }
+  }
 
 ```
 
@@ -86,49 +86,49 @@
 
 ```c#
 
-public class UserManager
-{
-    public UserManager(IEventPublisher eventPublisher, DemoDbContext dbContext)
-    {
-        EventPublisher = eventPublisher;
-        DbContext = dbContext;
-    }
-
-    private IEventPublisher EventPublisher { get; }
-    private DemoDbContext DbContext { get; }
-
-    public async Task CreateUserAsync(UserInput input)
-    {
-        // 开启本地事务
-        using var tran = await DbContext.DataBase.BeginTransactionAsync();
-        try
-        {
-            // 创建用户逻辑处理...
-
-            // 发布新用户事件
-            // 通过注入IEventPublisher发布事件，需要传入事务上下文数据
-            await EventPublisher.PublishAsync(new NewUserEvent{
-                Id = user.Id,
-                Name = input.Name
-            }, DbContext.GetTransactionContext());
-
-            // 发布延迟事件
-            // 通过ef扩展，直接使用DbContext发布事件，自动使用当前上下文事务
-            await DbContext.PublishEventAsync(new NewUserPromotionEvent{
-                Id = user.Id,
-                Name = input.Name,
-                PromotionId = "1"
-            }, DatetimeOffset.Now.AddMinutes(30));
-
-            // 提交本地事务
-            await tran.CommitAsync();
-        }catch(Exception ex)
-        {
-            // 回滚事务，消息数据也将回滚不会发布
-            await tran.RollbackAsync();
-        }
-    }
-}
+  public class UserManager
+  {
+      public UserManager(IEventPublisher eventPublisher, DemoDbContext dbContext)
+      {
+          EventPublisher = eventPublisher;
+          DbContext = dbContext;
+      }
+  
+      private IEventPublisher EventPublisher { get; }
+      private DemoDbContext DbContext { get; }
+  
+      public async Task CreateUserAsync(UserInput input)
+      {
+          // 开启本地事务
+          using var tran = await DbContext.DataBase.BeginTransactionAsync();
+          try
+          {
+              // 创建用户逻辑处理...
+  
+              // 发布新用户事件
+              // 通过注入IEventPublisher发布事件，需要传入事务上下文数据
+              await EventPublisher.PublishAsync(new NewUserEvent{
+                  Id = user.Id,
+                  Name = input.Name
+              }, DbContext.GetTransactionContext());
+  
+              // 发布延迟事件
+              // 通过ef扩展，直接使用DbContext发布事件，自动使用当前上下文事务
+              await DbContext.PublishEventAsync(new NewUserPromotionEvent{
+                  Id = user.Id,
+                  Name = input.Name,
+                  PromotionId = "1"
+              }, DatetimeOffset.Now.AddMinutes(30));
+  
+              // 提交本地事务
+              await tran.CommitAsync();
+          }catch(Exception ex)
+          {
+              // 回滚事务，消息数据也将回滚不会发布
+              await tran.RollbackAsync();
+          }
+      }
+  }
 
 ```
 
@@ -136,34 +136,34 @@ public class UserManager
 
 ```c#
     
-    // 一个事件可以有多个处理类，可以分布在不同的微服务中
-    // 用于发送短信的事件处理类
-    public class NewUserEventForSmsHandler : IEventHandler<NewUserEvent>
-    {
-        public async Task Execute(NewUserEvent @event, IDictionary<string, string> items)
-        {
-            // 发送短信...
-        }
-    }
+  // 一个事件可以有多个处理类，可以分布在不同的微服务中
+  // 用于发送短信的事件处理类
+  public class NewUserEventForSmsHandler : IEventHandler<NewUserEvent>
+  {
+      public async Task Execute(NewUserEvent @event, IDictionary<string, string> items)
+      {
+          // 发送短信...
+      }
+  }
 
 
-    // 用于发放消费券的事件处理类
-    public class NewUserEventForCouponsHandler : IEventHandler<NewUserEvent>
-    {
-        public async Task Execute(NewUserEvent @event, IDictionary<string, string> items)
-        {
-            // 业务处理...
-        }
-    }
+  // 用于发放消费券的事件处理类
+  public class NewUserEventForCouponsHandler : IEventHandler<NewUserEvent>
+  {
+      public async Task Execute(NewUserEvent @event, IDictionary<string, string> items)
+      {
+          // 业务处理...
+      }
+  }
 
-    // 用于新用户延迟活动的事件处理类,将在指定时间自行
-    public class NewUserPromotionEventHandler : IEventHandler<NewUserPromotionEvent>
-    {
-        public async Task Execute(NewUserPromotionEvent @event, IDictionary<string, string> items)
-        {
-            // 业务处理...
-        }
-    }    
+  // 用于新用户延迟活动的事件处理类,将在指定时间自行
+  public class NewUserPromotionEventHandler : IEventHandler<NewUserPromotionEvent>
+  {
+      public async Task Execute(NewUserPromotionEvent @event, IDictionary<string, string> items)
+      {
+          // 业务处理...
+      }
+  }    
 ```
 
 
@@ -176,42 +176,42 @@ public class UserManager
 
 ```c#
 
-public class UserManager
-{
-    public UserManager(IEventPublisher eventPublisher, DemoDbContext dbContext)
-    {
-        EventPublisher = eventPublisher;
-        DbContext = dbContext;
-    }
-
-    private IEventPublisher EventPublisher { get; }
-    private DemoDbContext DbContext { get; }
-
-    public async Task CreateUserAsync(UserInput input)
-    {
-        // 开启事务
-        using var scope = new TransactionScope();
-        try
-        {
-            // 创建用户逻辑处理...
-
-            // 发布新用户事件
-            // 通过注入IEventPublisher发布事件，需要传入事务上下文数据
-            await EventPublisher.PublishAsync(new NewUserEvent{
-                Id = user.Id,
-                Name = input.Name
-            // 使用 XaTransactionContext.Current
-            }, XaTransactionContext.Current);
-
-            // 提交事务
-            await scope.Complete();
-        }catch(Exception ex)
-        {
-            // 回滚事务，消息数据也将回滚不会发布
-            await tran.RollbackAsync();
-        }
-    }
-}
+  public class UserManager
+  {
+      public UserManager(IEventPublisher eventPublisher, DemoDbContext dbContext)
+      {
+          EventPublisher = eventPublisher;
+          DbContext = dbContext;
+      }
+  
+      private IEventPublisher EventPublisher { get; }
+      private DemoDbContext DbContext { get; }
+  
+      public async Task CreateUserAsync(UserInput input)
+      {
+          // 开启事务
+          using var scope = new TransactionScope();
+          try
+          {
+              // 创建用户逻辑处理...
+  
+              // 发布新用户事件
+              // 通过注入IEventPublisher发布事件，需要传入事务上下文数据
+              await EventPublisher.PublishAsync(new NewUserEvent{
+                  Id = user.Id,
+                  Name = input.Name
+              // 使用 XaTransactionContext.Current
+              }, XaTransactionContext.Current);
+  
+              // 提交事务
+              await scope.Complete();
+          }catch(Exception ex)
+          {
+              // 回滚事务，消息数据也将回滚不会发布
+              await tran.RollbackAsync();
+          }
+      }
+  }
 
 ```
 
@@ -240,11 +240,11 @@ public class UserManager
 
 ```c#
 
-    // 替换默认的IMsgIdGenerator
-    service.AddSingleton<IMsgIdGenerator, CustomMsgIdGenerator>();
-    service.AddEventBus()
-        .AddMemoryQueue()
-        .AddMemoryStorage();
+  // 替换默认的IMsgIdGenerator
+  service.AddSingleton<IMsgIdGenerator, CustomMsgIdGenerator>();
+  service.AddEventBus()
+      .AddMemoryQueue()
+      .AddMemoryStorage();
 
 ```
 ## 后续计划
