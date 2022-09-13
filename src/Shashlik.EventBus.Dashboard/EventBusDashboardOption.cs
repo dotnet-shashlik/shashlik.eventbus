@@ -5,7 +5,14 @@
 /// </summary>
 public class EventBusDashboardOption
 {
-    private string _urlPrefix = "/eventBus";
+    public const string DefaultUrlPrefix = "/eventBus";
+
+    private string _urlPrefix = DefaultUrlPrefix;
+
+    /// <summary>
+    /// 认证支持类，需要实现 <see cref="IEventBusDashboardAuthentication"/>
+    /// </summary>
+    public Type? AuthenticateProvider { get; set; }
 
     /// <summary>
     /// 面板路由前缀
@@ -15,10 +22,13 @@ public class EventBusDashboardOption
         get => _urlPrefix;
         set
         {
-            _urlPrefix = value;
-            if (!_urlPrefix.StartsWith('/'))
+            if (!value.StartsWith('/'))
             {
-                _urlPrefix = '/' + _urlPrefix;
+                _urlPrefix = '/' + value;
+            }
+            else
+            {
+                _urlPrefix = value;
             }
         }
     }

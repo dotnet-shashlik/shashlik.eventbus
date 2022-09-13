@@ -6,6 +6,11 @@ namespace Shashlik.EventBus.Dashboard;
 
 public static class DashboardBuilderExtensions
 {
+    /// <summary>
+    /// 启用event bus仪表板
+    /// </summary>
+    /// <param name="app"></param>
+    /// <returns></returns>
     public static IApplicationBuilder UseEventBusDashboard(this IApplicationBuilder app)
     {
         var options = app.ApplicationServices.GetService<IOptions<EventBusDashboardOption>>();
@@ -37,22 +42,38 @@ public static class DashboardBuilderExtensions
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<UrlService>();
         option ??= new EventBusDashboardOption();
+        if (option.AuthenticateProvider is not null &&
+            !typeof(IEventBusDashboardAuthentication).IsAssignableFrom(option.AuthenticateProvider))
+            throw new InvalidCastException(
+                $"invalid event bus authentication provider type: {option.AuthenticateProvider}");
 
-        builder.Services.Configure<EventBusDashboardOption>(x => { x.UrlPrefix = option.UrlPrefix; });
+        builder.Services.Configure<EventBusDashboardOption>(x =>
+        {
+            x.UrlPrefix = option.UrlPrefix;
+            x.AuthenticateProvider = x.AuthenticateProvider;
+        });
+
+        if (option.AuthenticateProvider is not null)
+            builder.Services.AddSingleton(typeof(IEventBusDashboardAuthentication), option.AuthenticateProvider);
+
         builder.Services.AddMvc().AddApplicationPart(typeof(DashboardBuilderExtensions).Assembly);
         return builder;
     }
 
     /// <summary>
-    /// 启用event bus仪表板，使用自定义认证
+    /// 启用event bus仪表板， 使用认证类<typeparamref name="TAuth"/>
     /// </summary>
     /// <param name="builder"></param>
-    /// <typeparam name="TAuth"></typeparam>
+    /// <param name="prefix"></param>
+    /// <typeparam name="TAuth">认证类型</typeparam>
     /// <returns></returns>
-    public static IEventBusBuilder AddDashboard<TAuth>(this IEventBusBuilder builder)
+    public static IEventBusBuilder AddDashboard<TAuth>(this IEventBusBuilder builder, string? prefix = null)
         where TAuth : class, IEventBusDashboardAuthentication
     {
-        builder.Services.AddScoped<IEventBusDashboardAuthentication, TAuth>();
-        return builder.AddDashboard();
+        return builder.AddDashboard(new EventBusDashboardOption
+        {
+            UrlPrefix = prefix ?? EventBusDashboardOption.DefaultUrlPrefix,
+            AuthenticateProvider = typeof(TAuth)
+        });
     }
 }
