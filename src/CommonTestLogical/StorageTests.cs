@@ -11,6 +11,7 @@ using Shashlik.EventBus;
 using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.Kernel.Dependency;
 using Shashlik.Utils.Extensions;
+using Shashlik.Utils.Helpers;
 using Shouldly;
 
 namespace CommonTestLogical
@@ -21,7 +22,8 @@ namespace CommonTestLogical
     [Transient]
     public class StorageTests
     {
-        public StorageTests(IMessageStorage messageStorage, IOptions<EventBusOptions> eventBusOptions, IServiceProvider serviceProvider)
+        public StorageTests(IMessageStorage messageStorage, IOptions<EventBusOptions> eventBusOptions,
+            IServiceProvider serviceProvider)
         {
             MessageStorage = messageStorage;
             EventBusOptions = eventBusOptions.Value;
@@ -249,7 +251,6 @@ namespace CommonTestLogical
             (await MessageStorage.TryLockPublishedAsync(id, DateTimeOffset.Now.AddSeconds(6), default)).ShouldBeTrue();
         }
 
-
         public async Task TryLockReceivedTests()
         {
             var @event = new TestEvent { Name = "张三" };
@@ -305,7 +306,8 @@ namespace CommonTestLogical
             msg.Id.ShouldBe(id);
 
             var expireAt = DateTimeOffset.Now.AddHours(1);
-            await MessageStorage.UpdatePublishedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
+            await MessageStorage.UpdatePublishedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1),
+                default);
 
             var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg!.RetryCount.ShouldBe(1);
@@ -336,7 +338,8 @@ namespace CommonTestLogical
             msg.Id.ShouldBe(id);
 
             var expireAt = DateTimeOffset.Now.AddHours(1);
-            await MessageStorage.UpdateReceivedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1), default);
+            await MessageStorage.UpdateReceivedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1),
+                default);
 
             var dbMsg = await MessageStorage.FindReceivedByMsgIdAsync(msg.MsgId, new EventHandlerDescriptor
             {
@@ -378,15 +381,21 @@ namespace CommonTestLogical
             };
 
 
-            var msg1 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed, false);
-            var msg2 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Scheduled, false);
-            var msg3 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Succeeded, false);
+            var msg1 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed,
+                false);
+            var msg2 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
+                MessageStatus.Scheduled, false);
+            var msg3 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
+                MessageStatus.Succeeded, false);
             var msg4 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Succeeded, false);
             var msg5 = addMsg(DateTimeOffset.Now, MessageStatus.Failed, false);
 
-            var msg6 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed, true);
-            var msg7 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Scheduled, true);
-            var msg8 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Succeeded, true);
+            var msg6 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed,
+                true);
+            var msg7 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
+                MessageStatus.Scheduled, true);
+            var msg8 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
+                MessageStatus.Succeeded, true);
             var msg9 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Succeeded, true);
             var msg10 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Failed, true);
 
@@ -503,7 +512,6 @@ namespace CommonTestLogical
             }
         }
 
-
         public async Task QueryPublishedTests()
         {
             var @event = new TestEvent { Name = "张三" };
@@ -581,13 +589,15 @@ namespace CommonTestLogical
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            var list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, msg.Status, 0, 100, default);
+            var list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, msg.Status, 0, 100,
+                default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
+                default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
@@ -612,13 +622,15 @@ namespace CommonTestLogical
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, string.Empty, 0, 100,
+                default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
+                default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
@@ -697,6 +709,121 @@ namespace CommonTestLogical
             transactionContext!.IsDone().ShouldBeFalse();
             tran.Dispose();
             transactionContext!.IsDone().ShouldBeTrue();
+        }
+
+        public async Task GetPublishedMessageStatusCountsTest()
+        {
+            var @event = new TestEvent { Name = "张三" };
+
+            var count = RandomHelper.Next(3, 20);
+            int success = 0, failed = 0, scheduled = 0;
+            for (int i = 0; i < count; i++)
+            {
+                var status = (_Status)(i % 3);
+                switch (status)
+                {
+                    case _Status.Succeeded:
+                        success++;
+                        break;
+                    case _Status.Failed:
+                        failed++;
+                        break;
+                    case _Status.Scheduled:
+                        scheduled++;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                var msg = new MessageStorageModel
+                {
+                    MsgId = Guid.NewGuid().ToString("n"),
+                    Environment = EventBusOptions.Environment,
+                    CreateTime = DateTimeOffset.Now,
+                    DelayAt = null,
+                    ExpireTime = DateTimeOffset.Now.AddHours(-1),
+                    EventHandlerName = "TestEventHandlerName1",
+                    EventName = "TestEventName1",
+                    EventBody = @event.ToJson(),
+                    EventItems = "{}",
+                    RetryCount = 0,
+                    Status = status.ToString(),
+                    IsLocking = false,
+                    LockEnd = null
+                };
+
+                await MessageStorage.SavePublishedAsync(msg, null, default);
+            }
+
+            var publishedMessageStatusCountsAsync = await MessageStorage.GetPublishedMessageStatusCountsAsync(default);
+            publishedMessageStatusCountsAsync[_Status.Succeeded.ToString().ToUpperInvariant()]
+                .ShouldBeGreaterThanOrEqualTo(success);
+            publishedMessageStatusCountsAsync[_Status.Failed.ToString().ToUpperInvariant()]
+                .ShouldBeGreaterThanOrEqualTo(failed);
+            publishedMessageStatusCountsAsync[_Status.Scheduled.ToString().ToUpperInvariant()]
+                .ShouldBeGreaterThanOrEqualTo(scheduled);
+        }
+
+        public async Task GetReceivedMessageStatusCountsTest()
+        {
+            var @event = new TestEvent { Name = "张三" };
+
+            var count = RandomHelper.Next(3, 20);
+            int success = 0, failed = 0, scheduled = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                var status = (_Status)(i % 3);
+                switch (status)
+                {
+                    case _Status.Succeeded:
+                        success++;
+                        break;
+                    case _Status.Failed:
+                        failed++;
+                        break;
+                    case _Status.Scheduled:
+                        scheduled++;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                var msg = new MessageStorageModel
+                {
+                    MsgId = Guid.NewGuid().ToString("n"),
+                    Environment = EventBusOptions.Environment,
+                    CreateTime = DateTimeOffset.Now,
+                    DelayAt = null,
+                    ExpireTime = DateTimeOffset.Now.AddHours(-1),
+                    EventHandlerName = "TestEventHandlerName1",
+                    EventName = "TestEventName1",
+                    EventBody = @event.ToJson(),
+                    EventItems = "{}",
+                    RetryCount = 0,
+                    Status = status.ToString(),
+                    IsLocking = false,
+                    LockEnd = null
+                };
+
+                await MessageStorage.SaveReceivedAsync(msg, default);
+            }
+
+            var receivedMessageStatusCountAsync = await MessageStorage.GetReceivedMessageStatusCountAsync(default);
+            receivedMessageStatusCountAsync[_Status.Succeeded.ToString().ToUpperInvariant()]
+                .ShouldBeGreaterThanOrEqualTo(success);
+            receivedMessageStatusCountAsync[_Status.Failed.ToString().ToUpperInvariant()]
+                .ShouldBeGreaterThanOrEqualTo(failed);
+            receivedMessageStatusCountAsync[_Status.Scheduled.ToString().ToUpperInvariant()]
+                .ShouldBeGreaterThanOrEqualTo(scheduled);
+        }
+
+
+        public enum _Status
+        {
+            Succeeded = 0,
+            Failed = 1,
+            Scheduled = 2
         }
     }
 }

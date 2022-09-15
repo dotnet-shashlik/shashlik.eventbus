@@ -7,7 +7,8 @@ namespace Shashlik.EventBus.SqlServer.Tests
 {
     public class SqlServerTests : TestBase<Startup>
     {
-        public SqlServerTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public SqlServerTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(
+            factory, testOutputHelper)
         {
         }
 
@@ -48,7 +49,7 @@ namespace Shashlik.EventBus.SqlServer.Tests
         {
             await StorageTests.TryLockPublishedTests();
         }
-        
+
         [Fact]
         public async Task TryLockReceivedTests()
         {
@@ -132,6 +133,18 @@ namespace Shashlik.EventBus.SqlServer.Tests
         public void XaTransactionContextDisposeTest()
         {
             StorageTests.XaTransactionContextDisposeTest();
+        }
+
+        [Fact]
+        public async Task GetPublishedMessageStatusCountsTest()
+        {
+            await StorageTests.GetPublishedMessageStatusCountsTest();
+        }
+
+        [Fact]
+        public async Task GetReceivedMessageStatusCountsTest()
+        {
+            await StorageTests.GetReceivedMessageStatusCountsTest();
         }
     }
 }

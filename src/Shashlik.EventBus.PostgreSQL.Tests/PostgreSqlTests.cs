@@ -7,7 +7,8 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
 {
     public class PostgreSqlTests : TestBase<Startup>
     {
-        public PostgreSqlTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory,
+        public PostgreSqlTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(
+            factory,
             testOutputHelper)
         {
         }
@@ -133,6 +134,18 @@ namespace Shashlik.EventBus.PostgreSQL.Tests
         public void XaTransactionContextDisposeTest()
         {
             StorageTests.XaTransactionContextDisposeTest();
+        }
+
+        [Fact]
+        public async Task GetPublishedMessageStatusCountsTest()
+        {
+            await StorageTests.GetPublishedMessageStatusCountsTest();
+        }
+
+        [Fact]
+        public async Task GetReceivedMessageStatusCountsTest()
+        {
+            await StorageTests.GetReceivedMessageStatusCountsTest();
         }
     }
 }
