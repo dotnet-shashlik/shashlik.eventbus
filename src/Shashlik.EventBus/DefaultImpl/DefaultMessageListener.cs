@@ -69,11 +69,13 @@ namespace Shashlik.EventBus.DefaultImpl
                     DelayAt = message.DelayAt
                 };
 
-                var existsModel = await MessageStorage.FindReceivedByMsgIdAsync(message.MsgId, descriptor, cancellationToken)
+                var existsModel = await MessageStorage
+                    .FindReceivedByMsgIdAsync(message.MsgId, descriptor, cancellationToken)
                     .ConfigureAwait(false);
                 // 保存接收到的消息
                 if (existsModel is null)
-                    await MessageStorage.SaveReceivedAsync(receiveMessageStorageModel, cancellationToken).ConfigureAwait(false);
+                    await MessageStorage.SaveReceivedAsync(receiveMessageStorageModel, cancellationToken)
+                        .ConfigureAwait(false);
                 else
                     receiveMessageStorageModel.Id = existsModel.Id;
 
@@ -112,11 +114,14 @@ namespace Shashlik.EventBus.DefaultImpl
             var failCount = 1;
             while (!cancellationToken.IsCancellationRequested)
             {
-                var handleResult = await ReceivedHandler.HandleAsync(messageStorageModel, items, descriptor, cancellationToken)
+                var handleResult = await ReceivedHandler
+                    .HandleAsync(messageStorageModel, items, descriptor, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (!handleResult.Success)
                     failCount++;
+                else
+                    return;
 
                 if (failCount > 5)
                 {

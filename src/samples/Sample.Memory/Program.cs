@@ -10,6 +10,7 @@ using SampleBase;
 using Shashlik.EventBus;
 using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MemoryStorage;
+using Shashlik.Utils.Extensions;
 
 namespace Sample.Memory
 {
@@ -57,20 +58,21 @@ namespace Sample.Memory
             {
                 await Task.CompletedTask;
 
-                for (var i = 0; i < 30000; i++)
+                while (true)
                 {
-                    if (i % 2 == 0)
-                        await EventPublisher.PublishAsync(new Event1 {Name = $"【ClusterId: {ClusterId}】张三: {i}"}, null,
-                            cancellationToken: cancellationToken);
-                    else
-                        await EventPublisher.PublishAsync(new DelayEvent {Name = $"【ClusterId: {ClusterId}】李四: {i}"},
-                            DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null,
-                            cancellationToken: cancellationToken);
+                    Console.WriteLine("请输入消息内容:");
+                    var content = Console.ReadLine();
+                    if (content.EqualsIgnoreCase("exit"))
+                        return;
 
-                    await Task.Delay(5, cancellationToken);
+                    content = $"{DateTime.Now:HH:mm:ss}=====>{content}";
+
+                    Console.WriteLine($"已发布消息: {content}");
+
+                    await EventPublisher.PublishAsync(new Event1 { Name = content },
+                        null,
+                        cancellationToken: cancellationToken);
                 }
-
-                Logger.LogWarning($"all message send completed.");
             }
 
             public Task StopAsync(CancellationToken cancellationToken)
