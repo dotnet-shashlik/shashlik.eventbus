@@ -7,7 +7,8 @@ namespace Shashlik.EventBus.MySql.Tests
 {
     public class MySqlTests : TestBase<Startup>
     {
-        public MySqlTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory, testOutputHelper)
+        public MySqlTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(
+            factory, testOutputHelper)
         {
         }
 
@@ -131,6 +132,18 @@ namespace Shashlik.EventBus.MySql.Tests
         public void XaTransactionContextDisposeTest()
         {
             StorageTests.XaTransactionContextDisposeTest();
+        }
+
+        [Fact]
+        public async Task GetPublishedMessageStatusCountsTest()
+        {
+            await StorageTests.GetPublishedMessageStatusCountsTest();
+        }
+
+        [Fact]
+        public async Task GetReceivedMessageStatusCountsTest()
+        {
+            await StorageTests.GetReceivedMessageStatusCountsTest();
         }
     }
 }

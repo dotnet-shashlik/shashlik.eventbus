@@ -252,6 +252,16 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(GetReceivedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
         }
 
+        public Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_published.Values.GroupBy(x => x.Status).ToDictionary(x => x.Key, x => x.Count()));
+        }
+
+        public Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_received.Values.GroupBy(x => x.Status).ToDictionary(x => x.Key, x => x.Count()));
+        }
+
         public List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
             string environment)
         {

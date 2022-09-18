@@ -7,8 +7,9 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
 {
     public class MemoryStorageTests : TestBase<Startup>
     {
-        public MemoryStorageTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory,
-            testOutputHelper)
+        public MemoryStorageTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) :
+            base(factory,
+                testOutputHelper)
         {
         }
 
@@ -79,6 +80,18 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         public async Task QueryReceivedTests()
         {
             await StorageTests.QueryReceivedTests();
+        }
+
+        [Fact]
+        public async Task GetPublishedMessageStatusCountsTest()
+        {
+            await StorageTests.GetPublishedMessageStatusCountsTest();
+        }
+
+        [Fact]
+        public async Task GetReceivedMessageStatusCountsTest()
+        {
+            await StorageTests.GetReceivedMessageStatusCountsTest();
         }
     }
 }

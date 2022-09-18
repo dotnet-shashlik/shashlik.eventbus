@@ -272,28 +272,17 @@ public static class InnerExtensions
         return datetime.ToUnixTimeSeconds();
     }
 
-    private static readonly DateTime StartTime = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-    /// <summary>
-    /// long转换为DateTime,本地时间
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    public static DateTime LongToDateTime(this long value)
-    {
-        return StartTime.AddSeconds(value).ToLocalTime();
-    }
-
-
     private static readonly DateTimeOffset StartTimeOffset = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     /// <summary>
-    /// long转换为DateTimeOffset,本地时间
+    /// long转换为DateTimeOffset,本地时间,0转换为null
     /// </summary>
     /// <param name="value"></param>
     /// <returns></returns>
-    public static DateTimeOffset LongToDateTimeOffset(this long value)
+    public static DateTimeOffset? LongToDateTimeOffset(this long value)
     {
+        if (value is 0L)
+            return null;
         return StartTimeOffset.AddSeconds(value).ToLocalTime();
     }
 
