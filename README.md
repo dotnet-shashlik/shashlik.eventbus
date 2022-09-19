@@ -215,6 +215,12 @@
 
 ```
 
+## Dashboard
+
+![dashboard](https://raw.githubusercontent.com/dotnet-shashlik/shashlik.eventbus/main/pictures/dashboard.png)
+
+[demo->](https://github.com/dotnet-shashlik/shashlik.eventbus/blob/v2.1.0/src/samples/Shashlik.Dashboard.Demo/Program.cs)
+
 ## 扩展
 
 如果默认实现不能满足你的需求，可以自行实现可扩展接口，并注册即可。
@@ -249,7 +255,7 @@
 ```
 ## 后续计划
 - 功能
-  - [ ] Dashboard
+  - [x] Dashboard
 - 消息中间件支持
     - [x] RabbitMQ
     - [x] Kafka

@@ -32,7 +32,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.RelationD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.Extensions.EfCore", "Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj", "{973AFEAF-CEF4-4B62-AA9C-F0FA4375F4A7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{91A4AD7C-779D-4399-92E4-5323B9BD40FD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".tests", ".tests", "{91A4AD7C-779D-4399-92E4-5323B9BD40FD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.Tests", "Shashlik.EventBus.Tests\Shashlik.EventBus.Tests.csproj", "{686D1D39-ABC7-4246-BF1D-EA6DAF204C91}"
 EndProject
