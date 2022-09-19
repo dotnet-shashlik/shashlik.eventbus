@@ -722,13 +722,13 @@ namespace CommonTestLogical
                 var status = (_Status)(i % 3);
                 switch (status)
                 {
-                    case _Status.Succeeded:
+                    case _Status.SUCCEEDED:
                         success++;
                         break;
-                    case _Status.Failed:
+                    case _Status.FAILED:
                         failed++;
                         break;
-                    case _Status.Scheduled:
+                    case _Status.SCHEDULED:
                         scheduled++;
                         break;
                     default:
@@ -756,11 +756,11 @@ namespace CommonTestLogical
             }
 
             var publishedMessageStatusCountsAsync = await MessageStorage.GetPublishedMessageStatusCountsAsync(default);
-            publishedMessageStatusCountsAsync[_Status.Succeeded.ToString().ToUpperInvariant()]
+            publishedMessageStatusCountsAsync[_Status.SUCCEEDED.ToString().ToUpperInvariant()]
                 .ShouldBeGreaterThanOrEqualTo(success);
-            publishedMessageStatusCountsAsync[_Status.Failed.ToString().ToUpperInvariant()]
+            publishedMessageStatusCountsAsync[_Status.FAILED.ToString().ToUpperInvariant()]
                 .ShouldBeGreaterThanOrEqualTo(failed);
-            publishedMessageStatusCountsAsync[_Status.Scheduled.ToString().ToUpperInvariant()]
+            publishedMessageStatusCountsAsync[_Status.SCHEDULED.ToString().ToUpperInvariant()]
                 .ShouldBeGreaterThanOrEqualTo(scheduled);
         }
 
@@ -776,13 +776,13 @@ namespace CommonTestLogical
                 var status = (_Status)(i % 3);
                 switch (status)
                 {
-                    case _Status.Succeeded:
+                    case _Status.SUCCEEDED:
                         success++;
                         break;
-                    case _Status.Failed:
+                    case _Status.FAILED:
                         failed++;
                         break;
-                    case _Status.Scheduled:
+                    case _Status.SCHEDULED:
                         scheduled++;
                         break;
                     default:
@@ -810,20 +810,20 @@ namespace CommonTestLogical
             }
 
             var receivedMessageStatusCountAsync = await MessageStorage.GetReceivedMessageStatusCountAsync(default);
-            receivedMessageStatusCountAsync[_Status.Succeeded.ToString().ToUpperInvariant()]
+            receivedMessageStatusCountAsync[_Status.SUCCEEDED.ToString().ToUpperInvariant()]
                 .ShouldBeGreaterThanOrEqualTo(success);
-            receivedMessageStatusCountAsync[_Status.Failed.ToString().ToUpperInvariant()]
+            receivedMessageStatusCountAsync[_Status.FAILED.ToString().ToUpperInvariant()]
                 .ShouldBeGreaterThanOrEqualTo(failed);
-            receivedMessageStatusCountAsync[_Status.Scheduled.ToString().ToUpperInvariant()]
+            receivedMessageStatusCountAsync[_Status.SCHEDULED.ToString().ToUpperInvariant()]
                 .ShouldBeGreaterThanOrEqualTo(scheduled);
         }
 
 
         public enum _Status
         {
-            Succeeded = 0,
-            Failed = 1,
-            Scheduled = 2
+            SUCCEEDED = 0,
+            FAILED = 1,
+            SCHEDULED = 2
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿ConnectionStrings:
-  Default: server=localhost\SQLEXPRESS;database=eventbustest;user id=sa;password=Shashlik123123;
+  Default: server=localhost;database=sqlservertest;user id=sa;password=Shashlik123123;Encrypt=True;TrustServerCertificate=True;
 EventBus:
   RabbitMQ:
     Host: localhost

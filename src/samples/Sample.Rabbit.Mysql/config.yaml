@@ -1,5 +1,5 @@
 ﻿ConnectionStrings:
-  Default: server=localhost;database=sqlservertest;user id=sa;password=Shashlik123123;Encrypt=True;TrustServerCertificate=True;TransparentNetworkIPResolution=False;
+  Default: server=localhost;database=eventbustest;user id=root;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
 EventBus:
   RabbitMQ:
     Host: localhost
