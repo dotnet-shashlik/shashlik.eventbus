@@ -93,6 +93,7 @@ switch (type)
 // 使用ef DbContext mysql
 eventBusBuilder
     .AddMemoryQueue()
+    // 注册dashboard service, 并使用自定义认证类TokenCookieAuth
     .AddDashboard<TokenCookieAuth>()
     ;
 
@@ -105,6 +106,7 @@ dataContext.Database.Migrate();
 
 app.UseAuthorization();
 app.UseRouting();
+// 启用 dashboard
 app.UseEventBusDashboard();
 
 app.MapControllers();
