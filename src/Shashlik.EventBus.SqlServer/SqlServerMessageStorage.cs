@@ -33,7 +33,7 @@ namespace Shashlik.EventBus.SqlServer
         public async ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken = default)
         {
             var sql = $@"
-SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]='{msgId}';";
+SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId] = '{msgId}';";
 
             var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
@@ -42,7 +42,7 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]=
         public async Task<MessageStorageModel?> FindPublishedByMsgIdAsync(string msgId,
             CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]='{msgId}';";
+            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId] = '{msgId}';";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -53,7 +53,7 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]=
 
         public async Task<MessageStorageModel?> FindPublishedByIdAsync(long id, CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE [id]={id};";
+            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE [id] = {id};";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -66,7 +66,7 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]=
             CancellationToken cancellationToken = default)
         {
             var sql =
-                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE [msgId]='{msgId}' AND [eventHandlerName]='{eventHandlerDescriptor.EventHandlerName}';";
+                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE [msgId] = '{msgId}' AND [eventHandlerName] = '{eventHandlerDescriptor.EventHandlerName}';";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -78,7 +78,7 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]=
         public async Task<MessageStorageModel?> FindReceivedByIdAsync(long id, CancellationToken cancellationToken)
         {
             var sql =
-                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE [id]={id};";
+                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE [id] = {id};";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -91,30 +91,32 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId]=
             int take,
             CancellationToken cancellationToken)
         {
+            var parameters = new List<SqlParameter>();
             var where = new StringBuilder();
             if (!eventName.IsNullOrWhiteSpace())
-                where.Append(" AND [eventName]=@eventName");
+            {
+                where.Append(" AND [eventName] = @eventName");
+                parameters.Add(new SqlParameter("@eventName", SqlDbType.VarChar) { Value = eventName });
+            }
+
             if (!status.IsNullOrWhiteSpace())
-                where.Append(" AND [status]=@status");
+            {
+                where.Append(" AND [status] = @status");
+                parameters.Add(new SqlParameter("@status", SqlDbType.VarChar) { Value = status });
+            }
 
             var sql = $@"
 SELECT * FROM 
 (
-    SELECT *,ROW_NUMBER() OVER(ORDER BY [createTime] DESC) AS rowNumber FROM {Options.CurrentValue.FullPublishedTableName}
+    SELECT *, ROW_NUMBER() OVER(ORDER BY [createTime] DESC) AS rowNumber FROM {Options.CurrentValue.FullPublishedTableName}
     WHERE 
-        1=1{where}
+        1 = 1{where}
 ) AS A
 WHERE A.rowNumber BETWEEN {skip} and {skip + take}
 ORDER BY A.createTime DESC;
 ";
-
-            var parameters = new[]
-            {
-                new SqlParameter("@eventName", SqlDbType.VarChar) { Value = eventName },
-                new SqlParameter("@status", SqlDbType.VarChar) { Value = status },
-            };
-
-            var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
+            
+            var table = await SqlQuery(sql, parameters.ToArray(), cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return new List<MessageStorageModel>();
             return table.AsEnumerable()
@@ -127,36 +129,42 @@ ORDER BY A.createTime DESC;
             int take,
             CancellationToken cancellationToken)
         {
+            var parameters = new List<SqlParameter>();
             var where = new StringBuilder();
             if (!eventName.IsNullOrWhiteSpace())
-                where.Append(" AND [eventName]=@eventName");
+            {
+                where.Append(" AND [eventName] = @eventName");
+                parameters.Add(new SqlParameter("@eventName", SqlDbType.VarChar) { Value = eventName });
+            }
+
             if (!eventHandlerName.IsNullOrWhiteSpace())
-                where.Append(" AND [eventHandlerName]=@eventHandlerName");
+            {
+                where.Append(" AND [eventHandlerName] = @eventHandlerName");
+                parameters.Add(new SqlParameter("@eventHandlerName", SqlDbType.VarChar) { Value = eventHandlerName });
+            }
+
             if (!status.IsNullOrWhiteSpace())
-                where.Append(" AND [status]=@status");
+            {
+                where.Append(" AND [status] = @status");
+                parameters.Add(new SqlParameter("@status", SqlDbType.VarChar) { Value = status });
+            }
 
             var sql = $@"
 SELECT * FROM 
 (
     SELECT *,ROW_NUMBER() OVER(ORDER BY [createTime] DESC) AS rowNumber FROM {Options.CurrentValue.FullReceivedTableName}
     WHERE 
-        1=1{where}
+        1 = 1{where}
 ) AS A
 WHERE A.rowNumber BETWEEN {skip} and {skip + take}
 ORDER BY A.createTime DESC;
 ";
-            var parameters = new[]
-            {
-                new SqlParameter("@eventName", SqlDbType.VarChar) { Value = eventName },
-                new SqlParameter("@eventHandlerName", SqlDbType.VarChar) { Value = eventHandlerName },
-                new SqlParameter("@status", SqlDbType.VarChar) { Value = status },
-            };
 
-            var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
+            var table = await SqlQuery(sql, parameters.ToArray(), cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return new List<MessageStorageModel>();
             return table.AsEnumerable()
-                .Select(RowToPublishedModel)
+                .Select(RowToReceivedModel)
                 .ToList();
         }
 
@@ -354,7 +362,7 @@ WHERE
             CancellationToken cancellationToken)
         {
             var sql = $@"
-SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GROUP BY [status];
+SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.FullPublishedTableName} GROUP BY [status];
 ";
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             var result = new Dictionary<string, int>();
@@ -374,7 +382,7 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GR
             CancellationToken cancellationToken)
         {
             var sql = $@"
-SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GROUP BY [status];
+SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableName} GROUP BY [status];
 ";
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             var result = new Dictionary<string, int>();

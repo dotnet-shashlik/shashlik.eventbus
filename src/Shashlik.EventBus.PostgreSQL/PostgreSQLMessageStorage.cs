@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken = default)
         {
             var sql =
-                $"SELECT 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\"='{msgId}' LIMIT 1;";
+                $"SELECT 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\" = '{msgId}' LIMIT 1;";
 
             var count = (await SqlScalar(sql, cancellationToken).ConfigureAwait(false))?.ParseTo<int>() ?? 0;
             return count > 0;
@@ -41,7 +41,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async Task<MessageStorageModel?> FindPublishedByMsgIdAsync(string msgId,
             CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\"='{msgId}';";
+            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"msgId\" = '{msgId}';";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -52,7 +52,7 @@ namespace Shashlik.EventBus.PostgreSQL
 
         public async Task<MessageStorageModel?> FindPublishedByIdAsync(long id, CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"id\"={id};";
+            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"id\" = {id};";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -60,11 +60,12 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
+        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId,
+            EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken = default)
         {
             var sql =
-                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE \"msgId\"='{msgId}' AND \"eventHandlerName\"='{eventHandlerDescriptor.EventHandlerName}';";
+                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE \"msgId\" = '{msgId}' AND \"eventHandlerName\" = '{eventHandlerDescriptor.EventHandlerName}';";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -76,7 +77,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async Task<MessageStorageModel?> FindReceivedByIdAsync(long id, CancellationToken cancellationToken)
         {
             var sql =
-                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE \"id\"={id};";
+                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE \"id\" = {id};";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -85,30 +86,33 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip, int take,
+        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip,
+            int take,
             CancellationToken cancellationToken)
         {
+            var parameters = new List<NpgsqlParameter>();
             var where = new StringBuilder();
             if (!eventName.IsNullOrWhiteSpace())
-                where.Append(" AND \"eventName\"=@eventName");
+            {
+                where.Append(" AND \"eventName\" = @eventName");
+                parameters.Add(new NpgsqlParameter("@eventName", NpgsqlDbType.Varchar) { Value = eventName });
+            }
+
             if (!status.IsNullOrWhiteSpace())
-                where.Append(" AND \"status\"=@status");
+            {
+                where.Append(" AND \"status\" = @status");
+                parameters.Add(new NpgsqlParameter("@status", NpgsqlDbType.Varchar) { Value = status });
+            }
 
             var sql = $@"
 SELECT * FROM {Options.CurrentValue.FullPublishedTableName}
 WHERE
     1 = 1{where}
-            ORDER BY ""createTime"" DESC
+ORDER BY ""createTime"" DESC
 LIMIT {take} OFFSET {skip};
             ";
 
-            var parameters = new[]
-            {
-                new NpgsqlParameter("@eventName", NpgsqlDbType.Varchar) { Value = eventName },
-                new NpgsqlParameter("@status", NpgsqlDbType.Varchar) { Value = status },
-            };
-
-            var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
+            var table = await SqlQuery(sql, parameters.ToArray(), cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return new List<MessageStorageModel>();
             return table.AsEnumerable()
@@ -116,37 +120,45 @@ LIMIT {take} OFFSET {skip};
                 .ToList();
         }
 
-        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName, string? status, int skip,
+        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName,
+            string? status, int skip,
             int take,
             CancellationToken cancellationToken)
         {
+            var parameters = new List<NpgsqlParameter>();
             var where = new StringBuilder();
             if (!eventName.IsNullOrWhiteSpace())
-                where.Append(" AND \"eventName\"=@eventName");
+            {
+                where.Append(" AND \"eventName\" = @eventName");
+                parameters.Add(new NpgsqlParameter("@eventName", NpgsqlDbType.Varchar) { Value = eventName });
+            }
+
             if (!eventHandlerName.IsNullOrWhiteSpace())
-                where.Append(" AND \"eventHandlerName\"=@eventHandlerName");
+            {
+                where.Append(" AND \"eventHandlerName\" = @eventHandlerName");
+                parameters.Add(new NpgsqlParameter("@eventHandlerName", NpgsqlDbType.Varchar)
+                    { Value = eventHandlerName });
+            }
+
             if (!status.IsNullOrWhiteSpace())
-                where.Append(" AND \"status\"=@status");
+            {
+                where.Append(" AND \"status\" = @status");
+                parameters.Add(new NpgsqlParameter("@status", NpgsqlDbType.Varchar) { Value = status });
+            }
 
             var sql = $@"
 SELECT * FROM {Options.CurrentValue.FullReceivedTableName}
 WHERE
     1 = 1{where}
-            ORDER BY ""createTime"" DESC
+ORDER BY ""createTime"" DESC
 LIMIT {take} OFFSET {skip};
             ";
-            var parameters = new[]
-            {
-                new NpgsqlParameter("@eventName", NpgsqlDbType.Varchar) { Value = eventName },
-                new NpgsqlParameter("@eventHandlerName", NpgsqlDbType.Varchar) { Value = eventHandlerName },
-                new NpgsqlParameter("@status", NpgsqlDbType.Varchar) { Value = status },
-            };
 
-            var table = await SqlQuery(sql, parameters, cancellationToken).ConfigureAwait(false);
+            var table = await SqlQuery(sql, parameters.ToArray(), cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return new List<MessageStorageModel>();
             return table.AsEnumerable()
-                .Select(RowToPublishedModel)
+                .Select(RowToReceivedModel)
                 .ToList();
         }
 
@@ -184,7 +196,8 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
             return longId;
         }
 
-        public async Task<long> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken = default)
+        public async Task<long> SaveReceivedAsync(MessageStorageModel message,
+            CancellationToken cancellationToken = default)
         {
             var sql = $@"
 INSERT INTO {Options.CurrentValue.FullReceivedTableName}
@@ -245,7 +258,8 @@ WHERE ""id"" = {id}
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
@@ -314,7 +328,8 @@ LIMIT {count};
         }
 
         public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAsync(int count,
-            int delayRetrySecond, int maxFailedRetryCount, string environment, CancellationToken cancellationToken = default)
+            int delayRetrySecond, int maxFailedRetryCount, string environment,
+            CancellationToken cancellationToken = default)
         {
             var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
             var now = DateTimeOffset.Now;
@@ -337,10 +352,11 @@ LIMIT {count};
                 .Select(RowToReceivedModel).ToList();
         }
 
-        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(
+            CancellationToken cancellationToken)
         {
             var sql = $@"
-SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GROUP BY ""status"";
+SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.FullPublishedTableName} GROUP BY ""status"";
 ";
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             var result = new Dictionary<string, int>();
@@ -348,7 +364,7 @@ SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} 
             foreach (DataRow dataRow in table.Rows)
             {
                 var status = dataRow["status"].ToString();
-                if(string.IsNullOrEmpty(status)) continue;
+                if (string.IsNullOrEmpty(status)) continue;
 
                 result[status] = Convert.ToInt32(dataRow["c"]);
             }
@@ -356,10 +372,11 @@ SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} 
             return result;
         }
 
-        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(
+            CancellationToken cancellationToken)
         {
             var sql = $@"
-SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GROUP BY ""status"";
+SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableName} GROUP BY ""status"";
 ";
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             var result = new Dictionary<string, int>();
@@ -367,7 +384,7 @@ SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} G
             foreach (DataRow dataRow in table.Rows)
             {
                 var status = dataRow["status"].ToString();
-                if(string.IsNullOrEmpty(status)) continue;
+                if (string.IsNullOrEmpty(status)) continue;
 
                 result[status] = Convert.ToInt32(dataRow["c"]);
             }
@@ -431,7 +448,8 @@ SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} G
             return await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql, NpgsqlParameter[] parameter,
+        private async Task<object?> SqlScalar(ITransactionContext? transactionContext, string sql,
+            NpgsqlParameter[] parameter,
             CancellationToken cancellationToken = default)
         {
             if (transactionContext is null || transactionContext is XaTransactionContext)

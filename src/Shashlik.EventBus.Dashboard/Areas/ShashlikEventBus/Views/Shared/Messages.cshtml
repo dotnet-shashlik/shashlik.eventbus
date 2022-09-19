@@ -46,6 +46,7 @@
                   <tr>
                       <th scope="col"><input type="checkbox" id="selectAll"/></th>
                       <th scope="col">#</th>
+                      <th scope="col">EventName</th>
                       <th scope="col">EventHandlerName</th>
                       <th scope="col">Status</th>
                       <th scope="col">RetryCount</th>
@@ -60,7 +61,7 @@
                       <tr>
                           <td><input type="checkbox" value="@message.Id" /></td>
                           <td>
-                              <a href="#" data-bs-toggle="modal" data-bs-target="#modal_@message.Id">@message.ToString()</a>
+                              <a href="#" data-bs-toggle="modal" data-bs-target="#modal_@message.Id">@message.MsgId</a>
                               <div class="modal fade modal-xl" id="modal_@message.Id" tabindex="-1" aria-labelledby="modal_@(message.Id)_Label" aria-hidden="true">
                                   <div class="modal-dialog">
                                       <div class="modal-content">
@@ -86,7 +87,7 @@
                                                           </table>
                                                       </div>
                                                   </div>
-                                                </div>
+                                              </div>
                                           </div>
                                           <div class="modal-footer">
                                               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -94,6 +95,7 @@
                                       </div>
                                   </div>
                               </div></td>
+                          <td>@message.EventName</td>
                           <td>@message.EventHandlerName</td>
                           <td>@message.Status</td>
                           <td>@message.RetryCount</td>

@@ -23,6 +23,7 @@ namespace Sample.Kafka.PostgreSQL
 
         private static async Task Main(string[] args)
         {
+            // 可以启动多个实例, 不同实例输入不同的集群节点id,逐个发布消息可以查看负载情况
             Console.Write($"请输入节点集群ID:");
             ClusterId = Console.ReadLine();
             if (ClusterId.IsNullOrWhiteSpace())
@@ -52,10 +53,7 @@ namespace Sample.Kafka.PostgreSQL
                     services.AddEventBus(r => { r.Environment = "DemoKafkaPostgre3"; })
                         //.AddNpgsql<DemoDbContext>()
                         .AddMemoryStorage()
-                        .AddKafka(r =>
-                        {
-                            r.AddOrUpdate("bootstrap.servers", "192.168.50.178:9092");
-                        });
+                        .AddKafka(configuration.GetSection("EventBus:Kafka"));
 
                     services.AddHostedService<TestService>();
                 })
@@ -78,35 +76,20 @@ namespace Sample.Kafka.PostgreSQL
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                for (var i = 0; i < 30000; i++)
+                while (true)
                 {
-                    try
-                    {
-                        Console.WriteLine($"Memory Usage: {GC.GetTotalMemory(false) / 1024}KB");
+                    Console.WriteLine("请输入消息内容:");
+                    var content = Console.ReadLine();
+                    if (content.EqualsIgnoreCase("exit"))
+                        return;
 
-                        var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+                    content = $"{DateTime.Now:HH:mm:ss} [ClusterId: {ClusterId}]=====>{content}";
 
-                        if (i % 3 == 0)
-                        {
-                            await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, null, cancellationToken);
-                            await transaction.RollbackAsync(cancellationToken);
-                            await Task.Delay(5, cancellationToken);
-                            continue;
-                        }
+                    Console.WriteLine($"已发布消息: {content}");
 
-                        if (i % 2 == 0)
-                            await EventPublisher.PublishAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, DbContext
-                                .GetTransactionContext(), null, cancellationToken);
-                        else
-                            await DbContext.PublishEventAsync(new DelayEvent { Name = $"【ClusterId: {ClusterId}】李四: {i}" },
-                                DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null, cancellationToken);
-
-                        await transaction.CommitAsync(cancellationToken);
-                        await Task.Delay(5, cancellationToken);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                    }
+                    await EventPublisher.PublishAsync(new Event1 { Name = content },
+                        null,
+                        cancellationToken: cancellationToken);
                 }
             }
 

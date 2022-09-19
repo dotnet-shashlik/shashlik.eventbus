@@ -10,6 +10,10 @@
     <ProjectReference Include="..\..\Shashlik.EventBus.Dashboard\Shashlik.EventBus.Dashboard.csproj" />
     <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
     <ProjectReference Include="..\..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
+    <ProjectReference Include="..\..\Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj" />
+    <ProjectReference Include="..\..\Shashlik.EventBus.SqlServer\Shashlik.EventBus.SqlServer.csproj" />
+    <ProjectReference Include="..\Sample.Rabbit.PostgreSQL\Sample.Rabbit.PostgreSQL.csproj" />
+    <ProjectReference Include="..\Sample.Rabbit.SqlServer\Sample.Rabbit.SqlServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

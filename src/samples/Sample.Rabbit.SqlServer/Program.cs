@@ -23,6 +23,7 @@ namespace Sample.Rabbit.SqlServer
 
         private static async Task Main(string[] args)
         {
+            // 可以启动多个实例, 不同实例输入不同的集群节点id,逐个发布消息可以查看负载情况
             Console.Write($"请输入节点集群ID:");
             ClusterId = Console.ReadLine();
             if (ClusterId.IsNullOrWhiteSpace())
@@ -50,12 +51,7 @@ namespace Sample.Rabbit.SqlServer
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitSqlServer"; })
                         .AddSqlServer<DemoDbContext>()
-                        .AddRabbitMQ(r =>
-                        {
-                            r.Host = "192.168.50.178";
-                            r.UserName = "rabbit";
-                            r.Password = "8NnT2nUNoOwpBAue";
-                        });
+                        .AddRabbitMQ(configuration.GetSection("EventBus:RabbitMQ"));
 
                     services.AddHostedService<TestService>();
                 })
@@ -83,31 +79,21 @@ namespace Sample.Rabbit.SqlServer
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                await Task.CompletedTask;
-
-                for (var i = 0; i < 30000; i++)
+                while (true)
                 {
-                    var transaction = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+                    Console.WriteLine("请输入消息内容:");
+                    var content = Console.ReadLine();
+                    if (content.EqualsIgnoreCase("exit"))
+                        return;
 
-                    if (i % 3 == 0)
-                    {
-                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, null, cancellationToken);
-                        await transaction.RollbackAsync(cancellationToken);
-                        await Task.Delay(5, cancellationToken);
-                        continue;
-                    }
+                    content = $"{DateTime.Now:HH:mm:ss} [ClusterId: {ClusterId}]=====>{content}";
 
-                    if (i % 2 == 0)
-                        await DbContext.PublishEventAsync(new Event1 { Name = $"【ClusterId: {ClusterId}】张三: {i}" }, null, cancellationToken);
-                    else
-                        await DbContext.PublishEventAsync(new DelayEvent { Name = $"【ClusterId: {ClusterId}】李四: {i}" },
-                            DateTimeOffset.Now.AddSeconds(new Random().Next(6, 100)), null, cancellationToken);
+                    Console.WriteLine($"已发布消息: {content}");
 
-                    await transaction.CommitAsync(cancellationToken);
-                    await Task.Delay(5, cancellationToken);
+                    await EventPublisher.PublishAsync(new Event1 { Name = content },
+                        null,
+                        cancellationToken: cancellationToken);
                 }
-
-                Logger.LogWarning($"all message send completed.");
             }
 
             public Task StopAsync(CancellationToken cancellationToken)
