@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
+
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -11,7 +12,10 @@
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.0" />
         <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.1.0" />
+
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.1" />
         <PackageReference Include="Shouldly" Version="4.0.3" />
         <PackageReference Include="xunit" Version="2.4.1" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -22,10 +26,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\CommonTestLogical\CommonTestLogical.csproj" />
-        <ProjectReference Include="..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
-        <ProjectReference Include="..\Shashlik.EventBus.Kafka\Shashlik.EventBus.Kafka.csproj" />
-        <ProjectReference Include="..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
-        <ProjectReference Include="..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj" />
         
     </ItemGroup>
 
