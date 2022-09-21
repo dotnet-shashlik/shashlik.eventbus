@@ -33,7 +33,7 @@ public static class InnerExtensions
     }
 
     /// <summary>
-    /// where id
+    /// where if
     /// </summary>
     /// <param name="list"></param>
     /// <param name="condition">条件值</param>
@@ -76,10 +76,7 @@ public static class InnerExtensions
     {
         if (key is null)
             return default;
-        if (dic.TryGetValue(key, out var value))
-            return value;
-
-        return default;
+        return dic.TryGetValue(key, out var value) ? value : default;
     }
 
     /// <summary>
