@@ -25,7 +25,7 @@ namespace Shashlik.EventBus.MemoryQueue
                         OnReceived?.Invoke(msg);
 
                     // ReSharper disable once MethodSupportsCancellation
-                    Task.Delay(10).ConfigureAwait(false).GetAwaiter().GetResult();
+                    Task.Delay(10).ConfigureAwait(false);
                 }
             }, stopCancellationToken);
         }
