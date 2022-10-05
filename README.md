@@ -208,7 +208,6 @@
           }catch(Exception ex)
           {
               // 回滚事务，消息数据也将回滚不会发布
-              await tran.RollbackAsync();
           }
       }
   }
