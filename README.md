@@ -258,7 +258,6 @@
 - 消息中间件支持
     - [x] RabbitMQ
     - [x] Kafka
-    - [ ] RocketMQ
     - [ ] ActiveMQ
     - [ ] Pulsar
     - [ ] Redis
@@ -266,5 +265,4 @@
     - [x] MySql
     - [x] PostgreSql
     - [x] SqlServer
-    - [ ] Oracle
     - [ ] MongoDb
