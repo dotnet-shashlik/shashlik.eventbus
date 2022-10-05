@@ -84,7 +84,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     await MessageStorage.UpdateReceivedAsync(
                             messageStorageModel.Id,
                             MessageStatus.Succeeded,
-                            messageStorageModel.RetryCount,
+                            ++messageStorageModel.RetryCount,
                             DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),
                             cancellationToken)
                         .ConfigureAwait(false);

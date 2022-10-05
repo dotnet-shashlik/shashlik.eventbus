@@ -14,7 +14,8 @@ namespace Shashlik.EventBus.DefaultImpl
         private ILogger<DefaultPublishHandler> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
 
-        public DefaultPublishHandler(IOptions<EventBusOptions> options, IMessageSender messageSender, IMessageStorage messageStorage,
+        public DefaultPublishHandler(IOptions<EventBusOptions> options, IMessageSender messageSender,
+            IMessageStorage messageStorage,
             ILogger<DefaultPublishHandler> logger, IMessageSerializer messageSerializer)
         {
             Options = options;
@@ -29,7 +30,8 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageStorageModel messageStorageModel,
             CancellationToken cancellationToken = default)
         {
-            return await HandleAsync(messageStorageModel.Id, messageTransferModel, messageStorageModel, false, cancellationToken);
+            return await HandleAsync(messageStorageModel.Id, messageTransferModel, messageStorageModel, false,
+                cancellationToken);
         }
 
         public async Task<HandleResult> HandleAsync(long id, CancellationToken cancellationToken = default)
@@ -50,7 +52,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 if (!requireLock || await MessageStorage.TryLockPublishedAsync(
                         id, DateTimeOffset.Now.AddSeconds(Options.Value.LockTime),
                         cancellationToken).ConfigureAwait(false)
-                )
+                   )
                 {
                     messageStorageModel ??= await MessageStorage.FindPublishedByIdAsync(id, cancellationToken);
                     if (messageStorageModel is null)
@@ -76,7 +78,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     await MessageStorage.UpdatePublishedAsync(
                             messageStorageModel.Id,
                             MessageStatus.Succeeded,
-                            messageStorageModel.RetryCount,
+                            ++messageStorageModel.RetryCount,
                             DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),
                             cancellationToken)
                         .ConfigureAwait(false);

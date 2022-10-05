@@ -31,4 +31,9 @@ public class MessageViewModel
     /// 搜索条件
     /// </summary>
     public string? EventName { get; set; }
+
+    /// <summary>
+    /// 搜索条件
+    /// </summary>
+    public string? EventHandlerName { get; set; }
 }

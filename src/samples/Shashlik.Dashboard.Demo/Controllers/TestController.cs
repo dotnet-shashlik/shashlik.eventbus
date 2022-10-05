@@ -13,22 +13,4 @@ namespace Shashlik.Dashboard.Demo.Controllers
             await publisher.PublishAsync(new TestEvent(), null);
         }
     }
-
-    public class TestEvent : IEvent
-    {
-        public Guid Id { get; set; } = Guid.NewGuid();
-    }
-
-    public class TestEventHandler : IEventHandler<TestEvent>
-    {
-        public Task Execute(TestEvent @event, IDictionary<string, string> additionalItems)
-        {
-            var rand = new Random();
-            if (rand.Next(5) == 0)
-            {
-                throw new Exception();
-            }
-            return Task.CompletedTask;
-        }
-    }
 }

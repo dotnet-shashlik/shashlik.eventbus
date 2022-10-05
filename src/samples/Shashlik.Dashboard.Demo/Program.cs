@@ -7,6 +7,8 @@ using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MySql;
 using Shashlik.EventBus.PostgreSQL;
 using Shashlik.EventBus.SqlServer;
+using Shashlik.EventBus.Utils;
+using Timer = System.Timers.Timer;
 
 var builder = WebApplication.CreateBuilder(args);
 

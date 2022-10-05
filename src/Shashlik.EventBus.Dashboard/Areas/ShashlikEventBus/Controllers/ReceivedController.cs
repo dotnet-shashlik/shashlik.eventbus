@@ -12,7 +12,8 @@ public class ReceivedController : BaseDashboardController
         _messageStorage = messageStorage;
     }
 
-    public async Task<IActionResult> Index(string? eventName, string? status, int pageSize = 20, int pageIndex = 1)
+    public async Task<IActionResult> Index(string? eventName, string? eventHandlerName, string? status,
+        int pageSize = 20, int pageIndex = 1)
     {
         ViewBag.Title = "Received";
         ViewBag.Page = "Received";
@@ -23,12 +24,13 @@ public class ReceivedController : BaseDashboardController
             status = model.StatusCount.Keys.First();
         }
 
-        model.Messages = await _messageStorage.SearchReceived(eventName, string.Empty, status,
+        model.Messages = await _messageStorage.SearchReceived(eventName, eventHandlerName, status,
             (pageIndex - 1) * pageSize,
             pageSize, CancellationToken.None);
         model.PageIndex = pageIndex;
         model.PageSize = pageSize;
         model.EventName = eventName;
+        model.EventHandlerName = eventHandlerName;
         var total = 0M;
         if (!string.IsNullOrEmpty(status))
         {
