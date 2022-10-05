@@ -68,6 +68,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.SqlServer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Tests", "tests\Shashlik.EventBus.Tests\Shashlik.EventBus.Tests.csproj", "{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Redis", "Shashlik.EventBus.Redis\Shashlik.EventBus.Redis.csproj", "{31D439BE-70B8-4E9B-B673-2E77E601E670}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -166,6 +168,10 @@ Global
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31D439BE-70B8-4E9B-B673-2E77E601E670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31D439BE-70B8-4E9B-B673-2E77E601E670}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31D439BE-70B8-4E9B-B673-2E77E601E670}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31D439BE-70B8-4E9B-B673-2E77E601E670}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
