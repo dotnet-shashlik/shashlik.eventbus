@@ -42,7 +42,7 @@ namespace Shashlik.EventBus.Redis
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
             try
             {
-                await redisClient.XGroupCreateAsync(eventName, eventHandlerName);
+                await redisClient.XGroupCreateAsync(eventName, eventHandlerName, MkStream: true);
             }
             catch (Exception e)
             {

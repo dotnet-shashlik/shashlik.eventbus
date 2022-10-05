@@ -45,6 +45,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.Dashboard.Demo", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Dashboard", "..\Shashlik.EventBus.Dashboard\Shashlik.EventBus.Dashboard.csproj", "{F015E50E-B70F-41AE-94FE-BF9CCAB478DA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Redis.Mysql", "Sample.Redis.Mysql\Sample.Redis.Mysql.csproj", "{78D2BFC0-FB98-4063-9460-B3E78EEE9982}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Redis", "..\Shashlik.EventBus.Redis\Shashlik.EventBus.Redis.csproj", "{4F6C11DB-42FD-4C10-B5B5-FBB16514E9D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +135,14 @@ Global
 		{F015E50E-B70F-41AE-94FE-BF9CCAB478DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F015E50E-B70F-41AE-94FE-BF9CCAB478DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F015E50E-B70F-41AE-94FE-BF9CCAB478DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78D2BFC0-FB98-4063-9460-B3E78EEE9982}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78D2BFC0-FB98-4063-9460-B3E78EEE9982}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78D2BFC0-FB98-4063-9460-B3E78EEE9982}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78D2BFC0-FB98-4063-9460-B3E78EEE9982}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F6C11DB-42FD-4C10-B5B5-FBB16514E9D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F6C11DB-42FD-4C10-B5B5-FBB16514E9D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F6C11DB-42FD-4C10-B5B5-FBB16514E9D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F6C11DB-42FD-4C10-B5B5-FBB16514E9D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -148,6 +160,7 @@ Global
 		{2087F79E-9F97-4C05-8F3F-460859B500A6} = {BDD30104-8F77-451E-8A0B-CE431F1F8328}
 		{2D5FEC69-8FCD-4279-90AD-983E3C7F8CEB} = {BDD30104-8F77-451E-8A0B-CE431F1F8328}
 		{F015E50E-B70F-41AE-94FE-BF9CCAB478DA} = {BDD30104-8F77-451E-8A0B-CE431F1F8328}
+		{4F6C11DB-42FD-4C10-B5B5-FBB16514E9D7} = {BDD30104-8F77-451E-8A0B-CE431F1F8328}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

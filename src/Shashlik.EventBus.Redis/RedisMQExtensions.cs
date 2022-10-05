@@ -12,9 +12,9 @@ namespace Shashlik.EventBus.Redis
         /// <param name="action"></param>
         /// <returns></returns>
         public static IEventBusBuilder AddRedisMQ(this IEventBusBuilder eventBusBuilder,
-            Action<EventBusRedisMQOptions> action)
+            Action<EventBusRedisMQOptions>? action = null)
         {
-            eventBusBuilder.Services.Configure(action);
+            eventBusBuilder.Services.Configure(action ?? (r => { }));
             eventBusBuilder.Services.AddSingleton<IMessageSender, RedisMQMessageSender>();
             eventBusBuilder.Services.AddSingleton<IEventSubscriber, RedisMQEventSubscriber>();
             return eventBusBuilder;
