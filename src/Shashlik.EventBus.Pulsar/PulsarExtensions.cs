@@ -8,7 +8,7 @@ namespace Shashlik.EventBus.Pulsar
     public static class PulsarExtensions
     {
         /// <summary>
-        /// add rabbit mq services
+        /// add pulsar mq services
         /// </summary>
         /// <param name="eventBusBuilder"></param>
         /// <param name="configurationSection"></param>
@@ -22,7 +22,7 @@ namespace Shashlik.EventBus.Pulsar
         }
 
         /// <summary>
-        /// add rabbit mq services
+        /// add pulsar mq services
         /// </summary>
         /// <param name="eventBusBuilder"></param>
         /// <param name="action"></param>
@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.Pulsar
         }
 
         /// <summary>
-        /// add rabbit mq core services
+        /// add pulsar mq core services
         /// </summary>
         /// <param name="eventBusBuilder"></param>
         /// <returns></returns>
