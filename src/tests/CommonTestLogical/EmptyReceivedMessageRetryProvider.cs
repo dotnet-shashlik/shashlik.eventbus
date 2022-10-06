@@ -11,7 +11,7 @@ namespace CommonTestLogical
             return Task.CompletedTask;
         }
 
-        public Task<HandleResult> RetryAsync(long id, CancellationToken cancellationToken)
+        public Task<HandleResult> RetryAsync(string id, CancellationToken cancellationToken)
         {
             return Task.FromResult(new HandleResult(true));
         }

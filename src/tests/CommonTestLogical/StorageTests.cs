@@ -353,7 +353,7 @@ namespace CommonTestLogical
         public async Task DeleteExpiresTests()
         {
             var @event = new TestEvent { Name = "张三" };
-            Func<DateTimeOffset, string, bool, long> addMsg = (expire, status, isReceive) =>
+            Func<DateTimeOffset, string, bool, string> addMsg = (expire, status, isReceive) =>
             {
                 var model = new MessageStorageModel
                 {
@@ -418,7 +418,7 @@ namespace CommonTestLogical
         {
             var @event = new TestEvent { Name = "张三" };
 
-            Func<DateTimeOffset, string, long> addMsg = (createTime, status) =>
+            Func<DateTimeOffset, string, string> addMsg = (createTime, status) =>
             {
                 var model = new MessageStorageModel
                 {
@@ -466,7 +466,7 @@ namespace CommonTestLogical
         {
             var @event = new TestEvent { Name = "张三" };
 
-            Func<DateTimeOffset, string, long> addMsg = (createTime, status) =>
+            Func<DateTimeOffset, string, string> addMsg = (createTime, status) =>
             {
                 var model = new MessageStorageModel
                 {
