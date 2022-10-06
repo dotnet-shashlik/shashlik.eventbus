@@ -41,7 +41,7 @@ public class ReceivedController : BaseDashboardController
         return View("Messages", model);
     }
 
-    public async Task Retry(long[]? ids, [FromServices] IReceivedMessageRetryProvider receivedMessageRetryProvider)
+    public async Task Retry(string[]? ids, [FromServices] IReceivedMessageRetryProvider receivedMessageRetryProvider)
     {
         if (ids == null)
         {

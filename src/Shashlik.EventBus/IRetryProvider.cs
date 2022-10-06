@@ -11,9 +11,9 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 执行重试
         /// </summary>
-        /// <param name="id">消息存储id</param>
+        /// <param name="storageId">消息存储id</param>
         /// <param name="retryAction">重试action,返回异步任务成功/失败</param>
         /// <returns></returns>
-        public void Retry(long id, Func<Task<HandleResult>> retryAction);
+        public void Retry(string storageId, Func<Task<HandleResult>> retryAction);
     }
 }

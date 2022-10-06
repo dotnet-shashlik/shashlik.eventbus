@@ -14,20 +14,20 @@ namespace Shashlik.EventBus.MemoryStorage
 {
     public class MemoryMessageStorage : IMessageStorage
     {
-        private readonly ConcurrentDictionary<long, MessageStorageModel> _published = new();
-        private readonly ConcurrentDictionary<long, MessageStorageModel> _received = new();
+        private readonly ConcurrentDictionary<string, MessageStorageModel> _published = new();
+        private readonly ConcurrentDictionary<string, MessageStorageModel> _received = new();
         private static int _lastId;
         private static readonly object IdLck = new();
         private static readonly object DeleteLck = new();
 
-        private static long AutoIncrementId()
+        private static string AutoIncrementId()
         {
             lock (IdLck)
             {
                 _lastId++;
             }
 
-            return _lastId;
+            return _lastId.ToString();
         }
 
         public ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken)
@@ -35,7 +35,8 @@ namespace Shashlik.EventBus.MemoryStorage
             return new ValueTask<bool>(_published.Any(r => r.Value.MsgId == msgId));
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByMsgIdAsync(string msgId, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByMsgIdAsync(string msgId,
+            CancellationToken cancellationToken)
         {
             var res = _published.Values.FirstOrDefault(r => r.MsgId == msgId);
             if (res != null)
@@ -43,24 +44,26 @@ namespace Shashlik.EventBus.MemoryStorage
             return await Task.FromResult(res);
         }
 
-        public Task<MessageStorageModel?> FindPublishedByIdAsync(long id, CancellationToken cancellationToken)
+        public Task<MessageStorageModel?> FindPublishedByIdAsync(string id, CancellationToken cancellationToken)
         {
             return Task.FromResult(_published.GetOrDefault(id));
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId, EventHandlerDescriptor eventHandlerDescriptor,
+        public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId,
+            EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken)
         {
             return await Task.FromResult(_received.Values.FirstOrDefault(r =>
                 r.MsgId == msgId && r.EventHandlerName == eventHandlerDescriptor.EventHandlerName));
         }
 
-        public Task<MessageStorageModel?> FindReceivedByIdAsync(long id, CancellationToken cancellationToken)
+        public Task<MessageStorageModel?> FindReceivedByIdAsync(string id, CancellationToken cancellationToken)
         {
             return Task.FromResult(_received.GetOrDefault(id));
         }
 
-        public Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip, int take,
+        public Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip,
+            int take,
             CancellationToken cancellationToken)
         {
             var list = _published.Values
@@ -72,7 +75,8 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(list);
         }
 
-        public Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName, string? status, int skip, int take,
+        public Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName,
+            string? status, int skip, int take,
             CancellationToken cancellationToken)
         {
             var list = _received.Values
@@ -85,7 +89,7 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(list);
         }
 
-        public Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
+        public Task<string> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken)
         {
             message.Id = AutoIncrementId();
@@ -94,7 +98,7 @@ namespace Shashlik.EventBus.MemoryStorage
             throw new Exception($"save published message error, msgId: {message.MsgId}");
         }
 
-        public Task<long> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken)
+        public Task<string> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken)
         {
             message.Id = AutoIncrementId();
             if (_received.TryAdd(message.Id, message))
@@ -102,7 +106,7 @@ namespace Shashlik.EventBus.MemoryStorage
             throw new Exception($"save received message error, msgId: {message.MsgId}");
         }
 
-        public Task UpdatePublishedAsync(long id, string status, int retryCount, DateTimeOffset? expireTime,
+        public Task UpdatePublishedAsync(string id, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken)
         {
             if (_published.TryGetValue(id, out var model))
@@ -117,7 +121,7 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.CompletedTask;
         }
 
-        public Task UpdateReceivedAsync(long id, string status, int retryCount,
+        public Task UpdateReceivedAsync(string id, string status, int retryCount,
             DateTimeOffset? expireTime, CancellationToken cancellationToken)
         {
             if (_received.TryGetValue(id, out var model))
@@ -132,7 +136,8 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.CompletedTask;
         }
 
-        public Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt, CancellationToken cancellationToken)
+        public Task<bool> TryLockPublishedAsync(string id, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
@@ -154,7 +159,7 @@ namespace Shashlik.EventBus.MemoryStorage
                 return Task.FromResult(false);
         }
 
-        public Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt,
+        public Task<bool> TryLockReceivedAsync(string id, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -216,10 +221,12 @@ namespace Shashlik.EventBus.MemoryStorage
         public Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAsync(int count, int delayRetrySecond,
             int maxFailedRetryCount, string environment, CancellationToken cancellationToken)
         {
-            return Task.FromResult(GetPublishedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
+            return Task.FromResult(
+                GetPublishedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
         }
 
-        public List<MessageStorageModel> GetPublishedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
+        public List<MessageStorageModel> GetPublishedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond,
+            int maxFailedRetryCount,
             string environment)
         {
             var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
@@ -249,7 +256,8 @@ namespace Shashlik.EventBus.MemoryStorage
             string environment,
             CancellationToken cancellationToken)
         {
-            return Task.FromResult(GetReceivedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
+            return Task.FromResult(
+                GetReceivedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
         }
 
         public Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken)
@@ -262,7 +270,8 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(_received.Values.GroupBy(x => x.Status).ToDictionary(x => x.Key, x => x.Count()));
         }
 
-        public List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond, int maxFailedRetryCount,
+        public List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond,
+            int maxFailedRetryCount,
             string environment)
         {
             var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);

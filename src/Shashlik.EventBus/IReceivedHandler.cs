@@ -25,11 +25,11 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 事件处理执行(有锁)
         /// </summary>
-        /// <param name="id">消息存储id</param>
+        /// <param name="storageId"></param>
         /// <param name="cancellationToken">取消token</param>
         /// <returns></returns>
         public Task<HandleResult> HandleAsync(
-            long id,
+            string storageId,
             CancellationToken cancellationToken = default);
     }
 }

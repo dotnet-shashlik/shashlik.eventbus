@@ -1,70 +1,165 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using MySqlConnector;
+using MongoDB.Driver;
 
-namespace Shashlik.EventBus.MySql
+namespace Shashlik.EventBus.MongoDb
 {
-    public class MySqlMessageStorageInitializer : IMessageStorageInitializer
+    public class MongoDbMessageStorageInitializer : IMessageStorageInitializer
     {
-        public MySqlMessageStorageInitializer(IOptionsMonitor<EventBusMySqlOptions> options,
-            IConnectionString connectionString)
+        public MongoDbMessageStorageInitializer(IOptionsMonitor<EventBusMongoDbOptions> options,
+            IConnection connection)
         {
             Options = options;
-            ConnectionString = connectionString;
+            Client = connection.Client;
         }
 
-        private IOptionsMonitor<EventBusMySqlOptions> Options { get; }
-        private IConnectionString ConnectionString { get; }
+        private IOptionsMonitor<EventBusMongoDbOptions> Options { get; }
+        private IMongoClient Client { get; }
 
         public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
-            var sql = $@"
-CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.PublishedTableName}`
-(
-	`id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-	`msgId` VARCHAR(32) NOT NULL,
-	`environment` VARCHAR(32),
-	`eventName` VARCHAR(255) NOT NULL,
-	`eventBody` LONGTEXT NOT NULL,
-	`createTime` BIGINT NOT NULL,
-	`delayAt` BIGINT NOT NULL,
-	`expireTime` BIGINT NOT NULL,
-	`eventItems` LONGTEXT NULL,
-	`status` VARCHAR(32) NOT NULL,
-	`retryCount` INT NOT NULL,
-	`isLocking` TINYINT NOT NULL,
-	`lockEnd` BIGINT NOT NULL,
-	UNIQUE INDEX `IX_published_msgId` (`msgId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            var mongoDatabase = Client.GetDatabase(Options.CurrentValue.DataBase);
+            var collections = await mongoDatabase.ListCollectionNamesAsync(cancellationToken: cancellationToken);
+            var names = await collections.ToListAsync(cancellationToken: cancellationToken);
+            if (names.All(r => r != Options.CurrentValue.PublishedCollectionName))
+            {
+                await mongoDatabase.CreateCollectionAsync(Options.CurrentValue.PublishedCollectionName,
+                    cancellationToken: cancellationToken);
+                var mongoCollection =
+                    mongoDatabase.GetCollection<MessageStorageModel>(Options.CurrentValue.PublishedCollectionName);
+                await mongoCollection.Indexes.CreateManyAsync(new CreateIndexModel<MessageStorageModel>[]
+                    {
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.Id))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.Id),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.MsgId))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.MsgId),
+                                Background = true,
+                                Unique = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.EventName))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.EventName),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.CreateTime))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.CreateTime),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.ExpireTime))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.ExpireTime),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.Status))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.Status),
+                                Background = true
+                            }),
+                    },
+                    cancellationToken);
+            }
 
-
-CREATE TABLE IF NOT EXISTS `{Options.CurrentValue.ReceivedTableName}`
-(
-	`id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-	`msgId` VARCHAR(32) NOT NULL,
-	`environment` VARCHAR(32),
-	`eventName` VARCHAR(255) NOT NULL,
-	`eventHandlerName` VARCHAR(255) NOT NULL,
-	`eventBody` LONGTEXT NOT NULL,
-	`createTime` BIGINT NOT NULL,
-	`isDelay` TINYINT NOT NULL,
-	`delayAt` BIGINT NOT NULL,
-	`expireTime` BIGINT NOT NULL,
-	`eventItems` LONGTEXT NULL,
-	`status` VARCHAR(32) NOT NULL,
-	`retryCount` INT NOT NULL,
-	`isLocking` TINYINT NOT NULL,
-	`lockEnd` BIGINT NOT NULL,
-	 UNIQUE INDEX `IX_received_msgId_eventHandlerName` (`msgId`, `eventHandlerName`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-";
-
-            await using var connection = new MySqlConnection(ConnectionString.ConnectionString);
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-            await using var cmd = connection.CreateCommand();
-            cmd.CommandText = sql;
-            await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            if (names.All(r => r != Options.CurrentValue.ReceivedCollectionName))
+            {
+                await mongoDatabase.CreateCollectionAsync(Options.CurrentValue.ReceivedCollectionName,
+                    cancellationToken: cancellationToken);
+                var mongoCollection =
+                    mongoDatabase.GetCollection<MessageStorageModel>(Options.CurrentValue.ReceivedCollectionName);
+                await mongoCollection.Indexes.CreateManyAsync(new CreateIndexModel<MessageStorageModel>[]
+                    {
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.Id))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.Id),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.MsgId))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.MsgId),
+                                Background = true,
+                                Unique = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.EventName))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.EventName),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.EventHandlerName))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.EventHandlerName),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.CreateTime))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.CreateTime),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.ExpireTime))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.ExpireTime),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.DelayAt))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.DelayAt),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.Status))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.Status),
+                                Background = true
+                            }),
+                    },
+                    cancellationToken);
+            }
         }
     }
 }

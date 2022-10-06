@@ -42,7 +42,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task<HandleResult> RetryAsync(long id, CancellationToken cancellationToken)
+        public async Task<HandleResult> RetryAsync(string id, CancellationToken cancellationToken)
         {
             var messageStorageModel = await MessageStorage.FindPublishedByIdAsync(id, cancellationToken).ConfigureAwait(false);
             if (messageStorageModel is null)

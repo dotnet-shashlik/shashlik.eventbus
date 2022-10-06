@@ -39,13 +39,13 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task<HandleResult> HandleAsync(long id, CancellationToken cancellationToken = default)
+        public async Task<HandleResult> HandleAsync(string id, CancellationToken cancellationToken = default)
         {
             return await HandleAsync(id, null, null, null, true, cancellationToken);
         }
 
         private async Task<HandleResult> HandleAsync(
-            long id,
+            string id,
             MessageStorageModel? messageStorageModel,
             IDictionary<string, string>? items,
             EventHandlerDescriptor? descriptor,

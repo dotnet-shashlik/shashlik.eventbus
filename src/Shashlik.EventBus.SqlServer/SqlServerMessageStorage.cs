@@ -51,7 +51,7 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId] 
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByIdAsync(long id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string id, CancellationToken cancellationToken)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE [id] = {id};";
 
@@ -75,7 +75,7 @@ SELECT TOP 1 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE [msgId] 
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByIdAsync(long id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string id, CancellationToken cancellationToken)
         {
             var sql =
                 $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE [id] = {id};";
@@ -115,7 +115,7 @@ SELECT * FROM
 WHERE A.rowNumber BETWEEN {skip} and {skip + take}
 ORDER BY A.createTime DESC;
 ";
-            
+
             var table = await SqlQuery(sql, parameters.ToArray(), cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
                 return new List<MessageStorageModel>();
@@ -168,7 +168,8 @@ ORDER BY A.createTime DESC;
                 .ToList();
         }
 
-        public async Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
+        public async Task<string> SavePublishedAsync(MessageStorageModel message,
+            ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -195,14 +196,14 @@ SELECT SCOPE_IDENTITY();
             };
 
             var id = await SqlScalar(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
-            if (id is null || !id.TryParse<long>(out var longId))
+            if (id is null)
                 throw new DbUpdateException();
 
-            message.Id = longId;
-            return longId;
+            message.Id = id.ToString();
+            return message.Id!;
         }
 
-        public async Task<long> SaveReceivedAsync(MessageStorageModel message,
+        public async Task<string> SaveReceivedAsync(MessageStorageModel message,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -231,14 +232,14 @@ SELECT SCOPE_IDENTITY();
             };
 
             var id = await SqlScalar(sql, parameters, cancellationToken).ConfigureAwait(false);
-            if (id is null || !id.TryParse<long>(out var longId))
+            if (id is null)
                 throw new DbUpdateException();
 
-            message.Id = longId;
-            return longId;
+            message.Id = id.ToString();
+            return message.Id!;
         }
 
-        public async Task UpdatePublishedAsync(long id, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdatePublishedAsync(string id, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -250,7 +251,7 @@ WHERE [id] = {id};
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task UpdateReceivedAsync(long id, string status, int retryCount,
+        public async Task UpdateReceivedAsync(string id, string status, int retryCount,
             DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
@@ -262,7 +263,7 @@ WHERE [id] = {id};
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockPublishedAsync(string id, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -277,7 +278,7 @@ WHERE [id] = {id};
             return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
 
-        public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockReceivedAsync(string id, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -485,7 +486,7 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableName}
         {
             return new MessageStorageModel
             {
-                Id = row.GetRowValue<long>("id"),
+                Id = row.GetRowValue<string>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
                 CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,
@@ -505,7 +506,7 @@ SELECT [status], COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableName}
         {
             return new MessageStorageModel
             {
-                Id = row.GetRowValue<long>("id"),
+                Id = row.GetRowValue<string>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
                 CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,

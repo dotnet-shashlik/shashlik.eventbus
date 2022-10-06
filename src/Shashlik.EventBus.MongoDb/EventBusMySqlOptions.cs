@@ -1,28 +1,34 @@
 ﻿#nullable enable
 using System;
+using MongoDB.Driver;
 
-namespace Shashlik.EventBus.MySql
+namespace Shashlik.EventBus.MongoDb
 {
-    public class EventBusMySqlOptions
+    public class EventBusMongoDbOptions
     {
         /// <summary>
         /// 已发布消息表名
         /// </summary>
-        public string PublishedTableName { get; set; } = "eventbus_published";
+        public string PublishedCollectionName { get; set; } = "eventbus_published";
 
         /// <summary>
         /// 已接收的消息表名
         /// </summary>
-        public string ReceivedTableName { get; set; } = "eventbus_received";
+        public string ReceivedCollectionName { get; set; } = "eventbus_received";
 
         /// <summary>
-        /// ef数据库上下文类型, 和<see cref="ConnectionString"/>配其中一个，优先使用<see cref="DbContextType"/>
+        /// 数据库名称
         /// </summary>
-        public Type? DbContextType { get; set; }
+        public string DataBase { get; set; } = "eventbus";
 
         /// <summary>
-        /// mysql数据库连接字符串，和<see cref="DbContextType"/>配其中一个，优先使用<see cref="DbContextType"/>
+        /// MongoDb数据库连接字符串
         /// </summary>
-        public string? ConnectionString { get; set; }
+        public string? ConnectionString { get; set; } = "mongodb://localhost";
+
+        /// <summary>
+        /// 自定义IMongoClient连接获取
+        /// </summary>
+        public Func<IServiceProvider, IMongoClient>? ClientFactory { get; set; }
     }
 }

@@ -13,7 +13,7 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 存储的消息id
         /// </summary>
-        public long Id { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// 消息d

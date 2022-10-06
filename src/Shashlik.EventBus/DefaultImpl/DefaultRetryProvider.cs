@@ -10,21 +10,21 @@ namespace Shashlik.EventBus.DefaultImpl
     internal class DefaultRetryProvider : IRetryProvider
     {
         private IOptions<EventBusOptions> Options { get; }
-        private ConcurrentDictionary<long, Func<Task<HandleResult>>> Tasks { get; }
+        private ConcurrentDictionary<string, Func<Task<HandleResult>>> Tasks { get; }
 
         public DefaultRetryProvider(IOptions<EventBusOptions> options)
         {
             Options = options;
-            Tasks = new ConcurrentDictionary<long, Func<Task<HandleResult>>>();
+            Tasks = new ConcurrentDictionary<string, Func<Task<HandleResult>>>();
         }
 
-        public void Retry(long id, Func<Task<HandleResult>> retryAction)
+        public void Retry(string storageId, Func<Task<HandleResult>> retryAction)
         {
-            if (!Tasks.TryAdd(id, retryAction))
+            if (!Tasks.TryAdd(storageId, retryAction))
                 return;
 
             var source = new CancellationTokenSource();
-            source.Token.Register(() => Tasks.TryRemove(id, out _));
+            source.Token.Register(() => Tasks.TryRemove(storageId, out _));
             source.Token.Register(() => source.Dispose());
 
             async void Action()

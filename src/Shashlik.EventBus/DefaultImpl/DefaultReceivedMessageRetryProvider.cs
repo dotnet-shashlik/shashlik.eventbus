@@ -50,7 +50,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task<HandleResult> RetryAsync(long id, CancellationToken cancellationToken)
+        public async Task<HandleResult> RetryAsync(string id, CancellationToken cancellationToken)
         {
             var item = await MessageStorage.FindReceivedByIdAsync(id, cancellationToken).ConfigureAwait(false);
             if (item is null)

@@ -50,7 +50,7 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByIdAsync(long id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string id, CancellationToken cancellationToken)
         {
             var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE \"id\" = {id};";
 
@@ -74,7 +74,7 @@ namespace Shashlik.EventBus.PostgreSQL
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByIdAsync(long id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string id, CancellationToken cancellationToken)
         {
             var sql =
                 $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE \"id\" = {id};";
@@ -162,7 +162,7 @@ LIMIT {take} OFFSET {skip};
                 .ToList();
         }
 
-        public async Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
+        public async Task<string> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -189,14 +189,14 @@ VALUES(@msgId, @environment, @createTime, @delayAt, @expireTime, @eventName, @ev
             };
 
             var id = await SqlScalar(transactionContext, sql, parameters, cancellationToken).ConfigureAwait(false);
-            if (id is null || !id.TryParse<long>(out var longId))
+            if (id is null)
                 throw new DbUpdateException();
 
-            message.Id = longId;
-            return longId;
+            message.Id = id.ToString();
+            return message.Id!;
         }
 
-        public async Task<long> SaveReceivedAsync(MessageStorageModel message,
+        public async Task<string> SaveReceivedAsync(MessageStorageModel message,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -225,14 +225,14 @@ VALUES(@msgId, @environment, @createTime, @isDelay, @delayAt, @expireTime, @even
             };
 
             var id = await SqlScalar(sql, parameters, cancellationToken).ConfigureAwait(false);
-            if (id is null || !id.TryParse<long>(out var longId))
+            if (id is null)
                 throw new DbUpdateException();
 
-            message.Id = longId;
-            return longId;
+            message.Id = id.ToString();
+            return message.Id!;
         }
 
-        public async Task UpdatePublishedAsync(long id, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdatePublishedAsync(string id, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
@@ -245,7 +245,7 @@ WHERE ""id"" = {id}
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task UpdateReceivedAsync(long id, string status, int retryCount,
+        public async Task UpdateReceivedAsync(string id, string status, int retryCount,
             DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
@@ -258,7 +258,7 @@ WHERE ""id"" = {id}
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockPublishedAsync(long id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockPublishedAsync(string id, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -275,7 +275,7 @@ WHERE ""id"" = {id} AND (""isLocking"" = false OR ""lockEnd"" < {nowLong})
             return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
 
-        public async Task<bool> TryLockReceivedAsync(long id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockReceivedAsync(string id, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -480,7 +480,7 @@ SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableNam
         {
             return new MessageStorageModel
             {
-                Id = row.GetRowValue<long>("id"),
+                Id = row.GetRowValue<string>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
                 CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,
@@ -500,7 +500,7 @@ SELECT ""status"", COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableNam
         {
             return new MessageStorageModel
             {
-                Id = row.GetRowValue<long>("id"),
+                Id = row.GetRowValue<string>("id"),
                 MsgId = row.GetRowValue<string>("msgId"),
                 Environment = row.GetRowValue<string>("environment"),
                 CreateTime = row.GetRowValue<long>("createTime").LongToDateTimeOffset()!.Value,
