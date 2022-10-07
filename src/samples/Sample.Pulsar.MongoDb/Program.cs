@@ -104,7 +104,7 @@ namespace Sample.Pulsar.MongoDb
                     var usersCollection = mongoDatabase.GetCollection<Users>(nameof(Users));
                     using var startSession =
                         await mongoDatabase.Client.StartSessionAsync(cancellationToken: cancellationToken);
-                    // mongodb 事务需要集群部署
+                    // 开启事务, mongodb 事务需要集群部署
                     startSession.StartTransaction();
 
                     try
@@ -122,8 +122,8 @@ namespace Sample.Pulsar.MongoDb
                             startSession.GetTransactionContext(),
                             cancellationToken: cancellationToken);
 
-                        //if (DateTime.Now.Millisecond % 2 == 0)
-                        throw new Exception("模拟异常");
+                        if (DateTime.Now.Millisecond % 2 == 0)
+                            throw new Exception("模拟异常");
 
                         // 提交事务
                         await startSession.CommitTransactionAsync(cancellationToken);
@@ -131,7 +131,7 @@ namespace Sample.Pulsar.MongoDb
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("发布失败:" + content);
+                        Console.WriteLine("逻辑异常,数据回滚,发布失败:" + content);
                         // 回滚事务,消息数据也将回滚,不会发布
                         await startSession.AbortTransactionAsync(cancellationToken);
                     }
