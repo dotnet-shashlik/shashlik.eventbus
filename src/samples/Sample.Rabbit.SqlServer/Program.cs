@@ -88,11 +88,66 @@ namespace Sample.Rabbit.SqlServer
 
                     content = $"{DateTime.Now:HH:mm:ss} [ClusterId: {ClusterId}]=====>{content}";
 
-                    Console.WriteLine($"已发布消息: {content}");
+                    // 本地事务
+                    if (DateTime.Now.Millisecond % 2 == 0)
+                    {
+                        await using var tran = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+                        try
+                        {
+                            // 业务数据
+                            DbContext.Users.Add(new Users
+                            {
+                                Name = Guid.NewGuid().ToString()
+                            });
 
-                    await EventPublisher.PublishAsync(new Event1 { Name = content },
-                        null,
-                        cancellationToken: cancellationToken);
+                            // 发布事件
+                            await EventPublisher.PublishAsync(new Event1 { Name = content },
+                                DbContext.GetTransactionContext(),
+                                cancellationToken: cancellationToken);
+
+                            if (DateTime.Now.Millisecond % 2 == 0)
+                                throw new Exception("模拟异常");
+
+                            // 提交事务
+                            await tran.CommitAsync(cancellationToken);
+                            Console.WriteLine($"已发布消息: {content}");
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("逻辑异常,数据回滚,发布失败:" + content);
+                            // 回滚事务,消息数据也将回滚,不会发布
+                            await tran.RollbackAsync(cancellationToken);
+                        }
+                    }
+                    // TransactionScope
+                    else
+                    {
+                        using var tran = new System.Transactions.TransactionScope();
+                        try
+                        {
+                            // 业务数据
+                            DbContext.Users.Add(new Users
+                            {
+                                Name = Guid.NewGuid().ToString()
+                            });
+
+                            // 发布事件
+                            await EventPublisher.PublishAsync(new Event1 { Name = content },
+                                XaTransactionContext.Current,
+                                cancellationToken: cancellationToken);
+
+                            if (DateTime.Now.Millisecond % 2 == 0)
+                                throw new Exception("模拟异常");
+
+                            // 提交事务
+                            tran.Complete();
+                            Console.WriteLine($"已发布消息: {content}");
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("逻辑异常,数据回滚,发布失败:" + content);
+                        }
+                    }
                 }
             }
 
