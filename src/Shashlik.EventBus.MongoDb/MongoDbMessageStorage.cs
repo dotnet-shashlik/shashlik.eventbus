@@ -94,7 +94,7 @@ namespace Shashlik.EventBus.MongoDb
                 .ToListAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName,
+        public async Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName, string? eventHandlerName,
             string? status, int skip,
             int take,
             CancellationToken cancellationToken)
@@ -120,7 +120,7 @@ namespace Shashlik.EventBus.MongoDb
         {
             IMongoCollection<MessageStorageModel> mongoCollection;
             if (transactionContext is null)
-                mongoCollection = GetReceivedCollection();
+                mongoCollection = GetPublishedCollection();
             else
             {
                 if (transactionContext is MongoDbTransactionContext mongoDbTransactionContext)
@@ -158,8 +158,8 @@ namespace Shashlik.EventBus.MongoDb
             await mongoCollection.FindOneAndUpdateAsync(r => r.Id == id,
                 Builders<MessageStorageModel>.Update
                     .Set(r => r.Status, status)
-                    .Set(r => retryCount, retryCount)
-                    .Set(r => expireTime, expireTime),
+                    .Set(r => r.RetryCount, retryCount)
+                    .Set(r => r.ExpireTime, expireTime),
                 cancellationToken: cancellationToken);
         }
 
@@ -172,8 +172,8 @@ namespace Shashlik.EventBus.MongoDb
             await mongoCollection.FindOneAndUpdateAsync(r => r.Id == id,
                 Builders<MessageStorageModel>.Update
                     .Set(r => r.Status, status)
-                    .Set(r => retryCount, retryCount)
-                    .Set(r => expireTime, expireTime),
+                    .Set(r => r.RetryCount, retryCount)
+                    .Set(r => r.ExpireTime, expireTime),
                 cancellationToken: cancellationToken);
         }
 

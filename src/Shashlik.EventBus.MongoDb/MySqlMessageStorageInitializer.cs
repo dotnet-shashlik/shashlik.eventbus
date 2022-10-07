@@ -33,14 +33,6 @@ namespace Shashlik.EventBus.MongoDb
                     {
                         new CreateIndexModel<MessageStorageModel>(
                             Builders<MessageStorageModel>.IndexKeys
-                                .Descending(nameof(MessageStorageModel.Id))
-                            , new CreateIndexOptions
-                            {
-                                Name = nameof(MessageStorageModel.Id),
-                                Background = true
-                            }),
-                        new CreateIndexModel<MessageStorageModel>(
-                            Builders<MessageStorageModel>.IndexKeys
                                 .Descending(nameof(MessageStorageModel.MsgId))
                             , new CreateIndexOptions
                             {
@@ -80,6 +72,14 @@ namespace Shashlik.EventBus.MongoDb
                                 Name = nameof(MessageStorageModel.Status),
                                 Background = true
                             }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.LockEnd))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.LockEnd),
+                                Background = true
+                            }),
                     },
                     cancellationToken);
             }
@@ -92,14 +92,6 @@ namespace Shashlik.EventBus.MongoDb
                     mongoDatabase.GetCollection<MessageStorageModel>(Options.CurrentValue.ReceivedCollectionName);
                 await mongoCollection.Indexes.CreateManyAsync(new CreateIndexModel<MessageStorageModel>[]
                     {
-                        new CreateIndexModel<MessageStorageModel>(
-                            Builders<MessageStorageModel>.IndexKeys
-                                .Descending(nameof(MessageStorageModel.Id))
-                            , new CreateIndexOptions
-                            {
-                                Name = nameof(MessageStorageModel.Id),
-                                Background = true
-                            }),
                         new CreateIndexModel<MessageStorageModel>(
                             Builders<MessageStorageModel>.IndexKeys
                                 .Descending(nameof(MessageStorageModel.MsgId))
@@ -155,6 +147,14 @@ namespace Shashlik.EventBus.MongoDb
                             , new CreateIndexOptions
                             {
                                 Name = nameof(MessageStorageModel.Status),
+                                Background = true
+                            }),
+                        new CreateIndexModel<MessageStorageModel>(
+                            Builders<MessageStorageModel>.IndexKeys
+                                .Descending(nameof(MessageStorageModel.LockEnd))
+                            , new CreateIndexOptions
+                            {
+                                Name = nameof(MessageStorageModel.LockEnd),
                                 Background = true
                             }),
                     },

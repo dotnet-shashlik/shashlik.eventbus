@@ -120,7 +120,7 @@ LIMIT {take} OFFSET {skip};
                 .ToList();
         }
 
-        public async Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName,
+        public async Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName, string? eventHandlerName,
             string? status, int skip,
             int take,
             CancellationToken cancellationToken)

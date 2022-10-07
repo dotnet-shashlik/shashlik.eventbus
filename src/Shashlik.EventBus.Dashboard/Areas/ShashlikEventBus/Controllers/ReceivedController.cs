@@ -24,7 +24,7 @@ public class ReceivedController : BaseDashboardController
             status = model.StatusCount.Keys.First();
         }
 
-        model.Messages = await _messageStorage.SearchReceived(eventName, eventHandlerName, status,
+        model.Messages = await _messageStorage.SearchReceivedAsync(eventName, eventHandlerName, status,
             (pageIndex - 1) * pageSize,
             pageSize, CancellationToken.None);
         model.PageIndex = pageIndex;

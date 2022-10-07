@@ -75,7 +75,7 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(list);
         }
 
-        public Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName,
+        public Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName, string? eventHandlerName,
             string? status, int skip, int take,
             CancellationToken cancellationToken)
         {

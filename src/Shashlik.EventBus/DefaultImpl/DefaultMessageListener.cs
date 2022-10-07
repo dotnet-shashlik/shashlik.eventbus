@@ -125,16 +125,18 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 if (failCount > 5)
                 {
-                    await Task.Delay(Options.Value.StartRetryAfter * 1000);
+                    await Task.Delay(Options.Value.StartRetryAfter * 1000).ConfigureAwait(false);
                     // 5次都失败了,进入重试器执行
                     RetryProvider.Retry(
                         messageStorageModel.Id,
-                        () => ReceivedHandler.HandleAsync(messageStorageModel, items, descriptor, cancellationToken)
+                        async () => await ReceivedHandler.HandleAsync(messageStorageModel, items, descriptor,
+                            cancellationToken)
                     );
 
                     return;
                 }
 
+                // ReSharper disable once MethodSupportsCancellation
                 await Task.Delay(10).ConfigureAwait(false);
             }
         }

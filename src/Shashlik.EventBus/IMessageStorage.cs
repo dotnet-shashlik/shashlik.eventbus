@@ -74,7 +74,7 @@ namespace Shashlik.EventBus
         /// <param name="take">take</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<List<MessageStorageModel>> SearchReceived(string? eventName, string? eventHandlerName, string? status,
+        Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName, string? eventHandlerName, string? status,
             int skip, int take,
             CancellationToken cancellationToken);
 

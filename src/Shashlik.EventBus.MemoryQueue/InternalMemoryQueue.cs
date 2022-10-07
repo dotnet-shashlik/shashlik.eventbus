@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.MemoryQueue
 
         public static void Start(CancellationToken stopCancellationToken)
         {
-            _ = Task.Run(() =>
+            _ = Task.Run(async () =>
             {
                 while (!stopCancellationToken.IsCancellationRequested)
                 {
@@ -25,7 +25,7 @@ namespace Shashlik.EventBus.MemoryQueue
                         OnReceived?.Invoke(msg);
 
                     // ReSharper disable once MethodSupportsCancellation
-                    Task.Delay(10).ConfigureAwait(false);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
             }, stopCancellationToken);
         }

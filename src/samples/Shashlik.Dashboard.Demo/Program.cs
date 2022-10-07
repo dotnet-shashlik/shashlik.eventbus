@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using SampleBase;
+using MongoDB.Driver;
 using Shashlik.Dashboard.Demo;
 using Shashlik.EventBus;
 using Shashlik.EventBus.Dashboard;
 using Shashlik.EventBus.MemoryQueue;
+using Shashlik.EventBus.MongoDb;
 using Shashlik.EventBus.MySql;
 using Shashlik.EventBus.PostgreSQL;
 using Shashlik.EventBus.SqlServer;
-using Shashlik.EventBus.Utils;
-using Timer = System.Timers.Timer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +19,8 @@ Console.WriteLine("请选择数据库类型:");
 Console.WriteLine("1: mysql");
 Console.WriteLine("2: postgres");
 Console.WriteLine("3: sqlserver");
+Console.WriteLine("4: mongodb");
+
 var type = Console.ReadLine();
 
 string connectionString;
@@ -34,28 +35,35 @@ switch (type)
     case "3":
         connectionString = builder.Configuration.GetValue<string>("sqlserver");
         break;
+    case "4":
+        connectionString = builder.Configuration.GetValue<string>("mongodb");
+        builder.Services.AddSingleton<IMongoClient>(new MongoClient(connectionString));
+        break;
     default:
         throw new ArgumentException();
 }
 
-builder.Services.AddDbContext<DataContext>(
-    x =>
-    {
-        switch (type)
+if (type != "4")
+{
+    builder.Services.AddDbContext<DataContext>(
+        x =>
         {
-            case "1":
-                x.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-                break;
-            case "2":
-                x.UseNpgsql(connectionString);
-                break;
-            case "3":
-                x.UseSqlServer(connectionString);
-                break;
-            default:
-                throw new ArgumentException();
-        }
-    });
+            switch (type)
+            {
+                case "1":
+                    x.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                    break;
+                case "2":
+                    x.UseNpgsql(connectionString);
+                    break;
+                case "3":
+                    x.UseSqlServer(connectionString);
+                    break;
+                default:
+                    break;
+            }
+        });
+}
 
 var eventBusBuilder = builder.Services.AddEventBus(r =>
 {
@@ -88,6 +96,9 @@ switch (type)
     case "3":
         eventBusBuilder = eventBusBuilder.AddSqlServer<DataContext>();
         break;
+    case "4":
+        eventBusBuilder = eventBusBuilder.AddMongoDb(connectionString);
+        break;
     default:
         throw new ArgumentException();
 }
@@ -100,16 +111,20 @@ eventBusBuilder
     ;
 
 var app = builder.Build();
-using var serviceScope = app.Services.CreateScope();
-var dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
-dataContext.Database.Migrate();
+
+if (type != "4")
+{
+    using var serviceScope = app.Services.CreateScope();
+    var dataContext = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+    dataContext.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 
 app.UseAuthorization();
 app.UseRouting();
 // 启用 dashboard
-app.UseEventBusDashboard();
+//app.UseEventBusDashboard();
 
 app.MapControllers();
 

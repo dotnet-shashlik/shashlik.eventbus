@@ -1,5 +1,4 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using MongoDB.Driver;
 
 namespace Shashlik.EventBus.MongoDb
@@ -27,8 +26,8 @@ namespace Shashlik.EventBus.MongoDb
         public string? ConnectionString { get; set; } = "mongodb://localhost";
 
         /// <summary>
-        /// 自定义IMongoClient连接获取
+        /// 自定义IMongoClient连接获取,优先级更高
         /// </summary>
-        public Func<IServiceProvider, IMongoClient>? ClientFactory { get; set; }
+        public Func<IServiceProvider, IMongoClient>? ClientFactory { get; set; } = null;
     }
 }
