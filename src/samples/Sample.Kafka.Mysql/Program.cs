@@ -2,7 +2,6 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -103,6 +102,8 @@ namespace Sample.Kafka.Mysql
                                 Name = Guid.NewGuid().ToString()
                             });
 
+                            await DbContext.SaveChangesAsync(cancellationToken);
+
                             // 发布事件
                             await EventPublisher.PublishAsync(new Event1 { Name = content },
                                 DbContext.GetTransactionContext(),
@@ -133,6 +134,8 @@ namespace Sample.Kafka.Mysql
                             {
                                 Name = Guid.NewGuid().ToString()
                             });
+
+                            await DbContext.SaveChangesAsync(cancellationToken);
 
                             // 发布事件
                             await EventPublisher.PublishAsync(new Event1 { Name = content },

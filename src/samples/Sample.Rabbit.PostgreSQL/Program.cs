@@ -105,6 +105,8 @@ namespace Sample.Rabbit.PostgreSQL
                                 Name = Guid.NewGuid().ToString()
                             });
 
+                            await DbContext.SaveChangesAsync(cancellationToken);
+
                             // 发布事件
                             await EventPublisher.PublishAsync(new Event1 { Name = content },
                                 DbContext.GetTransactionContext(),
@@ -135,6 +137,8 @@ namespace Sample.Rabbit.PostgreSQL
                             {
                                 Name = Guid.NewGuid().ToString()
                             });
+
+                            await DbContext.SaveChangesAsync(cancellationToken);
 
                             // 发布事件
                             await EventPublisher.PublishAsync(new Event1 { Name = content },
