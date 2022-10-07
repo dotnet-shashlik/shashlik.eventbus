@@ -18,7 +18,7 @@ public class MongoDbTransactionContext : ITransactionContext
         {
             return !ClientSessionHandle.IsInTransaction;
         }
-        catch (Exception e)
+        catch
         {
             return true;
         }
