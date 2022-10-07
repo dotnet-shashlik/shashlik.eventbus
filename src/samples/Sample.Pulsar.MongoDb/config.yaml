@@ -1,0 +1,8 @@
+﻿Logging:
+  LogLevel:
+    Default: "Debug"
+ConnectionStrings:
+  Default: mongodb://mongo:123123@localhost:27017/?authSource=admin
+EventBus:
+  Pulsar:
+    ServiceUrl: pulsar://localhost

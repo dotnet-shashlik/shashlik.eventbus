@@ -119,12 +119,14 @@ namespace Shashlik.EventBus.MongoDb
             CancellationToken cancellationToken = default)
         {
             IMongoCollection<MessageStorageModel> mongoCollection;
+            MongoDbTransactionContext? mongoDbTransactionContext = null;
             if (transactionContext is null)
                 mongoCollection = GetPublishedCollection();
             else
             {
-                if (transactionContext is MongoDbTransactionContext mongoDbTransactionContext)
+                if (transactionContext is MongoDbTransactionContext mongoDbTransactionContext1)
                 {
+                    mongoDbTransactionContext = mongoDbTransactionContext1;
                     mongoCollection = mongoDbTransactionContext.ClientSessionHandle.Client
                         .GetDatabase(Options.CurrentValue.DataBase)
                         .GetCollection<MessageStorageModel>(Options.CurrentValue.PublishedCollectionName);
@@ -137,7 +139,12 @@ namespace Shashlik.EventBus.MongoDb
             }
 
             message.Id = ObjectId.GenerateNewId().ToString();
-            await mongoCollection.InsertOneAsync(message, new InsertOneOptions { }, cancellationToken);
+
+            if (mongoDbTransactionContext is null)
+                await mongoCollection.InsertOneAsync(message, new InsertOneOptions { }, cancellationToken);
+            else
+                await mongoCollection.InsertOneAsync(mongoDbTransactionContext.ClientSessionHandle,
+                    message, new InsertOneOptions { }, cancellationToken);
             return message.Id;
         }
 

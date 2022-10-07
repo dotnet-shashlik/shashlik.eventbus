@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.MongoDb
@@ -64,6 +65,16 @@ namespace Shashlik.EventBus.MongoDb
             eventBusBuilder.Services.AddSingleton<IConnection, DefaultConnection>();
 
             return eventBusBuilder;
+        }
+
+        /// <summary>
+        /// 获取事务上下文
+        /// </summary>
+        /// <param name="clientSessionHandle"></param>
+        /// <returns></returns>
+        public static ITransactionContext GetTransactionContext(this IClientSessionHandle clientSessionHandle)
+        {
+            return new MongoDbTransactionContext(clientSessionHandle);
         }
     }
 }

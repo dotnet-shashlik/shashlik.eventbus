@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using System;
+using MongoDB.Driver;
 
 namespace Shashlik.EventBus.MongoDb;
 
@@ -13,6 +14,13 @@ public class MongoDbTransactionContext : ITransactionContext
 
     public bool IsDone()
     {
-        return ClientSessionHandle.IsInTransaction;
+        try
+        {
+            return !ClientSessionHandle.IsInTransaction;
+        }
+        catch (Exception e)
+        {
+            return true;
+        }
     }
 }
