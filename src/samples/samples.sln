@@ -53,6 +53,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MongoDb",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Pulsar", "..\Shashlik.EventBus.Pulsar\Shashlik.EventBus.Pulsar.csproj", "{39FD5D20-7A20-46B6-8D3B-F02FCF3A9902}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Pulsar.Mysql", "Sample.Pulsar.Mysql\Sample.Pulsar.Mysql.csproj", "{E9D6C360-9E3A-4DC7-B6E7-00BB91DD2235}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -155,6 +157,10 @@ Global
 		{39FD5D20-7A20-46B6-8D3B-F02FCF3A9902}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39FD5D20-7A20-46B6-8D3B-F02FCF3A9902}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{39FD5D20-7A20-46B6-8D3B-F02FCF3A9902}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9D6C360-9E3A-4DC7-B6E7-00BB91DD2235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9D6C360-9E3A-4DC7-B6E7-00BB91DD2235}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9D6C360-9E3A-4DC7-B6E7-00BB91DD2235}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9D6C360-9E3A-4DC7-B6E7-00BB91DD2235}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

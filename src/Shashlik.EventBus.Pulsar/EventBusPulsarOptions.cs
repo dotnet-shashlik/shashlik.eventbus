@@ -8,7 +8,7 @@ namespace Shashlik.EventBus.Pulsar
         /// <summary>
         /// 连接
         /// </summary>
-        public string? ServiceUrl { get; set; }
+        public string? ServiceUrl { get; set; } = "pulsar://localhost";
 
         public Func<IServiceProvider, PulsarClient>? PulsarClientFactory { get; set; }
     }

@@ -1,0 +1,10 @@
+﻿Logging:
+  LogLevel:
+    Default: "Debug"
+ConnectionStrings:
+  Default: server=localhost;database=eventbustest;user id=root;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
+EventBus:
+  RedisMQ:
+    Conn: localhost,password=123123,defaultDatabase=1
+  Pulsar:
+    ServiceUrl: pulsar://localhost
