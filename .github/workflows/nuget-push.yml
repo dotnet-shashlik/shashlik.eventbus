@@ -43,6 +43,24 @@ jobs:
       - name: Setup Kafka
         uses: 280780363/kafka-action@v1.0
 
+      - name: Setup MongoDb
+        uses: 280780363/mongo-action@v1.0
+        with:
+          version: 6.0.2
+          username: mongo
+          password: 123123
+
+      - name: Setup Pulsar
+        uses: reugn/github-action-pulsar@v1
+        with:
+          version: 2.10.1
+
+      - name: Setup Redis
+        uses: getong/redis-action@v1
+        with:
+          redis password: '123123'
+          redis version: 6.2.7
+
       - name: Install dependencies
         run: dotnet restore ./src/Shashlik.EventBus.sln
       - name: Test
