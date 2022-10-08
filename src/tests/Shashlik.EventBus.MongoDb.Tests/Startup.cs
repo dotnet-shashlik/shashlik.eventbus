@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using Shashlik.EventBus.MemoryQueue;
 using Shashlik.Kernel;
 using Shashlik.Utils.Extensions;
@@ -21,6 +22,7 @@ namespace Shashlik.EventBus.MongoDb.Tests
         public void ConfigureServices(IServiceCollection services)
         {
             var conn = Configuration.GetConnectionString("MongoDb");
+            services.AddSingleton<IMongoClient>(new MongoClient(conn));
 
             services.AddSingleton<IReceivedMessageRetryProvider, EmptyReceivedMessageRetryProvider>();
             services.AddSingleton<IPublishedMessageRetryProvider, EmptyPublishedMessageRetryProvider>();

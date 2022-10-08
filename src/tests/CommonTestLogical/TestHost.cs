@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -54,8 +55,12 @@ namespace CommonTestLogical
         {
             Factory = factory;
             factory.Output = testOutputHelper;
-            HttpClient = factory.CreateClient();
-            ServiceScope = factory.Services.CreateScope();
+            HttpClient = factory.WithWebHostBuilder(builder =>
+                    builder.UseSolutionRelativeContentRoot("tests"))
+                .CreateClient();
+            ServiceScope = factory.WithWebHostBuilder(builder =>
+                    builder.UseSolutionRelativeContentRoot("tests"))
+                .Services.CreateScope();
             Options = GetService<IOptions<EventBusOptions>>().Value;
         }
 

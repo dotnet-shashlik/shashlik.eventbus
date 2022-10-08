@@ -60,7 +60,6 @@ namespace CommonTestLogical
             var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg!.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
-            dbMsg.EventHandlerName.ShouldBeNullOrWhiteSpace();
             dbMsg.Status.ShouldBe(msg.Status);
         }
 
@@ -107,7 +106,6 @@ namespace CommonTestLogical
             var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg!.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
-            dbMsg.EventHandlerName.ShouldBeNullOrWhiteSpace();
             dbMsg.Status.ShouldBe(msg.Status);
         }
 
