@@ -24,10 +24,5 @@ namespace Shashlik.EventBus.MongoDb
         /// MongoDb数据库连接字符串
         /// </summary>
         public string? ConnectionString { get; set; } = "mongodb://localhost";
-
-        /// <summary>
-        /// 自定义IMongoClient连接获取,优先级更高
-        /// </summary>
-        public Func<IServiceProvider, IMongoClient>? ClientFactory { get; set; } = null;
     }
 }

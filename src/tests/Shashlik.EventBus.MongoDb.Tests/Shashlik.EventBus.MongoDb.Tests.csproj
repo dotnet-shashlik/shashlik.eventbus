@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.0" />
+        <PackageReference Include="NetEscapades.Configuration.Yaml" Version="2.1.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+        <PackageReference Include="Shouldly" Version="4.0.3" />
+        <PackageReference Include="xunit" Version="2.4.1" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shashlik.EventBus.MongoDb\Shashlik.EventBus.MongoDb.csproj" />
+        <ProjectReference Include="..\CommonTestLogical\CommonTestLogical.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
+        
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\config.test.yaml">
+        <Link>config.test.yaml</Link>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+</Project>
