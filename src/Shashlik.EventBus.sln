@@ -76,6 +76,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MongoDb",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MongoDb.Tests", "tests\Shashlik.EventBus.MongoDb.Tests\Shashlik.EventBus.MongoDb.Tests.csproj", "{CD9B8B26-9CC3-4576-A574-7A59D1C69DFD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Redis.MsgWithoutLosing.Tests", "tests\Shashlik.EventBus.Redis.MsgWithoutLosing.Tests\Shashlik.EventBus.Redis.MsgWithoutLosing.Tests.csproj", "{FEC12797-3C0C-465F-BD05-0EF0761925C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Redis.Tests", "tests\Shashlik.EventBus.Redis.Tests\Shashlik.EventBus.Redis.Tests.csproj", "{2E0989DE-5914-45CA-9D74-DED626AF4C06}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Pulsar.MsgWithoutLosing.Tests", "tests\Shashlik.EventBus.Pulsar.MsgWithoutLosing.Tests\Shashlik.EventBus.Pulsar.MsgWithoutLosing.Tests.csproj", "{242D0F43-5E51-4DC6-8055-D8B8104FABC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Pulsar.Tests", "tests\Shashlik.EventBus.Pulsar.Tests\Shashlik.EventBus.Pulsar.Tests.csproj", "{1C7BC7E0-D206-4AD4-8814-307931D568A2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -190,6 +198,22 @@ Global
 		{CD9B8B26-9CC3-4576-A574-7A59D1C69DFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD9B8B26-9CC3-4576-A574-7A59D1C69DFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD9B8B26-9CC3-4576-A574-7A59D1C69DFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEC12797-3C0C-465F-BD05-0EF0761925C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEC12797-3C0C-465F-BD05-0EF0761925C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEC12797-3C0C-465F-BD05-0EF0761925C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEC12797-3C0C-465F-BD05-0EF0761925C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E0989DE-5914-45CA-9D74-DED626AF4C06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E0989DE-5914-45CA-9D74-DED626AF4C06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E0989DE-5914-45CA-9D74-DED626AF4C06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E0989DE-5914-45CA-9D74-DED626AF4C06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{242D0F43-5E51-4DC6-8055-D8B8104FABC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{242D0F43-5E51-4DC6-8055-D8B8104FABC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{242D0F43-5E51-4DC6-8055-D8B8104FABC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{242D0F43-5E51-4DC6-8055-D8B8104FABC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C7BC7E0-D206-4AD4-8814-307931D568A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C7BC7E0-D206-4AD4-8814-307931D568A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C7BC7E0-D206-4AD4-8814-307931D568A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C7BC7E0-D206-4AD4-8814-307931D568A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -208,6 +232,10 @@ Global
 		{714DE6CF-44DD-4E4B-ACEC-D3D902F0639E} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{CD9B8B26-9CC3-4576-A574-7A59D1C69DFD} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{FEC12797-3C0C-465F-BD05-0EF0761925C6} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{2E0989DE-5914-45CA-9D74-DED626AF4C06} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{242D0F43-5E51-4DC6-8055-D8B8104FABC2} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{1C7BC7E0-D206-4AD4-8814-307931D568A2} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

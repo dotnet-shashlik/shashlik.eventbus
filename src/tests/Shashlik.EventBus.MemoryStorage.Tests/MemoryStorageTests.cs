@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.MemoryStorage.Tests
 {
+    [Collection("Shashlik.EventBus.MemoryStorage.Tests")]
     public class MemoryStorageTests : TestBase<Startup>
     {
         public MemoryStorageTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) :

@@ -4,12 +4,12 @@ using CommonTestLogical.MsgWithoutLosing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests
+namespace Shashlik.EventBus.Redis.MsgWithoutLosing.Tests
 {
-    [Collection("Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests")]
-    public class KafkaMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
+    [Collection("Shashlik.EventBus.Redis.MsgWithoutLosing.Tests")]
+    public class RedisMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
     {
-        public KafkaMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory,
+        public RedisMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory,
             ITestOutputHelper testOutputHelper) : base(
             factory, testOutputHelper)
         {

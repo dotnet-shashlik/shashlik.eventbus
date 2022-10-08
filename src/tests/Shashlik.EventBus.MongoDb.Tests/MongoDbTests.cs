@@ -14,6 +14,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.MongoDb.Tests
 {
+    [Collection("Shashlik.EventBus.MongoDb.Tests")]
     public class MongoDbTests : TestBase<Startup>
     {
         public MongoDbTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(

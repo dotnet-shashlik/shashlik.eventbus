@@ -8,6 +8,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
 {
+    [Collection("Shashlik.EventBus.SendMsgWithoutLosing.Tests")]
     public class SendMsgWithoutLosingTests : TestBase<SendMsgWithoutLosingTestStartup>
     {
         public SendMsgWithoutLosingTests(TestWebApplicationFactory<SendMsgWithoutLosingTestStartup> factory,

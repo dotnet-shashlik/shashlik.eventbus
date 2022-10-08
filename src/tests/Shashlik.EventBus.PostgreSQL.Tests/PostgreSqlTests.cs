@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.PostgreSQL.Tests
 {
+    [Collection("Shashlik.EventBus.PostgreSQL.Tests")]
     public class PostgreSqlTests : TestBase<Startup>
     {
         public PostgreSqlTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(

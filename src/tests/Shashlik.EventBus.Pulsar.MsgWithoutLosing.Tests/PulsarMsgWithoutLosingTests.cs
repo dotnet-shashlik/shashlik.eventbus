@@ -4,12 +4,12 @@ using CommonTestLogical.MsgWithoutLosing;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests
+namespace Shashlik.EventBus.Pulsar.MsgWithoutLosing.Tests
 {
-    [Collection("Shashlik.EventBus.Kafka.MsgWithoutLosing.Tests")]
-    public class KafkaMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
+    [Collection("Shashlik.EventBus.Pulsar.MsgWithoutLosing.Tests")]
+    public class PulsarMsgWithoutLosingTests : TestBase<MsgWithoutLosingStartup>
     {
-        public KafkaMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory,
+        public PulsarMsgWithoutLosingTests(TestWebApplicationFactory<MsgWithoutLosingStartup> factory,
             ITestOutputHelper testOutputHelper) : base(
             factory, testOutputHelper)
         {

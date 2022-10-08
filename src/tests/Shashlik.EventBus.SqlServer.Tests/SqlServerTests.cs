@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.SqlServer.Tests
 {
+    [Collection("Shashlik.EventBus.SqlServer.Tests")]
     public class SqlServerTests : TestBase<Startup>
     {
         public SqlServerTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(

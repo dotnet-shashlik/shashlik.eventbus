@@ -20,6 +20,12 @@ namespace CommonTestLogical
     {
         public ITestOutputHelper Output { get; set; }
 
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            base.ConfigureWebHost(builder);
+            builder.UseSolutionRelativeContentRoot("tests");
+        }
+
         protected override IHostBuilder CreateHostBuilder()
         {
             var builder = Host.CreateDefaultBuilder();
@@ -55,12 +61,8 @@ namespace CommonTestLogical
         {
             Factory = factory;
             factory.Output = testOutputHelper;
-            HttpClient = factory.WithWebHostBuilder(builder =>
-                    builder.UseSolutionRelativeContentRoot("tests"))
-                .CreateClient();
-            ServiceScope = factory.WithWebHostBuilder(builder =>
-                    builder.UseSolutionRelativeContentRoot("tests"))
-                .Services.CreateScope();
+            HttpClient = factory.CreateClient();
+            ServiceScope = factory.Services.CreateScope();
             Options = GetService<IOptions<EventBusOptions>>().Value;
         }
 

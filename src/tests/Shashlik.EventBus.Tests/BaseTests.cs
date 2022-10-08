@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using CommonTestLogical;
 using CommonTestLogical.TestEvents;
@@ -15,6 +14,7 @@ using Xunit.Abstractions;
 
 namespace Shashlik.EventBus.Tests
 {
+    [Collection("Shashlik.EventBus.Tests")]
     public class BaseTests : TestBase<Startup>
     {
         public BaseTests(TestWebApplicationFactory<Startup> factory, ITestOutputHelper testOutputHelper) : base(factory,
@@ -348,7 +348,7 @@ namespace Shashlik.EventBus.Tests
             await receivedMessageRetryProvider.RetryAsync(id, default);
             var messageStorageModel = await messageStorage.FindReceivedByIdAsync(id, default);
             messageStorageModel.ShouldNotBeNull();
-            messageStorageModel.RetryCount.ShouldBe(Options.RetryFailedMax + 1);
+            messageStorageModel.RetryCount.ShouldBe(Options.RetryFailedMax + 2);
         }
 
         /// <summary>
