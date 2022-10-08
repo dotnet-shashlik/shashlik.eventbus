@@ -589,66 +589,66 @@ namespace CommonTestLogical
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            var list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, msg.Status, 0, 100,
+            var list = await MessageStorage.SearchReceivedAsync(msg.EventName, msg.EventHandlerName, msg.Status, 0, 100,
                 default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
+            list = await MessageStorage.SearchReceivedAsync(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
                 default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(msg.EventName, string.Empty, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchReceivedAsync(msg.EventName, string.Empty, string.Empty, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(msg.EventName, string.Empty, msg.Status, 0, 100, default);
+            list = await MessageStorage.SearchReceivedAsync(msg.EventName, string.Empty, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
 
-            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
+            list = await MessageStorage.SearchReceivedAsync(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, string.Empty, 0, 100,
+            list = await MessageStorage.SearchReceivedAsync(string.Empty, msg.EventHandlerName, string.Empty, 0, 100,
                 default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
+            list = await MessageStorage.SearchReceivedAsync(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
                 default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
+            list = await MessageStorage.SearchReceivedAsync(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(string.Empty, string.Empty, msg.Status, 0, 100, default);
+            list = await MessageStorage.SearchReceivedAsync(string.Empty, string.Empty, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceived(msg.EventName, string.Empty, msg.Status, 0, 100, default);
+            list = await MessageStorage.SearchReceivedAsync(msg.EventName, string.Empty, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
