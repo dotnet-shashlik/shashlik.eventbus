@@ -188,13 +188,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 if (failCount > 5)
                 {
-                    await Task.Delay(Options.Value.StartRetryAfter * 1000).ConfigureAwait(false);
-                    // 5次都失败了,进入重试器执行
-                    RetryProvider.Retry(
-                        messageStorageModel.Id,
-                        () => PublishHandler.HandleAsync(messageTransferModel, messageStorageModel, cancellationToken)
-                    );
-
+                    // 将由重试器处理,为了减少线程消耗这里不再精准执行
                     return;
                 }
             }
