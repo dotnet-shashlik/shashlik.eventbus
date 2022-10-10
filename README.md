@@ -1,5 +1,24 @@
 # 【Shashlik.EventBus】
 
+## Nuget
+
+| PackageName                         | Nuget                                                                                                                                                  | Description                |
+|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------|
+| Shashlik.EventBus.Abstract          | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Abstract.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Abstract)                   | 接口抽象                       |
+| Shashlik.EventBus                   | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.svg)](https://www.nuget.org/packages/Shashlik.EventBus)                                     | 基础包，消息收发、存储抽象，以及事件处理的默认实现  |
+| Shashlik.EventBus.MySql             | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.MySql.svg)](https://www.nuget.org/packages/Shashlik.EventBus.MySql)                         | MySql 消息存储驱动               |
+| Shashlik.EventBus.PostgreSQL        | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.PostgreSQL.svg)](https://www.nuget.org/packages/Shashlik.EventBus.PostgreSQL)               | PostgreSQL 消息存储驱动          |
+| Shashlik.EventBus.SqlServer         | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.SqlServer.svg)](https://www.nuget.org/packages/Shashlik.EventBus.SqlServer)                 | SqlServer 消息存储驱动           |
+| Shashlik.EventBus.MongoDb           | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.MongoDb.svg)](https://www.nuget.org/packages/Shashlik.EventBus.MongoDb)                     | MongoDb 消息存储驱动             |
+| Shashlik.EventBus.Kafka             | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Kafka.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Kafka)                         | kafka 消息收发驱动               |
+| Shashlik.EventBus.RabbitMQ          | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.RabbitMQ.svg)](https://www.nuget.org/packages/Shashlik.EventBus.RabbitMQ)                   | RabbitMQ 消息收发驱动            |
+| Shashlik.EventBus.Pulsar            | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Pulsar.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Pulsar)                       | Pulsar 消息收发驱动              |
+| Shashlik.EventBus.Redis          | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Redis.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Redis)                      | RedisStream 消息收发驱动         |
+| Shashlik.EventBus.RelationDbStorage | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.RelationDbStorage.svg)](https://www.nuget.org/packages/Shashlik.EventBus.RelationDbStorage) | 关系型数据库事务实现                 |
+| Shashlik.EventBus.Extensions.EfCore | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Extensions.EfCore.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Extensions.EfCore) | EF 扩展，方便通过 EF 执行事件的发布与事务处理 |
+| Shashlik.EventBus.MemoryQueue       | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.MemoryQueue.svg)](https://www.nuget.org/packages/Shashlik.EventBus.MemoryQueue)             | 内存消息驱动，仅适用于测试              |
+| Shashlik.EventBus.MemoryStorage     | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.MemoryStorage.svg)](https://www.nuget.org/packages/Shashlik.EventBus.MemoryStorage)         | 内存消息存储，仅适用于测试              |
+
 
 ## 简介
 
