@@ -258,11 +258,10 @@
 - 消息中间件支持
     - [x] RabbitMQ
     - [x] Kafka
-    - [ ] ActiveMQ
-    - [ ] Pulsar
-    - [ ] Redis
+    - [x] Pulsar
+    - [x] Redis
 - 存储支持
     - [x] MySql
     - [x] PostgreSql
     - [x] SqlServer
-    - [ ] MongoDb
+    - [x] MongoDb
