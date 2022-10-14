@@ -323,7 +323,7 @@ namespace Shashlik.EventBus.Tests
         /// 手动retry
         /// </summary>
         [Fact]
-        public async Task ManualRetryTestSuccess()
+        public async Task ReceivedManualRetryTestSuccess()
         {
             var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
             var messageStorage = GetService<IMessageStorage>();
@@ -355,7 +355,7 @@ namespace Shashlik.EventBus.Tests
         /// 手动retry
         /// </summary>
         [Fact]
-        public async Task ManualRetryTestException()
+        public async Task ReceivedManualRetryTestException()
         {
             var receivedMessageRetryProvider = GetService<IReceivedMessageRetryProvider>();
             var messageStorage = GetService<IMessageStorage>();
@@ -386,17 +386,35 @@ namespace Shashlik.EventBus.Tests
             TestExceptionEventHandler.Counter.ShouldBe(count + 1);
         }
 
+        /// <summary>
+        /// 手动retry
+        /// </summary>
         [Fact]
-        public async Task RetryProviderMaxFailedTest()
+        public async Task PublishedManualRetryTestSuccess()
         {
-            var retryProvider = GetService<IRetryProvider>();
-            var counter = 0;
-            retryProvider.Retry("1", () => Task.FromResult(new HandleResult(false, new MessageStorageModel
+            var publishedMessageRetryProvider = GetService<IPublishedMessageRetryProvider>();
+            var messageStorage = GetService<IMessageStorage>();
+            var eventNameRuler = GetService<IEventNameRuler>();
+            var id = await messageStorage.SavePublishedAsync(new MessageStorageModel
             {
-                RetryCount = ++counter
-            })));
-            await Task.Delay(Options.RetryInterval * Options.RetryFailedMax * 1000 + 3000);
-            counter.ShouldBe(Options.RetryFailedMax);
+                MsgId = Guid.NewGuid().ToString(),
+                Environment = "dev",
+                CreateTime = DateTimeOffset.Now,
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = null,
+                EventName = eventNameRuler.GetName(typeof(TestEvent)),
+                EventBody = "{Name:\"张三\"}",
+                EventItems = "{}",
+                RetryCount = Options.RetryFailedMax + 1,
+                Status = MessageStatus.Failed,
+                IsLocking = false,
+                LockEnd = null
+            }, null, default);
+            await publishedMessageRetryProvider.RetryAsync(id, default);
+            var messageStorageModel = await messageStorage.FindPublishedByIdAsync(id, default);
+            messageStorageModel.ShouldNotBeNull();
+            messageStorageModel.RetryCount.ShouldBe(Options.RetryFailedMax + 2);
         }
 
         [Fact]
@@ -404,10 +422,74 @@ namespace Shashlik.EventBus.Tests
         {
             var retryProvider = GetService<IRetryProvider>();
             var counter = 0;
-            retryProvider.Retry("1",
+            await retryProvider.Retry("1",
                 () => Task.FromResult(new HandleResult(true, new MessageStorageModel { RetryCount = ++counter })));
             await Task.Delay(Options.RetryInterval * 1000 + 1000);
             counter.ShouldBe(1);
+        }
+
+        [Fact]
+        public async Task PublishedMessageRetryProviderStartupTest()
+        {
+            var retryProvider = GetService<IPublishedMessageRetryProvider>();
+            var messageStorage = GetService<IMessageStorage>();
+            var id = await messageStorage.SavePublishedAsync(new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString(),
+                Environment = Options.Environment,
+                CreateTime = DateTimeOffset.Now.AddSeconds(-Options.StartRetryAfter - 100),
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = null,
+                EventName = $"{nameof(TestEvent)}.{Options.Environment}",
+                EventBody = "{}",
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Failed,
+                IsLocking = false,
+                LockEnd = null
+            }, null, default);
+            await retryProvider.StartupAsync(default);
+
+            await Task.Delay(3000);
+
+            var msg = await messageStorage.FindPublishedByIdAsync(id, default);
+            msg.ShouldNotBeNull();
+            msg.Id.ShouldBe(id);
+            msg.Status.ShouldBe(MessageStatus.Succeeded);
+            msg.RetryCount.ShouldBe(1);
+        }
+
+        [Fact]
+        public async Task ReceivedMessageRetryProviderStartupTest()
+        {
+            var retryProvider = GetService<IReceivedMessageRetryProvider>();
+            var messageStorage = GetService<IMessageStorage>();
+            var id = await messageStorage.SaveReceivedAsync(new MessageStorageModel
+            {
+                MsgId = Guid.NewGuid().ToString(),
+                Environment = Options.Environment,
+                CreateTime = DateTimeOffset.Now.AddSeconds(-Options.StartRetryAfter - 100),
+                DelayAt = null,
+                ExpireTime = null,
+                EventHandlerName = $"{nameof(TestEventHandler)}.{Options.Environment}",
+                EventName = $"{nameof(TestEvent)}.{Options.Environment}",
+                EventBody = "{}",
+                EventItems = "{}",
+                RetryCount = 0,
+                Status = MessageStatus.Failed,
+                IsLocking = false,
+                LockEnd = null
+            }, default);
+            await retryProvider.StartupAsync(default);
+
+            await Task.Delay(3000);
+
+            var msg = await messageStorage.FindReceivedByIdAsync(id, default);
+            msg.ShouldNotBeNull();
+            msg.Id.ShouldBe(id);
+            msg.Status.ShouldBe(MessageStatus.Succeeded);
+            msg.RetryCount.ShouldBe(1);
         }
     }
 }
