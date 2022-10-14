@@ -22,8 +22,11 @@ namespace Shashlik.EventBus.DefaultImpl
 
         public IEnumerable<EventHandlerDescriptor> FindAll()
         {
-            if (_cache is null)
+            if (_cache is not null) return _cache.Values;
+            lock (this)
             {
+                if (_cache is not null) return _cache.Values;
+
                 var types = ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>));
 
                 List<EventHandlerDescriptor> list = new();
