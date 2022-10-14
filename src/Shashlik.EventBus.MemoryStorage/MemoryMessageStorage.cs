@@ -44,9 +44,9 @@ namespace Shashlik.EventBus.MemoryStorage
             return await Task.FromResult(res);
         }
 
-        public Task<MessageStorageModel?> FindPublishedByIdAsync(string id, CancellationToken cancellationToken)
+        public Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_published.GetOrDefault(id));
+            return Task.FromResult(_published.GetOrDefault(storageId));
         }
 
         public async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId,
@@ -57,9 +57,9 @@ namespace Shashlik.EventBus.MemoryStorage
                 r.MsgId == msgId && r.EventHandlerName == eventHandlerDescriptor.EventHandlerName));
         }
 
-        public Task<MessageStorageModel?> FindReceivedByIdAsync(string id, CancellationToken cancellationToken)
+        public Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_received.GetOrDefault(id));
+            return Task.FromResult(_received.GetOrDefault(storageId));
         }
 
         public Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip,
@@ -106,10 +106,10 @@ namespace Shashlik.EventBus.MemoryStorage
             throw new Exception($"save received message error, msgId: {message.MsgId}");
         }
 
-        public Task UpdatePublishedAsync(string id, string status, int retryCount, DateTimeOffset? expireTime,
+        public Task UpdatePublishedAsync(string storageId, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken)
         {
-            if (_published.TryGetValue(id, out var model))
+            if (_published.TryGetValue(storageId, out var model))
             {
                 model.Status = status;
                 model.RetryCount = retryCount;
@@ -121,10 +121,10 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.CompletedTask;
         }
 
-        public Task UpdateReceivedAsync(string id, string status, int retryCount,
+        public Task UpdateReceivedAsync(string storageId, string status, int retryCount,
             DateTimeOffset? expireTime, CancellationToken cancellationToken)
         {
-            if (_received.TryGetValue(id, out var model))
+            if (_received.TryGetValue(storageId, out var model))
             {
                 model.Status = status;
                 model.RetryCount = retryCount;
@@ -159,12 +159,12 @@ namespace Shashlik.EventBus.MemoryStorage
                 return Task.FromResult(false);
         }
 
-        public Task<bool> TryLockReceivedAsync(string id, DateTimeOffset lockEndAt,
+        public Task<bool> TryLockReceivedAsync(string storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            if (_received.TryGetValue(id, out var model))
+            if (_received.TryGetValue(storageId, out var model))
             {
                 if (!model.IsLocking || DateTimeOffset.Now > model.LockEnd)
                 {
