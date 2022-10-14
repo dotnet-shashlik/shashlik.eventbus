@@ -48,9 +48,9 @@ SELECT 1 FROM `{Options.CurrentValue.PublishedTableName}` WHERE `msgId` = '{msgI
             return RowToPublishedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId, CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM `{Options.CurrentValue.PublishedTableName}` WHERE `id` = {id};";
+            var sql = $"SELECT * FROM `{Options.CurrentValue.PublishedTableName}` WHERE `id` = {storageId};";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -72,10 +72,10 @@ SELECT 1 FROM `{Options.CurrentValue.PublishedTableName}` WHERE `msgId` = '{msgI
             return RowToReceivedModel(table.Rows[0]);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId, CancellationToken cancellationToken)
         {
             var sql =
-                $"SELECT * FROM `{Options.CurrentValue.ReceivedTableName}` WHERE `id` = {id};";
+                $"SELECT * FROM `{Options.CurrentValue.ReceivedTableName}` WHERE `id` = {storageId};";
 
             var table = await SqlQuery(sql, null, cancellationToken).ConfigureAwait(false);
             if (table.Rows.Count == 0)
@@ -231,31 +231,32 @@ SELECT LAST_INSERT_ID();
             return message.Id!;
         }
 
-        public async Task UpdatePublishedAsync(string id, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdatePublishedAsync(string storageId, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
 UPDATE `{Options.CurrentValue.PublishedTableName}`
 SET `status` = '{status}', `retryCount` = {retryCount}, `expireTime` = {expireTime?.GetLongDate() ?? 0}
-WHERE `id` = {id}
+WHERE `id` = {storageId}
 ";
 
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task UpdateReceivedAsync(string id, string status, int retryCount,
+        public async Task UpdateReceivedAsync(string storageId, string status, int retryCount,
             DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
+            if (storageId == null) throw new ArgumentNullException(nameof(storageId));
             var sql = $@"
 UPDATE `{Options.CurrentValue.ReceivedTableName}`
 SET `status` = '{status}', `retryCount` = {retryCount}, `expireTime` = {expireTime?.GetLongDate() ?? 0}
-WHERE `id` = {id}
+WHERE `id` = {storageId}
 ";
             await NonQuery(sql, null, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryLockPublishedAsync(string id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockPublishedAsync(string storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -265,12 +266,12 @@ WHERE `id` = {id}
             var sql = $@"
 UPDATE `{Options.CurrentValue.PublishedTableName}`
 SET `isLocking` = 1, `lockEnd` = {lockEndAt.GetLongDate()}
-WHERE `id` = {id} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
+WHERE `id` = {storageId} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
 ";
             return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
 
-        public async Task<bool> TryLockReceivedAsync(string id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockReceivedAsync(string storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -280,7 +281,7 @@ WHERE `id` = {id} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
             var sql = $@"
 UPDATE `{Options.CurrentValue.ReceivedTableName}`
 SET `isLocking` = 1, `lockEnd` = {lockEndAt.GetLongDate()}
-WHERE `id` = {id} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
+WHERE `id` = {storageId} AND (`isLocking` = 0 OR `lockEnd` < {nowLong})
 ";
             return await NonQuery(sql, null, cancellationToken).ConfigureAwait(false) == 1;
         }
