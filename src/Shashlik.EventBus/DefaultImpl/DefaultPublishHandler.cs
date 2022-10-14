@@ -91,6 +91,7 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 if (messageStorageModel is null)
                 {
+                    // 这种一般只会是数据库查询/连接异常,不管了,交给重试器执行
                     Logger.LogError(ex, $"[EventBus]: {ex.Message}");
                     return new HandleResult(true);
                 }
