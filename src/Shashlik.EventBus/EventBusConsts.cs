@@ -32,7 +32,7 @@ namespace Shashlik.EventBus
         }
 
         /// <summary>
-        /// 从附加数据过去发送时间
+        /// 从附加数据获取发送时间
         /// </summary>
         /// <param name="additionalItems"></param>
         /// <returns></returns>
