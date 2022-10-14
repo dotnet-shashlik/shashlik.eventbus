@@ -52,10 +52,10 @@ namespace Shashlik.EventBus.MongoDb
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId, CancellationToken cancellationToken)
         {
             var mongoCollection = GetPublishedCollection();
-            var msg = await mongoCollection.FindAsync(r => r.Id == id, cancellationToken: cancellationToken);
+            var msg = await mongoCollection.FindAsync(r => r.Id == storageId, cancellationToken: cancellationToken);
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
@@ -70,10 +70,10 @@ namespace Shashlik.EventBus.MongoDb
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string id, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId, CancellationToken cancellationToken)
         {
             var mongoCollection = GetReceivedCollection();
-            var msg = await mongoCollection.FindAsync(r => r.Id == id, cancellationToken: cancellationToken);
+            var msg = await mongoCollection.FindAsync(r => r.Id == storageId, cancellationToken: cancellationToken);
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
@@ -157,12 +157,12 @@ namespace Shashlik.EventBus.MongoDb
             return message.Id;
         }
 
-        public async Task UpdatePublishedAsync(string id, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdatePublishedAsync(string storageId, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var mongoCollection = GetPublishedCollection();
 
-            await mongoCollection.FindOneAndUpdateAsync(r => r.Id == id,
+            await mongoCollection.FindOneAndUpdateAsync(r => r.Id == storageId,
                 Builders<MessageStorageModel>.Update
                     .Set(r => r.Status, status)
                     .Set(r => r.RetryCount, retryCount)
@@ -170,13 +170,13 @@ namespace Shashlik.EventBus.MongoDb
                 cancellationToken: cancellationToken);
         }
 
-        public async Task UpdateReceivedAsync(string id, string status, int retryCount,
+        public async Task UpdateReceivedAsync(string storageId, string status, int retryCount,
             DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var mongoCollection = GetReceivedCollection();
 
-            await mongoCollection.FindOneAndUpdateAsync(r => r.Id == id,
+            await mongoCollection.FindOneAndUpdateAsync(r => r.Id == storageId,
                 Builders<MessageStorageModel>.Update
                     .Set(r => r.Status, status)
                     .Set(r => r.RetryCount, retryCount)
@@ -184,7 +184,7 @@ namespace Shashlik.EventBus.MongoDb
                 cancellationToken: cancellationToken);
         }
 
-        public async Task<bool> TryLockPublishedAsync(string id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockPublishedAsync(string storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -192,7 +192,7 @@ namespace Shashlik.EventBus.MongoDb
             var mongoCollection = GetPublishedCollection();
 
             var res = await mongoCollection.FindOneAndUpdateAsync(
-                r => r.Id == id && (!r.IsLocking || r.LockEnd < DateTimeOffset.Now),
+                r => r.Id == storageId && (!r.IsLocking || r.LockEnd < DateTimeOffset.Now),
                 Builders<MessageStorageModel>.Update
                     .Set(r => r.IsLocking, true)
                     .Set(r => r.LockEnd, lockEndAt)
@@ -200,7 +200,7 @@ namespace Shashlik.EventBus.MongoDb
             return res is not null;
         }
 
-        public async Task<bool> TryLockReceivedAsync(string id, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockReceivedAsync(string storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -208,7 +208,7 @@ namespace Shashlik.EventBus.MongoDb
             var mongoCollection = GetReceivedCollection();
 
             var res = await mongoCollection.FindOneAndUpdateAsync(
-                r => r.Id == id && (!r.IsLocking || r.LockEnd < DateTimeOffset.Now),
+                r => r.Id == storageId && (!r.IsLocking || r.LockEnd < DateTimeOffset.Now),
                 Builders<MessageStorageModel>.Update
                     .Set(r => r.IsLocking, true)
                     .Set(r => r.LockEnd, lockEndAt)
