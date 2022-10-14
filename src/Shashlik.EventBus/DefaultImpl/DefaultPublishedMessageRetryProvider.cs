@@ -44,7 +44,8 @@ namespace Shashlik.EventBus.DefaultImpl
 
         public async Task<HandleResult> RetryAsync(string id, CancellationToken cancellationToken)
         {
-            var messageStorageModel = await MessageStorage.FindPublishedByIdAsync(id, cancellationToken).ConfigureAwait(false);
+            var messageStorageModel =
+                await MessageStorage.FindPublishedByIdAsync(id, cancellationToken).ConfigureAwait(false);
             if (messageStorageModel is null)
                 throw new ArgumentException($"[EventBus]Not found published message of id: {id}", nameof(id));
 
@@ -74,7 +75,7 @@ namespace Shashlik.EventBus.DefaultImpl
             //TODO: 测试并行执行
             foreach (var item in messages)
             {
-                RetryProvider.Retry(item.Id, () => PublishHandler.HandleAsync(item.Id, cancellationToken));
+                await RetryProvider.Retry(item.Id, () => PublishHandler.HandleAsync(item.Id, cancellationToken));
             }
         }
     }

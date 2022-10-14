@@ -10,15 +10,14 @@ namespace Shashlik.Dashboard.Demo.Controllers
         [HttpGet("/test")]
         public async Task<string> Test([FromServices] IEventPublisher publisher)
         {
-            await publisher.PublishAsync(new TestEvent(), null);
-
-            return "success";
-        }
-
-        [AllowAnonymous]
-        [HttpGet("/test1")]
-        public async Task<string> Test()
-        {
+            await publisher.PublishAsync(new TestEvent
+            {
+                Title = "普通事件"
+            }, null);
+            await publisher.PublishAsync(new TestEvent
+            {
+                Title = "延迟事件"
+            }, DateTimeOffset.Now.AddSeconds(35), null);
             return "success";
         }
     }

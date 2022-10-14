@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-Console.WriteLine("ÇëÑ¡ÔñÊı¾İ¿âÀàĞÍ:");
+Console.WriteLine("è¯·é€‰æ‹©æ•°æ®åº“ç±»å‹:");
 Console.WriteLine("1: mysql");
 Console.WriteLine("2: postgres");
 Console.WriteLine("3: sqlserver");
@@ -67,23 +67,23 @@ if (type != "4")
 
 var eventBusBuilder = builder.Services.AddEventBus(r =>
 {
-    // ÕâĞ©¶¼ÊÇÈ±Ê¡ÅäÖÃ£¬¿ÉÒÔÖ±½Óservices.AddEventBus()
-    // ÔËĞĞ»·¾³£¬×¢²áµ½MQµÄÊÂ¼şÃû³ÆºÍÊÂ¼ş´¦ÀíÃû³Æ»á´øÉÏ´Ëºó×º
+    // è¿™äº›éƒ½æ˜¯ç¼ºçœé…ç½®ï¼Œå¯ä»¥ç›´æ¥services.AddEventBus()
+    // è¿è¡Œç¯å¢ƒï¼Œæ³¨å†Œåˆ°MQçš„äº‹ä»¶åç§°å’Œäº‹ä»¶å¤„ç†åç§°ä¼šå¸¦ä¸Šæ­¤åç¼€
     r.Environment = "Production";
-    // ×î´óÊ§°ÜÖØÊÔ´ÎÊı£¬Ä¬ÈÏ60´Î
-    r.RetryFailedMax = 1;
-    // ÏûÏ¢ÖØÊÔ¼ä¸ô£¬Ä¬ÈÏ2·ÖÖÓ
-    r.RetryInterval = 1;
-    // µ¥´ÎÖØÊÔÏûÏ¢ÊıÁ¿ÏŞÖÆ£¬Ä¬ÈÏ100
+    // æœ€å¤§å¤±è´¥é‡è¯•æ¬¡æ•°ï¼Œé»˜è®¤60æ¬¡
+    r.RetryFailedMax = 60;
+    // æ¶ˆæ¯é‡è¯•é—´éš”ï¼Œé»˜è®¤2åˆ†é’Ÿ
+    r.RetryInterval = 5;
+    // å•æ¬¡é‡è¯•æ¶ˆæ¯æ•°é‡é™åˆ¶ï¼Œé»˜è®¤100
     r.RetryLimitCount = 100;
-    // ³É¹¦µÄÏûÏ¢¹ıÆÚÊ±¼ä£¬Ä¬ÈÏ3Ìì£¬Ê§°ÜµÄÏûÏ¢ÓÀ²»¹ıÆÚ£¬±ØĞë´¦Àí
+    // æˆåŠŸçš„æ¶ˆæ¯è¿‡æœŸæ—¶é—´ï¼Œé»˜è®¤3å¤©ï¼Œå¤±è´¥çš„æ¶ˆæ¯æ°¸ä¸è¿‡æœŸï¼Œå¿…é¡»å¤„ç†
     r.SucceedExpireHour = 24 * 3;
-    // ÏûÏ¢´¦ÀíÊ§°Üºó£¬ÖØÊÔÆ÷½éÈëÊ±¼ä£¬Ä¬ÈÏ5·ÖÖÓºó
-    r.StartRetryAfter = 1;
-    // ÊÂÎñÌá½»³¬Ê±Ê±¼ä,µ¥Î»Ãë,Ä¬ÈÏ60Ãë
-    r.TransactionCommitTimeout = 60;
-    // ÖØÊÔÆ÷Ö´ĞĞÊ±ÏûÏ¢Ëø¶¨Ê±³¤
-    r.LockTime = 110;
+    // æ¶ˆæ¯å¤„ç†å¤±è´¥åï¼Œé‡è¯•å™¨ä»‹å…¥æ—¶é—´ï¼Œé»˜è®¤5åˆ†é’Ÿå
+    r.StartRetryAfter = 20;
+    // äº‹åŠ¡æäº¤è¶…æ—¶æ—¶é—´,å•ä½ç§’,é»˜è®¤60ç§’
+    r.TransactionCommitTimeout = 10;
+    // é‡è¯•å™¨æ‰§è¡Œæ—¶æ¶ˆæ¯é”å®šæ—¶é•¿
+    r.LockTime = 2;
 });
 switch (type)
 {
@@ -103,10 +103,10 @@ switch (type)
         throw new ArgumentException();
 }
 
-// Ê¹ÓÃef DbContext mysql
+// ä½¿ç”¨ef DbContext mysql
 eventBusBuilder
     .AddMemoryQueue()
-    // ×¢²ádashboard service, ²¢Ê¹ÓÃ×Ô¶¨ÒåÈÏÖ¤ÀàTokenCookieAuth
+    // æ³¨å†Œdashboard service, å¹¶ä½¿ç”¨è‡ªå®šä¹‰è®¤è¯ç±»TokenCookieAuth
     .AddDashboard<TokenCookieAuth>()
     ;
 
@@ -123,7 +123,7 @@ if (type != "4")
 
 app.UseAuthorization();
 app.UseRouting();
-// ÆôÓÃ dashboard
+// å¯ç”¨ dashboard
 //app.UseEventBusDashboard();
 
 app.MapControllers();

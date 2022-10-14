@@ -85,7 +85,7 @@ namespace Shashlik.EventBus.DefaultImpl
             //TODO: 测试并行执行
             foreach (var item in messages)
             {
-                RetryProvider.Retry(item.Id, () => ReceivedHandler.HandleAsync(item.Id, cancellationToken));
+                await RetryProvider.Retry(item.Id, () => ReceivedHandler.HandleAsync(item.Id, cancellationToken));
             }
         }
     }
