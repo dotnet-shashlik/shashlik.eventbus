@@ -1,8 +1,9 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
-    internal class InternalHostedStopToken : IHostedStopToken
+    internal class InternalHostedStopToken : IHostedStopToken, IDisposable
     {
         public InternalHostedStopToken()
         {
@@ -12,9 +13,14 @@ namespace Shashlik.EventBus.DefaultImpl
         private CancellationTokenSource StopCancellationTokenSource { get; }
         public CancellationToken StopCancellationToken => StopCancellationTokenSource.Token;
 
-        public void Cancel()
+        internal void Cancel()
         {
             StopCancellationTokenSource.Cancel();
+        }
+
+        public void Dispose()
+        {
+            StopCancellationTokenSource.Dispose();
         }
     }
 }
