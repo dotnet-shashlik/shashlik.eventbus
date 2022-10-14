@@ -23,16 +23,18 @@ namespace Shashlik.EventBus.DefaultImpl
         public async Task InvokeAsync(MessageStorageModel messageStorageModel, IDictionary<string, string> items,
             EventHandlerDescriptor eventHandlerDescriptor)
         {
-            using var scope = ServiceScopeFactory.CreateScope();
-            object eventHandlerInstance =
-                scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
             if (messageStorageModel.EventBody is null)
-                throw new InvalidCastException($"[EventBus] event body content is null, msgId: {messageStorageModel.MsgId}");
+                throw new InvalidCastException(
+                    $"[EventBus] event body content is null, msgId: {messageStorageModel.MsgId}");
             var eventBody =
                 MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
             if (eventBody is null)
                 throw new InvalidCastException(
                     $"[EventBus] event body content deserialize to type of \"{eventHandlerDescriptor.EventType}\" occur error, body: {messageStorageModel.EventBody}");
+
+            using var scope = ServiceScopeFactory.CreateScope();
+            var eventHandlerInstance =
+                scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
 
             var method =
                 eventHandlerDescriptor.EventHandlerType.GetMethod("Execute",
