@@ -4,7 +4,7 @@ using Timer = System.Timers.Timer;
 
 namespace Shashlik.EventBus.Utils
 {
-    public class TimerHelper
+    public static class TimerHelper
     {
         /// <summary>
         /// 在指定时间过后执行指定的表达式

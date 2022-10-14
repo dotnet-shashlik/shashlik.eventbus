@@ -10,7 +10,7 @@ namespace Shashlik.EventBus.Utils
     /// <summary>
     /// 反射相关方法
     /// </summary>
-    public class ReflectionHelper
+    public static class ReflectionHelper
     {
         /// <summary>
         /// 获取引用了<paramref name="assembly"/>程序集的所有的程序集
