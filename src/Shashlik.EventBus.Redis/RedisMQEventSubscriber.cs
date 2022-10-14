@@ -75,7 +75,7 @@ namespace Shashlik.EventBus.Redis
                         var messageBody = readResult.fieldValues[1].ToString();
                         if (messageBody.IsNullOrWhiteSpace())
                         {
-                            Logger.LogError(
+                            Logger.LogWarning(
                                 $"[EventBus-Redis] received empty message, event: {eventName}, handler: {eventHandlerName}");
                             continue;
                         }
@@ -96,14 +96,14 @@ namespace Shashlik.EventBus.Redis
                         if (message is null)
                         {
                             Logger.LogError("[EventBus-Redis] deserialize message from redis error");
-                            return;
+                            continue;
                         }
 
                         if (message.EventName != eventName)
                         {
                             Logger.LogError(
                                 $"[EventBus-Redis] received invalid event name \"{message.EventName}\", expect \"{eventName}\"");
-                            return;
+                            continue;
                         }
 
                         Logger.LogDebug(
@@ -119,7 +119,7 @@ namespace Shashlik.EventBus.Redis
                         }
 
                         // ReSharper disable once MethodSupportsCancellation
-                        await Task.Delay(5).ConfigureAwait(false);
+                        await Task.Delay(10).ConfigureAwait(false);
                     }
                 }
             }, cancellationToken);

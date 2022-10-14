@@ -57,7 +57,7 @@ namespace Shashlik.EventBus.Kafka
                     }
 
                     // ReSharper disable once MethodSupportsCancellation
-                    await Task.Delay(5).ConfigureAwait(false);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
             }, cancellationToken);
         }
