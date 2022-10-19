@@ -186,7 +186,7 @@
 ```
 
 
-默认的，发布、声明到消息中间件的事件、事件处理器名称生产规则为`{Type.Name}.{Options.Environment}`，在分布式架构下需要，您需要了解这个默认规则，这点不同于`CAP`框架必须显示声明，当然`Shashlik.EventBus`也可以使用`EventBusNameAttribute`特性来显示声明，详细说明请上github查看[wiki文档](https://github.com/dotnet-shashlik/shashlik.eventbus/wiki/Event.Publish#eventbusnameattribute)。
+默认的，发布、声明到消息中间件的事件、事件处理器名称生产规则为`{Type.Name}.{Options.Environment}`，在分布式架构下需要，您需要了解这个默认规则，这点不同于`CAP`框架必须显示声明，当然`Shashlik.EventBus`也可以使用`EventBusNameAttribute`特性来显示声明，详细说明请查看[wiki文档](https://github.com/dotnet-shashlik/shashlik.eventbus/wiki/Event.Publish#eventbusnameattribute)。
 
 
 ## XA事务支持（TransactionScope）
