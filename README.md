@@ -1,5 +1,8 @@
 # 【Shashlik.EventBus】
 
+[![build and test](https://github.com/dotnet-shashlik/shashlik.eventbus/workflows/build%20and%20test/badge.svg)](https://github.com/dotnet-shashlik/shashlik.eventbus)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/dotnet-shashlik/shashlik.eventbus/blob/main/LICENSE)
+
 ## Nuget
 
 | PackageName                         | Nuget                                                                                                                                                  | Description                |
