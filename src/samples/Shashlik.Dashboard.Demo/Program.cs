@@ -124,7 +124,7 @@ if (type != "4")
 app.UseAuthorization();
 app.UseRouting();
 // 启用 dashboard
-//app.UseEventBusDashboard();
+app.UseEventBusDashboard();
 
 app.MapControllers();
 
