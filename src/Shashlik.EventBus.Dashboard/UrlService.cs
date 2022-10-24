@@ -54,6 +54,6 @@ public class UrlService
         }
 
         uri.Query = string.Join('&', queryDic.Select(x => $"{x.Key}={x.Value}"));
-        return uri.ToString();
+        return uri.Uri.PathAndQuery.ToString();
     }
 }
