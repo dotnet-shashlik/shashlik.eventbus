@@ -178,7 +178,7 @@
       }
   }
 
-  // 用于新用户延迟活动的事件处理类,将在指定时间自行
+  // 用于新用户延迟活动的事件处理类,将在指定时间执行
   public class NewUserPromotionEventHandler : IEventHandler<NewUserPromotionEvent>
   {
       public async Task Execute(NewUserPromotionEvent @event, IDictionary<string, string> items)
