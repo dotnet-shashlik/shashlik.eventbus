@@ -1,27 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Shashlik.EventBus.Dashboard\Shashlik.EventBus.Dashboard.csproj" />
-    <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
-    <ProjectReference Include="..\..\Shashlik.EventBus.MongoDb\Shashlik.EventBus.MongoDb.csproj" />
-    <ProjectReference Include="..\..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj" />
-    <ProjectReference Include="..\..\Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj" />
-    <ProjectReference Include="..\..\Shashlik.EventBus.SqlServer\Shashlik.EventBus.SqlServer.csproj" />
-    <ProjectReference Include="..\Sample.Rabbit.PostgreSQL\Sample.Rabbit.PostgreSQL.csproj" />
-    <ProjectReference Include="..\Sample.Rabbit.SqlServer\Sample.Rabbit.SqlServer.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <!--    <ProjectReference Include="..\..\Shashlik.EventBus.Dashboard\Shashlik.EventBus.Dashboard.csproj" />-->
+        <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj"/>
+        <ProjectReference Include="..\..\Shashlik.EventBus.MongoDb\Shashlik.EventBus.MongoDb.csproj"/>
+        <ProjectReference Include="..\..\Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj"/>
+        <ProjectReference Include="..\..\Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj"/>
+        <ProjectReference Include="..\..\Shashlik.EventBus.SqlServer\Shashlik.EventBus.SqlServer.csproj"/>
+        <ProjectReference Include="..\Sample.Rabbit.PostgreSQL\Sample.Rabbit.PostgreSQL.csproj"/>
+        <ProjectReference Include="..\Sample.Rabbit.SqlServer\Sample.Rabbit.SqlServer.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />
-<!--    <PackageReference Include="Shashlik.EventBus.Dashboard" Version="2.1.0" />-->
-  </ItemGroup>
-
+    <ItemGroup>
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2"/>
+        <PackageReference Include="Shashlik.EventBus.Dashboard" Version="2.2.0"/>
+    </ItemGroup>
 
 
 </Project>

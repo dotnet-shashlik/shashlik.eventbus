@@ -13,22 +13,22 @@ namespace Shashlik.EventBus.MongoDb
         /// </summary>
         /// <param name="eventBusBuilder"></param>
         /// <param name="connectionString">连接字符串</param>
-        /// <param name="publishTableName">已发布消息表名，默认eventbus_published</param>
-        /// <param name="receiveTableName">已接收消息表名，默认eventbus_received</param>
+        /// <param name="publishCollectionName">已发布消息集合名称，默认eventbus_published</param>
+        /// <param name="receiveCollectionName">已接收消息集合名称，默认eventbus_received</param>
         /// <returns></returns>
         public static IEventBusBuilder AddMongoDb(
             this IEventBusBuilder eventBusBuilder,
             string connectionString,
-            string? publishTableName = null,
-            string? receiveTableName = null)
+            string? publishCollectionName = null,
+            string? receiveCollectionName = null)
         {
             eventBusBuilder.Services.Configure<EventBusMongoDbOptions>(options =>
             {
                 options.ConnectionString = connectionString;
-                if (!publishTableName.IsNullOrWhiteSpace())
-                    options.PublishedCollectionName = publishTableName!;
-                if (!receiveTableName.IsNullOrWhiteSpace())
-                    options.ReceivedCollectionName = receiveTableName!;
+                if (!publishCollectionName.IsNullOrWhiteSpace())
+                    options.PublishedCollectionName = publishCollectionName!;
+                if (!receiveCollectionName.IsNullOrWhiteSpace())
+                    options.ReceivedCollectionName = receiveCollectionName!;
             });
 
             return eventBusBuilder.AddMongoDb();
