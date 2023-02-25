@@ -6,6 +6,7 @@ namespace Shashlik.EventBus
     /// <summary>
     /// 重试执行器
     /// </summary>
+    [Obsolete]
     public interface IRetryProvider
     {
         /// <summary>

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
+    [Obsolete]
     public class DefaultRetryProvider : IRetryProvider
     {
         public async Task Retry(string storageId, Func<Task<HandleResult>> retryAction)

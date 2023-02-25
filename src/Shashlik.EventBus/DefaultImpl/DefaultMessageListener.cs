@@ -18,8 +18,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IEventHandlerFindProvider eventHandlerFindProvider,
             ILogger<DefaultMessageListener> logger,
             IOptions<EventBusOptions> options,
-            IReceivedHandler receivedHandler,
-            IRetryProvider retryProvider)
+            IReceivedHandler receivedHandler)
         {
             MessageSerializer = messageSerializer;
             MessageStorage = messageStorage;
@@ -27,7 +26,6 @@ namespace Shashlik.EventBus.DefaultImpl
             Logger = logger;
             Options = options;
             ReceivedHandler = receivedHandler;
-            RetryProvider = retryProvider;
         }
 
         private IMessageSerializer MessageSerializer { get; }
@@ -36,7 +34,6 @@ namespace Shashlik.EventBus.DefaultImpl
         private ILogger<DefaultMessageListener> Logger { get; }
         private IOptions<EventBusOptions> Options { get; }
         private IReceivedHandler ReceivedHandler { get; }
-        private IRetryProvider RetryProvider { get; }
 
         public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel message,
             CancellationToken cancellationToken)

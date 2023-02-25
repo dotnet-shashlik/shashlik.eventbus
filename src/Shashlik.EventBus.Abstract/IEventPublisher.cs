@@ -32,8 +32,8 @@ namespace Shashlik.EventBus
         /// 延迟事件发布
         /// </summary>
         /// <param name="event">事件实例</param>
-        /// <param name="transactionContext">事务上下文,null则不使用事务</param>
         /// <param name="delayAt">延迟执行时间</param>
+        /// <param name="transactionContext">事务上下文,null则不使用事务</param>
         /// <param name="additionalItems">附加事件数据</param>
         /// <param name="cancellationToken">cancellationToken</param>
         /// <typeparam name="TEvent">事件类型</typeparam>

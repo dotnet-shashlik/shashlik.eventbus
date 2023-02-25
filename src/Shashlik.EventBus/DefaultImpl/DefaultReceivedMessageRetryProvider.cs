@@ -19,7 +19,7 @@ namespace Shashlik.EventBus.DefaultImpl
             ILogger<DefaultReceivedMessageRetryProvider> logger,
             IMessageSerializer messageSerializer,
             IEventHandlerFindProvider eventHandlerFindProvider,
-            IReceivedHandler receivedHandler, IRetryProvider retryProvider)
+            IReceivedHandler receivedHandler)
         {
             MessageStorage = messageStorage;
             Options = options;
@@ -27,7 +27,6 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageSerializer = messageSerializer;
             EventHandlerFindProvider = eventHandlerFindProvider;
             ReceivedHandler = receivedHandler;
-            RetryProvider = retryProvider;
         }
 
         private IMessageStorage MessageStorage { get; }
@@ -36,7 +35,6 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageSerializer MessageSerializer { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
         private IReceivedHandler ReceivedHandler { get; }
-        private IRetryProvider RetryProvider { get; }
 
         public async Task StartupAsync(CancellationToken cancellationToken)
         {
@@ -82,11 +80,16 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
-            //TODO: 测试并行执行
-            foreach (var item in messages)
-            {
-                await RetryProvider.Retry(item.Id, () => ReceivedHandler.HandleAsync(item.Id, cancellationToken));
-            }
+
+            Parallel.ForEach(messages, new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism
+                },
+                item =>
+                {
+                    ReceivedHandler.HandleAsync(item.Id, cancellationToken).ConfigureAwait(false).GetAwaiter()
+                        .GetResult();
+                });
         }
     }
 }

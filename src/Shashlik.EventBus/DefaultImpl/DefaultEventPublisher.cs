@@ -20,7 +20,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IOptions<EventBusOptions> options,
             IMsgIdGenerator msgIdGenerator,
             IPublishHandler publishHandler,
-            ILogger<DefaultEventPublisher> logger, IRetryProvider retryProvider)
+            ILogger<DefaultEventPublisher> logger)
         {
             MessageStorage = messageStorage;
             MessageSerializer = messageSerializer;
@@ -29,7 +29,6 @@ namespace Shashlik.EventBus.DefaultImpl
             MsgIdGenerator = msgIdGenerator;
             PublishHandler = publishHandler;
             Logger = logger;
-            RetryProvider = retryProvider;
         }
 
         private IMessageStorage MessageStorage { get; }
@@ -39,7 +38,6 @@ namespace Shashlik.EventBus.DefaultImpl
         private IOptions<EventBusOptions> Options { get; }
         private IPublishHandler PublishHandler { get; }
         private ILogger<DefaultEventPublisher> Logger { get; }
-        private IRetryProvider RetryProvider { get; }
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,

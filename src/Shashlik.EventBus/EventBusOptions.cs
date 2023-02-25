@@ -27,6 +27,11 @@ namespace Shashlik.EventBus
         public int RetryLimitCount { get; set; } = 100;
 
         /// <summary>
+        /// 重试器并行执行数量,默认5
+        /// </summary>
+        public int RetryMaxDegreeOfParallelism { get; set; } = 5;
+
+        /// <summary>
         /// 最大失败重试次数,默认60次,最小值5
         /// </summary>
         public int RetryFailedMax { get; set; } = 60;

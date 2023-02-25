@@ -15,20 +15,18 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageStorage messageStorage,
             IOptions<EventBusOptions> options,
             IMessageSerializer messageSerializer,
-            IPublishHandler publishHandler, IRetryProvider retryProvider)
+            IPublishHandler publishHandler)
         {
             MessageStorage = messageStorage;
             Options = options;
             MessageSerializer = messageSerializer;
             PublishHandler = publishHandler;
-            RetryProvider = retryProvider;
         }
 
         private IMessageStorage MessageStorage { get; }
         private IOptions<EventBusOptions> Options { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IPublishHandler PublishHandler { get; }
-        private IRetryProvider RetryProvider { get; }
 
         public async Task StartupAsync(CancellationToken cancellationToken)
         {
@@ -72,11 +70,15 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
-            //TODO: 测试并行执行
-            foreach (var item in messages)
-            {
-                await RetryProvider.Retry(item.Id, () => PublishHandler.HandleAsync(item.Id, cancellationToken));
-            }
+            Parallel.ForEach(messages, new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism
+                },
+                item =>
+                {
+                    PublishHandler.HandleAsync(item.Id, cancellationToken).ConfigureAwait(false).GetAwaiter()
+                        .GetResult();
+                });
         }
     }
 }
