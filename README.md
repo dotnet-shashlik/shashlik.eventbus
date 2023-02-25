@@ -63,6 +63,8 @@
           r.RetryInterval = 60 * 2;
           // 单次重试消息数量限制，默认100
           r.RetryLimitCount = 100;
+          // 重试器并行执行数量,默认5
+          r.RetryMaxDegreeOfParallelism = 5;
           // 成功的消息过期时间，默认3天，失败的消息永不过期，必须处理
           r.SucceedExpireHour = 24 * 3;            
           // 消息处理失败后，重试器介入时间，默认5分钟后
@@ -212,7 +214,7 @@
       public async Task CreateUserAsync(UserInput input)
       {
           // 开启事务
-          using var scope = new TransactionScope();
+          using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
           try
           {
               // 创建用户逻辑处理...
@@ -257,7 +259,6 @@
 - `IEventHandlerFindProvider`：事件处理类查找器
 - `IExpiredMessageProvider`：已过期消息删除处理器。
 - `IMessageListener`：消息监听处理器。
-- `IRetryProvider`：重试执行器。
 - `IPublishHandler`：消息发布处理器。
 - `IReceivedHandler`：消息接收处理器。
 - `IMessageStorageInitializer`：存储介质初始化。
@@ -270,8 +271,15 @@
   // 替换默认的IMsgIdGenerator
   service.AddSingleton<IMsgIdGenerator, CustomMsgIdGenerator>();
   service.AddEventBus()
-      .AddMemoryQueue()
-      .AddMemoryStorage();
+        .AddMemoryQueue()
+        .AddMemoryStorage()
+        .AddDashboard(options =>
+        {
+            // 指定认证类
+            // options.UseAuthenticate<SecretCookieAuthenticate>();
+            // 使用SecretAuthenticate认证
+            options.UseSecretAuthenticate("<your secret>");
+        })
 
 ```
 ## 后续计划
