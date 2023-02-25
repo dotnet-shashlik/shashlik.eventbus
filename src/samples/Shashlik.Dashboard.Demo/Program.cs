@@ -21,7 +21,8 @@ Console.WriteLine("2: postgres");
 Console.WriteLine("3: sqlserver");
 Console.WriteLine("4: mongodb");
 
-var type = Console.ReadLine();
+// var type = Console.ReadLine();
+var type = "1";
 
 string connectionString;
 switch (type)
@@ -107,7 +108,7 @@ switch (type)
 eventBusBuilder
     .AddMemoryQueue()
     // 注册dashboard service, 并使用自定义认证类TokenCookieAuth
-    .AddDashboard<TokenCookieAuth>()
+    .AddDashboard(r => r.UseSecretAuthenticate())
     ;
 
 var app = builder.Build();

@@ -1,0 +1,16 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="@ViewData["UrlPrefix"]/static/bootstrap.min.css"/>
+</head>
+<body>
+<div>
+    @RenderBody()
+    <script src="@ViewData["UrlPrefix"]/static/bootstrap.min.js"></script>
+    <script src="@ViewData["UrlPrefix"]/static/bootstrap.bundle.min.js"></script>
+</div>
+</body>
+</html>

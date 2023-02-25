@@ -1,15 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Controllers;
 
+[AllowAnonymous]
 [Area(Consts.AreaName)]
 public abstract class BaseDashboardController : Controller
 {
-    [ViewData]
-    public string UrlPrefix =>
-        HttpContext.RequestServices.GetService<IOptions<EventBusDashboardOption>>()!.Value.UrlPrefix;
+    protected BaseDashboardController(IOptionsMonitor<EventBusDashboardOption> options)
+    {
+        Options = options;
+    }
+
+    protected IOptionsMonitor<EventBusDashboardOption> Options { get; }
+
+
+    [ViewData] public string UrlPrefix => Options.CurrentValue.UrlPrefix;
 
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
@@ -17,9 +25,7 @@ public abstract class BaseDashboardController : Controller
 
         if (auth != null && !await auth.AuthenticateAsync(context.HttpContext))
         {
-            context.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            context.Result = Content("Unauthorized");
-
+            context.Result = RedirectToAction("Index", "Auth");
             return;
         }
 

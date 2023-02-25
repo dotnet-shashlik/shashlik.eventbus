@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Models;
 
 namespace Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Controllers;
@@ -7,10 +8,11 @@ public class ReceivedController : BaseDashboardController
 {
     private readonly IMessageStorage _messageStorage;
 
-    public ReceivedController(IMessageStorage messageStorage)
+    public ReceivedController(IOptionsMonitor<EventBusDashboardOption> options, IMessageStorage messageStorage) : base(options)
     {
         _messageStorage = messageStorage;
     }
+
 
     public async Task<IActionResult> Index(string? eventName, string? eventHandlerName, string? status,
         int pageSize = 20, int pageIndex = 1)

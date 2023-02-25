@@ -1,0 +1,21 @@
+﻿@model Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Models.MessageViewModel
+
+<div style="width:50%; margin: 200px auto;">
+    <h2>Shshlik.EventBus.Dashboard</h2>
+    <form method="post" enctype="multipart/form-data">
+        <div class="input-group">
+            <input type="text" name="Secret" class="form-control" placeholder="Please enter shashlik eventbus dashboard secret">
+            <span class="input-group-btn">
+                <button class="btn btn-primary" type="submit">Login</button>
+            </span>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <span style="color: red">@ViewBag.Error</span>
+        }
+    </form>
+</div>
+<script>
+ 
+</script>

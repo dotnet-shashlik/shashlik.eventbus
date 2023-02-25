@@ -1,7 +1,7 @@
 ﻿@using System.Reflection
 @using Shashlik.EventBus.Dashboard
 @model Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Models.MessageViewModel
-@inject UrlService _urlService
+@inject  UrlService UrlService
 
 <div class="container-fluid">
     <div class="row">
@@ -11,7 +11,7 @@
                     @foreach (var kv in Model.StatusCount)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a href="@_urlService.CurrentUrl("status", kv.Key)">@kv.Key</a>
+                            <a href="@UrlService.CurrentUrl("status", kv.Key)">@kv.Key</a>
                             <span class="badge bg-primary rounded-pill">@kv.Value</span>
                         </li>
                     }
@@ -127,16 +127,16 @@
                             </button>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "10")">10</a>
+                                    <a class="dropdown-item" href="@UrlService.CurrentUrl("pageSize", "10")">10</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "20")">20</a>
+                                    <a class="dropdown-item" href="@UrlService.CurrentUrl("pageSize", "20")">20</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "50")">50</a>
+                                    <a class="dropdown-item" href="@UrlService.CurrentUrl("pageSize", "50")">50</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="@_urlService.CurrentUrl("pageSize", "100")">100</a>
+                                    <a class="dropdown-item" href="@UrlService.CurrentUrl("pageSize", "100")">100</a>
                                 </li>
                             </ul>
                         </div>
@@ -155,7 +155,7 @@
                                     continue;
                                 }
                                 <li class="page-item @(Model.PageIndex == p ? "disabled" : "")">
-                                    <a class="page-link" href="@_urlService.CurrentUrl("pageIndex", p.ToString())">@p</a>
+                                    <a class="page-link" href="@UrlService.CurrentUrl("pageIndex", p.ToString())">@p</a>
                                 </li>
                             }
 
