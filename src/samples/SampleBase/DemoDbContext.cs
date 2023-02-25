@@ -15,7 +15,7 @@ namespace SampleBase
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Users>()
-                .Property(r => r.Name).HasMaxLength(8).IsRequired();
+                .Property(r => r.Name).HasMaxLength(255).IsRequired();
             modelBuilder.Entity<Users>()
                 .HasKey(r => r.Id);
         }

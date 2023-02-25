@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -64,9 +67,12 @@ namespace Shashlik.EventBus.DefaultImpl
                     messageTransferModel ??= new MessageTransferModel
                     {
                         EventName = messageStorageModel.EventName,
+                        Environment = null,
                         MsgId = messageStorageModel.MsgId,
-                        MsgBody = MessageSerializer.Serialize(messageStorageModel),
-                        SendAt = DateTimeOffset.Now,
+                        MsgBody = messageStorageModel.EventBody,
+                        Items = MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel
+                            .EventItems),
+                        SendAt = messageStorageModel.CreateTime,
                         DelayAt = messageStorageModel.DelayAt
                     };
 

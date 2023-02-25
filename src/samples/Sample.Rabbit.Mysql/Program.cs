@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +47,7 @@ namespace Sample.Rabbit.Mysql
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
                         r.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-                            db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
+                            db => { db.MigrationsAssembly(Assembly.GetEntryAssembly().GetName().FullName); });
                     }, 5);
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitMySql"; })
@@ -129,7 +130,9 @@ namespace Sample.Rabbit.Mysql
                     // TransactionScope
                     else
                     {
-                        using var tran = new System.Transactions.TransactionScope();
+                        using var tran =
+                            new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption
+                                .Enabled);
                         try
                         {
                             // 业务数据

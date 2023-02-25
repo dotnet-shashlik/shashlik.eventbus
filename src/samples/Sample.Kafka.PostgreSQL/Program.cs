@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +48,7 @@ namespace Sample.Kafka.PostgreSQL
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
                         r.UseNpgsql(connectionString,
-                            db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().FullName); });
+                            db => { db.MigrationsAssembly(Assembly.GetEntryAssembly().GetName().FullName); });
                     });
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaPostgre3"; })
@@ -121,7 +122,8 @@ namespace Sample.Kafka.PostgreSQL
                     // TransactionScope
                     else
                     {
-                        using var tran = new System.Transactions.TransactionScope();
+                        using var tran = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeAsyncFlowOption
+                                .Enabled);
                         try
                         {
                             // 业务数据
