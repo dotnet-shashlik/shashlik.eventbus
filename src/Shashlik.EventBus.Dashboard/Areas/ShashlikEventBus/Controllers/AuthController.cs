@@ -39,7 +39,7 @@ public class AuthController : Controller
                 _options.CurrentValue.AuthenticateSecretCookieName ?? EventBusDashboardOption.DefaultCookieName,
                 _dataProtector.CreateProtector(EventBusDashboardOption.DataProtectorName)
                     .Protect(secretLoginModel.Secret),
-                _options.CurrentValue.AuthenticateSecretCookieOptions?.Invoke() ?? new CookieOptions
+                _options.CurrentValue.AuthenticateSecretCookieOptions?.Invoke(HttpContext) ?? new CookieOptions
                     { Expires = DateTimeOffset.Now.AddHours(2) });
 
             return RedirectToAction("Index", "Published");

@@ -108,7 +108,13 @@ switch (type)
 eventBusBuilder
     .AddMemoryQueue()
     // 注册dashboard service, 并使用自定义认证类TokenCookieAuth
-    .AddDashboard(r => r.UseSecretAuthenticate())
+    .AddDashboard(options =>
+    {
+        // 指定认证类
+        // options.UseAuthenticate<SecretCookieAuthenticate>();
+        // 使用SecretAuthenticate认证
+        options.UseSecretAuthenticate("Shashlik.EventBus.Secret");
+    })
     ;
 
 var app = builder.Build();

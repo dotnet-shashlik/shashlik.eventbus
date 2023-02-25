@@ -29,12 +29,14 @@ public class EventBusDashboardOption
     /// <summary>
     /// 认证支持类，需要实现 <see cref="IEventBusDashboardAuthentication"/>, 如果无需认证,该值设置为null即可
     /// </summary>
-    public Type? AuthenticateProvider { get; set; } = typeof(SecretCookieAuthenticate);
+    public Type? AuthenticateProvider { get; set; }
 
     /// <summary>
-    /// SecretCookieAuthenticate认证Secret值,配置<see cref="AuthenticateProvider"/>后,该值无效
+    /// SecretCookieAuthenticate认证Secret值
+    /// <para></para>
+    /// 默认每次都生成一个guid
     /// </summary>
-    public string? AuthenticateSecret { get; set; } = "#Shashlik@.EventBus!.Secret`123";
+    public string? AuthenticateSecret { get; set; }
 
     /// <summary>
     /// SecretCookieAuthenticate认证,cookie名称
@@ -44,7 +46,7 @@ public class EventBusDashboardOption
     /// <summary>
     /// SecretCookieAuthenticate认证,cookie设置,默认2小时过期
     /// </summary>
-    public Func<CookieOptions>? AuthenticateSecretCookieOptions { get; set; } = () => new CookieOptions
+    public Func<HttpContext, CookieOptions>? AuthenticateSecretCookieOptions { get; set; } = _ => new CookieOptions
     {
         Expires = DateTimeOffset.Now.AddHours(2),
     };
@@ -68,12 +70,15 @@ public class EventBusDashboardOption
     /// <param name="authenticateSecretCookieName">认证cookie name</param>
     /// <param name="authenticateSecretCookieOptions">认证cookie 配置</param>
     /// <returns></returns>
-    public EventBusDashboardOption UseSecretAuthenticate(string? authenticateSecret = null,
-        string? authenticateSecretCookieName = null, Func<CookieOptions>? authenticateSecretCookieOptions = null)
+    public EventBusDashboardOption UseSecretAuthenticate(
+        string authenticateSecret,
+        string? authenticateSecretCookieName = null,
+        Func<HttpContext, CookieOptions>? authenticateSecretCookieOptions = null)
     {
+        if (string.IsNullOrWhiteSpace(authenticateSecret))
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(authenticateSecret));
         UseAuthenticate<SecretCookieAuthenticate>();
-        if (authenticateSecret != null)
-            AuthenticateSecret = authenticateSecret;
+        AuthenticateSecret = authenticateSecret;
         if (AuthenticateSecretCookieName != null)
             AuthenticateSecretCookieName = authenticateSecretCookieName;
         if (AuthenticateSecretCookieOptions != null)
