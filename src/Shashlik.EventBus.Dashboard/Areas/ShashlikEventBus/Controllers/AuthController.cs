@@ -33,7 +33,8 @@ public class AuthController : Controller
     [HttpPost]
     public IActionResult Index(SecretLoginModel secretLoginModel)
     {
-        if (secretLoginModel.Secret == _options.CurrentValue.AuthenticateSecret)
+        if (secretLoginModel.Secret == _options.CurrentValue.AuthenticateSecret
+            && _options.CurrentValue.AuthenticateProvider == typeof(SecretCookieAuthenticate))
         {
             Response.Cookies.Append(
                 _options.CurrentValue.AuthenticateSecretCookieName ?? EventBusDashboardOption.DefaultCookieName,
