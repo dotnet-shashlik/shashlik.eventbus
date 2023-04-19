@@ -86,6 +86,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Pulsar.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Sqlite", "Shashlik.EventBus.Sqlite\Shashlik.EventBus.Sqlite.csproj", "{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Sqlite.Tests", "tests\Shashlik.EventBus.Sqlite.Tests\Shashlik.EventBus.Sqlite.Tests.csproj", "{18D4F748-BFB1-4B35-933E-089318134C67}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -220,6 +222,10 @@ Global
 		{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18D4F748-BFB1-4B35-933E-089318134C67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18D4F748-BFB1-4B35-933E-089318134C67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18D4F748-BFB1-4B35-933E-089318134C67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18D4F748-BFB1-4B35-933E-089318134C67}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -242,6 +248,7 @@ Global
 		{2E0989DE-5914-45CA-9D74-DED626AF4C06} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{242D0F43-5E51-4DC6-8055-D8B8104FABC2} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{1C7BC7E0-D206-4AD4-8814-307931D568A2} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
+		{18D4F748-BFB1-4B35-933E-089318134C67} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}
