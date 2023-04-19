@@ -86,7 +86,9 @@ public interface IRelationDbStorage : IMessageStorage
         if (connection!.State != ConnectionState.Open)
             connection.Open();
 
-        return await connection.ExecuteScalarAsync<TRes>(sql, ps).ConfigureAwait(false);
+        return await connection
+            .ExecuteScalarAsync<TRes>(sql, ps, transaction: relationDbStorageTransactionContext.DbTransaction)
+            .ConfigureAwait(false);
     }
 
     public object ToSaveObject(MessageStorageModel model)
