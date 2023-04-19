@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Npgsql;
 using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.EventBus.Utils;
 
@@ -16,17 +16,17 @@ using Shashlik.EventBus.Utils;
 // ReSharper disable ConvertIfStatementToSwitchStatement
 // ReSharper disable RedundantIfElseBlock
 
-namespace Shashlik.EventBus.PostgreSQL
+namespace Shashlik.EventBus.Sqlite
 {
-    public class PostgreSQLMessageStorage : IRelationDbStorage
+    public class SqliteMessageStorage : IRelationDbStorage
     {
-        public PostgreSQLMessageStorage(IOptionsMonitor<EventBusPostgreSQLOptions> options, IConnectionString connectionString)
+        public SqliteMessageStorage(IOptionsMonitor<EventBusSqliteOptions> options, IConnectionString connectionString)
         {
             Options = options;
             ConnectionString = connectionString;
         }
 
-        private IOptionsMonitor<EventBusPostgreSQLOptions> Options { get; }
+        private IOptionsMonitor<EventBusSqliteOptions> Options { get; }
         private IConnectionString ConnectionString { get; }
 
         private IRelationDbStorage GetInvoker()
@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.PostgreSQL
 
         public async ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken = default)
         {
-            var sql = $"SELECT 1 FROM {Options.CurrentValue.FullPublishedTableName} WHERE msgId = @msgId LIMIT 1;";
+            var sql = $"SELECT 1 FROM {Options.CurrentValue.PublishedTableName} WHERE msgId = @msgId LIMIT 1;";
             var count = await GetInvoker().ScalarAsync<int>(sql, new { msgId }, cancellationToken);
             return count > 0;
         }
@@ -44,7 +44,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async Task<MessageStorageModel?> FindPublishedByMsgIdAsync(string msgId,
             CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE msgId = @msgId;";
+            var sql = $"SELECT * FROM {Options.CurrentValue.PublishedTableName} WHERE msgId = @msgId;";
             return await GetInvoker().QueryOneModelAsync(sql, new { msgId }, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -52,7 +52,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId,
             CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullPublishedTableName} WHERE id = @storageId;";
+            var sql = $"SELECT * FROM {Options.CurrentValue.PublishedTableName} WHERE id = @storageId;";
             return await GetInvoker().QueryOneModelAsync(sql, new { storageId }, cancellationToken);
         }
 
@@ -61,7 +61,7 @@ namespace Shashlik.EventBus.PostgreSQL
             CancellationToken cancellationToken = default)
         {
             var sql =
-                $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE msgId = @msgId AND eventHandlerName = @eventHandlerName;";
+                $"SELECT * FROM {Options.CurrentValue.ReceivedTableName} WHERE msgId = @msgId AND eventHandlerName = @eventHandlerName;";
 
             return await GetInvoker().QueryOneModelAsync(sql,
                     new { msgId, eventHandlerName = eventHandlerDescriptor.EventHandlerName }, cancellationToken)
@@ -71,7 +71,7 @@ namespace Shashlik.EventBus.PostgreSQL
         public async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId,
             CancellationToken cancellationToken)
         {
-            var sql = $"SELECT * FROM {Options.CurrentValue.FullReceivedTableName} WHERE id = @storageId;";
+            var sql = $"SELECT * FROM {Options.CurrentValue.ReceivedTableName} WHERE id = @storageId;";
             return await GetInvoker().QueryOneModelAsync(sql, new { storageId }, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -95,7 +95,7 @@ namespace Shashlik.EventBus.PostgreSQL
             }
 
             var sql = $@"
-SELECT * FROM {Options.CurrentValue.FullPublishedTableName}
+SELECT * FROM {Options.CurrentValue.PublishedTableName}
 WHERE 
     1 = 1{where}
 ORDER BY createTime DESC
@@ -133,7 +133,7 @@ LIMIT {skip},{take};
             }
 
             var sql = $@"
-SELECT * FROM {Options.CurrentValue.FullReceivedTableName}
+SELECT * FROM {Options.CurrentValue.ReceivedTableName}
 WHERE 
     1 = 1{where}
 ORDER BY createTime DESC
@@ -150,9 +150,10 @@ LIMIT {skip},{take};
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-INSERT INTO {Options.CurrentValue.FullPublishedTableName}
+INSERT INTO {Options.CurrentValue.PublishedTableName}
 (msgId, environment, createTime, delayAt, expireTime, eventName, eventBody, eventItems, retryCount, status, isLocking, lockEnd)
-VALUES(@MsgId, @Environment, @CreateTime, @DelayAt, @ExpireTime, @EventName, @EventBody, @EventItems, @RetryCount, @Status, @IsLocking, @LockEnd) RETURNING id;
+VALUES(@MsgId, @Environment, @CreateTime, @DelayAt, @ExpireTime, @EventName, @EventBody, @EventItems, @RetryCount, @Status, @IsLocking, @LockEnd);
+SELECT last_insert_rowid();
 ";
             var id = await GetInvoker().ScalarAsync<int?>(transactionContext, sql, GetInvoker().ToSaveObject(message),
                     cancellationToken)
@@ -168,9 +169,10 @@ VALUES(@MsgId, @Environment, @CreateTime, @DelayAt, @ExpireTime, @EventName, @Ev
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-INSERT INTO {Options.CurrentValue.FullReceivedTableName}
+INSERT INTO {Options.CurrentValue.ReceivedTableName}
 (msgId, environment, createTime, isDelay, delayAt, expireTime, eventName, eventHandlerName, eventBody, eventItems, retryCount, status, isLocking, lockEnd)
-VALUES(@MsgId, @Environment, @CreateTime, @IsDelay, @DelayAt, @ExpireTime, @EventName, @EventHandlerName, @EventBody, @EventItems, @RetryCount, @Status, @IsLocking, @LockEnd) RETURNING id;
+VALUES(@MsgId, @Environment, @CreateTime, @IsDelay, @DelayAt, @ExpireTime, @EventName, @EventHandlerName, @EventBody, @EventItems, @RetryCount, @Status, @IsLocking, @LockEnd);
+SELECT last_insert_rowid();
 ";
 
             var id = await GetInvoker().ScalarAsync<int?>(sql, GetInvoker().ToSaveObject(message), cancellationToken)
@@ -187,7 +189,7 @@ VALUES(@MsgId, @Environment, @CreateTime, @IsDelay, @DelayAt, @ExpireTime, @Even
             CancellationToken cancellationToken = default)
         {
             var sql = $@"
-UPDATE {Options.CurrentValue.FullPublishedTableName}
+UPDATE {Options.CurrentValue.PublishedTableName}
 SET status = @status, retryCount = @retryCount, expireTime = @expireTime
 WHERE id = @storageId
 ";
@@ -203,7 +205,7 @@ WHERE id = @storageId
         {
             if (storageId == null) throw new ArgumentNullException(nameof(storageId));
             var sql = $@"
-UPDATE {Options.CurrentValue.FullReceivedTableName}
+UPDATE {Options.CurrentValue.ReceivedTableName}
 SET status = @status, retryCount = @retryCount, expireTime = @expireTime
 WHERE id = @storageId
 ";
@@ -221,7 +223,7 @@ WHERE id = @storageId
             var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
-UPDATE {Options.CurrentValue.FullPublishedTableName}
+UPDATE {Options.CurrentValue.PublishedTableName}
 SET isLocking = 1, lockEnd = @lockEndAt
 WHERE id = @storageId AND (isLocking = 0 OR lockEnd < @nowLong)
 ";
@@ -240,7 +242,7 @@ WHERE id = @storageId AND (isLocking = 0 OR lockEnd < @nowLong)
             var nowLong = DateTimeOffset.Now.GetLongDate();
 
             var sql = $@"
-UPDATE {Options.CurrentValue.FullReceivedTableName}
+UPDATE {Options.CurrentValue.ReceivedTableName}
 SET isLocking = 1, lockEnd = @lockEndAt
 WHERE id = @storageId AND (isLocking = 0 OR lockEnd < @nowLong)
 ";
@@ -254,8 +256,8 @@ WHERE id = @storageId AND (isLocking = 0 OR lockEnd < @nowLong)
         {
             var now = DateTimeOffset.Now.GetLongDate();
             var sql = $@"
-DELETE FROM {Options.CurrentValue.FullPublishedTableName} WHERE expireTime > 0 AND expireTime < {now} AND status = '{MessageStatus.Succeeded}';
-DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE expireTime > 0 AND expireTime < {now} AND status = '{MessageStatus.Succeeded}';
+DELETE FROM {Options.CurrentValue.PublishedTableName} WHERE expireTime > 0 AND expireTime < {now} AND status = '{MessageStatus.Succeeded}';
+DELETE FROM {Options.CurrentValue.ReceivedTableName} WHERE expireTime > 0 AND expireTime < {now} AND status = '{MessageStatus.Succeeded}';
 ";
             await GetInvoker().NonQueryAsync(sql, null, cancellationToken).ConfigureAwait(false);
         }
@@ -272,7 +274,7 @@ DELETE FROM {Options.CurrentValue.FullReceivedTableName} WHERE expireTime > 0 AN
             var nowLong = now.GetLongDate();
 
             var sql = $@"
-SELECT * FROM {Options.CurrentValue.FullPublishedTableName}
+SELECT * FROM {Options.CurrentValue.PublishedTableName}
 WHERE
     environment = '{environment}'
     AND createTime < {createTimeLimit}
@@ -297,7 +299,7 @@ LIMIT {count};
             var nowLong = now.GetLongDate();
 
             var sql = $@"
-SELECT * FROM {Options.CurrentValue.FullReceivedTableName}
+SELECT * FROM {Options.CurrentValue.ReceivedTableName}
 WHERE
     environment = '{environment}'
     AND ((isDelay = 0 AND createTime < {createTimeLimit}) OR (isDelay = 1 AND delayAt <= {nowLong} ))
@@ -314,7 +316,7 @@ LIMIT {count};
             CancellationToken cancellationToken)
         {
             var sql = $@"
-SELECT status, COUNT(1) AS c FROM {Options.CurrentValue.FullPublishedTableName} GROUP BY status;
+SELECT status, COUNT(1) AS c FROM {Options.CurrentValue.PublishedTableName} GROUP BY status;
 ";
 
             using var connection = CreateConnection();
@@ -328,7 +330,7 @@ SELECT status, COUNT(1) AS c FROM {Options.CurrentValue.FullPublishedTableName} 
             CancellationToken cancellationToken)
         {
             var sql = $@"
-SELECT status, COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableName} GROUP BY status;
+SELECT status, COUNT(1) AS c FROM {Options.CurrentValue.ReceivedTableName} GROUP BY status;
 ";
             using var connection = CreateConnection();
             var list = (await connection.QueryAsync(sql).ConfigureAwait(false))?.ToList();
@@ -339,7 +341,7 @@ SELECT status, COUNT(1) AS c FROM {Options.CurrentValue.FullReceivedTableName} G
 
         public IDbConnection CreateConnection()
         {
-            return new NpgsqlConnection(ConnectionString.ConnectionString);
+            return new SqliteConnection(ConnectionString.ConnectionString);
         }
     }
 }

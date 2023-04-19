@@ -1,9 +1,10 @@
-﻿using System;
+﻿// dotnet ef migrations add sqlite_init -c DemoDbContext -o Migrations -p ./Sample.Sqlite/Sample.Sqlite.csproj -s ./Sample.Sqlite/Sample.Sqlite.csproj
+
+using System;
 using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using FreeRedis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,11 +12,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
-using Shashlik.EventBus.MySql;
-using Shashlik.EventBus.Redis;
+using Shashlik.EventBus.MemoryQueue;
+using Shashlik.EventBus.Sqlite;
 using Shashlik.Utils.Extensions;
 
-namespace Sample.Redis.Mysql
+namespace Sample.Sqlite
 {
     public class Program
     {
@@ -41,25 +42,19 @@ namespace Sample.Redis.Mysql
                     using var serviceProvider = services.BuildServiceProvider();
                     var configuration = serviceProvider.GetService<IConfiguration>();
                     var connectionString = configuration.GetConnectionString("Default");
-                    var redisConn = configuration.GetValue<string>("EventBus:RedisMQ:Conn");
-                    var redisClient = new RedisClient(redisConn);
-                    services.AddSingleton(redisClient);
 
                     services.AddLogging(logging => { logging.AddConsole().SetMinimumLevel(LogLevel.Information); });
 
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
-                        r.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-                            db => { db.MigrationsAssembly(Assembly.GetEntryAssembly().GetName().FullName); });
+                        r.EnableSensitiveDataLogging();
+                        r.UseSqlite(connectionString,
+                            db => { db.MigrationsAssembly("Sample.Sqlite"); });
                     }, 5);
 
-                    services.AddEventBus(r => { r.Environment = "DemoRedisMySql"; })
-                        .AddMySql<DemoDbContext>()
-                        .AddRedisMQ(r =>
-                        {
-                            r.RedisClientFactory = s =>
-                                s.GetRequiredService<RedisClient>();
-                        });
+                    services.AddEventBus(r => { r.Environment = "DemoRabbitSqlite"; })
+                        .AddSqlite<DemoDbContext>()
+                        .AddMemoryQueue();
 
                     services.AddHostedService<TestService>();
 
@@ -98,14 +93,10 @@ namespace Sample.Redis.Mysql
                         return;
 
                     content = $"{DateTime.Now:HH:mm:ss} [ClusterId: {ClusterId}]=====>{content}";
-
-
-                    using var serviceScope = ServiceScopeFactory.CreateScope();
-                    await using var dbContext = serviceScope.ServiceProvider.GetService<DemoDbContext>();
-
+                    using var scope = ServiceScopeFactory.CreateScope();
+                    var dbContext = scope.ServiceProvider.GetRequiredService<DemoDbContext>();
 
                     // 本地事务
-                    if (DateTime.Now.Millisecond % 2 == 0)
                     {
                         await using var tran = await dbContext.Database.BeginTransactionAsync(cancellationToken);
                         try
@@ -132,42 +123,10 @@ namespace Sample.Redis.Mysql
                         }
                         catch (Exception e)
                         {
+                            Console.WriteLine(e.StackTrace);
                             Console.WriteLine("逻辑异常,数据回滚,发布失败:" + content);
                             // 回滚事务,消息数据也将回滚,不会发布
                             await tran.RollbackAsync(cancellationToken);
-                        }
-                    }
-                    // TransactionScope
-                    else
-                    {
-                        using var tran = new System.Transactions.TransactionScope(System.Transactions
-                            .TransactionScopeAsyncFlowOption
-                            .Enabled);
-                        try
-                        {
-                            // 业务数据
-                            dbContext.Users.Add(new Users
-                            {
-                                Name = Guid.NewGuid().ToString()
-                            });
-
-                            await dbContext.SaveChangesAsync(cancellationToken);
-
-                            // 发布事件
-                            await EventPublisher.PublishAsync(new Event1 { Name = content },
-                                XaTransactionContext.Current,
-                                cancellationToken: cancellationToken);
-
-                            if (DateTime.Now.Millisecond % 2 == 0)
-                                throw new Exception("模拟异常");
-
-                            // 提交事务
-                            tran.Complete();
-                            Console.WriteLine($"已发布消息: {content}");
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine("逻辑异常,数据回滚,发布失败:" + content);
                         }
                     }
                 }
