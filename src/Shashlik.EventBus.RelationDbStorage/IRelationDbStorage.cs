@@ -26,7 +26,7 @@ public interface IRelationDbStorage : IMessageStorage
             Environment = InnerExtensions.ParseTo<string>(model.environment),
             CreateTime = ((long)InnerExtensions.ParseTo<long>(model.createTime)).LongToDateTimeOffset()!.Value,
             DelayAt = ((long?)InnerExtensions.ParseTo<long>(model.delayAt))?.LongToDateTimeOffset(),
-            ExpireTime = ((long)InnerExtensions.ParseTo<long>(model.expireTime)).LongToDateTimeOffset()!.Value,
+            ExpireTime = ((long?)InnerExtensions.ParseTo<long>(model.expireTime))?.LongToDateTimeOffset(),
             EventHandlerName = InnerExtensions.ParseTo<string>(model.eventHandlerName),
             EventName = InnerExtensions.ParseTo<string>(model.eventName),
             EventBody = InnerExtensions.ParseTo<string>(model.eventBody),
