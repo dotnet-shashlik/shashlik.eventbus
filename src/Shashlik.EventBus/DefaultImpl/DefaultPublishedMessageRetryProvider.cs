@@ -51,7 +51,7 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 EventName = messageStorageModel.EventName,
                 MsgId = messageStorageModel.MsgId,
-                MsgBody = MessageSerializer.Serialize(messageStorageModel),
+                MsgBody = messageStorageModel.EventBody,
                 SendAt = DateTimeOffset.Now,
                 DelayAt = messageStorageModel.DelayAt
             };
