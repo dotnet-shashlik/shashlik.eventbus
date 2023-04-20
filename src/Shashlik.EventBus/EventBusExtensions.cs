@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.EventBus.Utils;
 
@@ -53,13 +54,13 @@ namespace Shashlik.EventBus
 
             using var serviceProvider = serviceCollection.BuildServiceProvider();
             var eventHandlerFindProvider = serviceProvider.GetRequiredService<IEventHandlerFindProvider>();
+            var options = serviceProvider.GetRequiredService<IOptions<EventBusOptions>>();
             var handlers = eventHandlerFindProvider.FindAll();
             foreach (var eventHandlerDescriptor in handlers)
-                serviceCollection.AddTransient(eventHandlerDescriptor.EventHandlerType);
+                serviceCollection.Add(new ServiceDescriptor(eventHandlerDescriptor.EventHandlerType,
+                    eventHandlerDescriptor.EventHandlerType, options.Value.HandlerServiceLifetime));
 
             return new DefaultEventBusBuilder(serviceCollection);
         }
-
-
     }
 }

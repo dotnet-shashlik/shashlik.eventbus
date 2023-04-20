@@ -2,6 +2,8 @@
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Shashlik.EventBus
 {
     public class EventBusOptions
@@ -50,5 +52,10 @@ namespace Shashlik.EventBus
         /// 成功的消息多久后删除,单位小时,默认3天
         /// </summary>
         public int SucceedExpireHour { get; set; } = 3 * 24;
+
+        /// <summary>
+        /// Service注册生命周期类型
+        /// </summary>
+        public ServiceLifetime HandlerServiceLifetime { get; set; } = ServiceLifetime.Transient;
     }
 }
