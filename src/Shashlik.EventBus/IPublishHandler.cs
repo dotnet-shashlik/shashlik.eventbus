@@ -9,7 +9,7 @@ namespace Shashlik.EventBus
     public interface IPublishHandler
     {
         /// <summary>
-        /// 执行发布操作
+        /// 执行发布操作,不管锁状态
         /// </summary>
         /// <param name="messageTransferModel">消息传输模型</param>
         /// <param name="messageStorageModel">消息存储模型</param>
@@ -21,12 +21,12 @@ namespace Shashlik.EventBus
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// 执行发布操作
+        /// 锁定数据并执行发布操作
         /// </summary>
         /// <param name="storageId">消息id</param>
         /// <param name="cancellationToken">取消token</param>
         /// <returns></returns>
-        public Task<HandleResult> HandleAsync(
+        public Task<HandleResult> LockingHandleAsync(
             string storageId,
             CancellationToken cancellationToken = default);
     }

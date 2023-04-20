@@ -87,7 +87,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 },
                 item =>
                 {
-                    ReceivedHandler.HandleAsync(item.Id, cancellationToken).ConfigureAwait(false).GetAwaiter()
+                    ReceivedHandler.LockingHandleAsync(item.Id, cancellationToken).ConfigureAwait(false).GetAwaiter()
                         .GetResult();
                 });
         }
