@@ -67,7 +67,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     messageTransferModel ??= new MessageTransferModel
                     {
                         EventName = messageStorageModel.EventName,
-                        Environment = null,
+                        Environment = messageStorageModel.Environment,
                         MsgId = messageStorageModel.MsgId,
                         MsgBody = messageStorageModel.EventBody,
                         Items = MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel

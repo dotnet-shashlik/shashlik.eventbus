@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic;
 using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.DefaultImpl
@@ -50,10 +53,12 @@ namespace Shashlik.EventBus.DefaultImpl
             var messageTransferModel = new MessageTransferModel
             {
                 EventName = messageStorageModel.EventName,
+                Environment = messageStorageModel.Environment,
                 MsgId = messageStorageModel.MsgId,
                 MsgBody = messageStorageModel.EventBody,
+                Items = MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel.EventItems),
                 SendAt = DateTimeOffset.Now,
-                DelayAt = messageStorageModel.DelayAt
+                DelayAt = messageStorageModel.DelayAt,
             };
 
             return await PublishHandler.HandleAsync(messageTransferModel, messageStorageModel, cancellationToken);
