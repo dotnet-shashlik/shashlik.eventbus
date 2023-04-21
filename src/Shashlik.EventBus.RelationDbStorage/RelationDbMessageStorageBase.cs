@@ -58,12 +58,12 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
     protected abstract string ReturnInsertIdSql { get; }
 
     /// <summary>
-    /// sql 标识符 结束字符
+    /// sql 标识符 开始字符
     /// </summary>
     protected virtual string SqlTagCharPrefix => "";
 
     /// <summary>
-    /// sql 标识符 开始字符
+    /// sql 标识符 结束字符
     /// </summary>
     protected virtual string SqlTagCharSuffix => "";
 
