@@ -42,6 +42,9 @@ jobs:
 
       - name: Setup Kafka
         uses: 280780363/kafka-action@v1.0
+        with:
+          kafka version: '2.8.1'
+          zookeeper version: '3.8.1'
 
       - name: Setup MongoDb
         uses: 280780363/mongo-action@v1.0
