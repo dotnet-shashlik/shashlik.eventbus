@@ -283,16 +283,3 @@
         })
 
 ```
-## 后续计划
-- 功能
-  - [x] Dashboard
-- 消息中间件支持
-    - [x] RabbitMQ
-    - [x] Kafka
-    - [x] Pulsar
-    - [x] Redis
-- 存储支持
-    - [x] MySql
-    - [x] PostgreSql
-    - [x] SqlServer
-    - [x] MongoDb
