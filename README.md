@@ -13,7 +13,7 @@
 | Shashlik.EventBus.PostgreSQL        | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.PostgreSQL.svg)](https://www.nuget.org/packages/Shashlik.EventBus.PostgreSQL)               | PostgreSQL 消息存储驱动          |
 | Shashlik.EventBus.SqlServer         | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.SqlServer.svg)](https://www.nuget.org/packages/Shashlik.EventBus.SqlServer)                 | SqlServer 消息存储驱动           |
 | Shashlik.EventBus.MongoDb           | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.MongoDb.svg)](https://www.nuget.org/packages/Shashlik.EventBus.MongoDb)                     | MongoDb 消息存储驱动             |
-| Shashlik.EventBus.Sqlite            | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Sqlite.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Sqlite)                     | MongoDb 消息存储驱动             |
+| Shashlik.EventBus.Sqlite            | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Sqlite.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Sqlite)                     | Sqlite 消息存储驱动              |
 | Shashlik.EventBus.Kafka             | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Kafka.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Kafka)                         | kafka 消息收发驱动               |
 | Shashlik.EventBus.RabbitMQ          | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.RabbitMQ.svg)](https://www.nuget.org/packages/Shashlik.EventBus.RabbitMQ)                   | RabbitMQ 消息收发驱动            |
 | Shashlik.EventBus.Pulsar            | [![nuGet](https://img.shields.io/nuget/v/Shashlik.EventBus.Pulsar.svg)](https://www.nuget.org/packages/Shashlik.EventBus.Pulsar)                       | Pulsar 消息收发驱动              |
