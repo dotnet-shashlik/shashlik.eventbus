@@ -64,12 +64,13 @@ namespace Shashlik.EventBus.RabbitMQ
                 if (counterInt >= 60)
                 {
                     _logger.LogError(
-                        $"[EventBus-RabbitMQ] send msg was returned and will not be try again: {args.RoutingKey}");
+                        $"[EventBus-RabbitMQ] send msg was returned and will not be try again: {args.RoutingKey}, ReplyCode: {args.ReplyCode}, ReplyText: {args.ReplyText}");
                     return;
                 }
 
                 args.BasicProperties.Headers[FailRetryHeaderKey] = counterInt + 1;
-                _logger.LogWarning($"[EventBus-RabbitMQ] send msg was returned and will try again: {args.RoutingKey}");
+                _logger.LogWarning(
+                    $"[EventBus-RabbitMQ] send msg was returned and will try again: {args.RoutingKey}, ReplyCode: {args.ReplyCode}, ReplyText: {args.ReplyText}");
 
                 // 被退回的消息重试发送
                 channel.BasicPublish(Options.CurrentValue.Exchange, args.RoutingKey, true, args.BasicProperties,
