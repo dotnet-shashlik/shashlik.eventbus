@@ -34,16 +34,13 @@ namespace Shashlik.EventBus.RabbitMQ
         public async Task SendAsync(MessageTransferModel message)
         {
             var channel = Connection.GetChannel();
-            channel.ConfirmSelect();
-            // 交换机定义,类型topic
-            channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
             var basicProperties = channel.CreateBasicProperties();
             basicProperties.MessageId = message.MsgId;
             // 启用消息持久化
             basicProperties.Persistent = true;
-            channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, basicProperties,
+            channel.BasicPublish(Options.CurrentValue.Exchange, message.EventName, true, basicProperties,
                 MessageSerializer.SerializeToBytes(message));
-            // 等待消费端ack消息
+            // 等待消息发布确认or die,确保消息发送环节不丢失
             channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(Options.CurrentValue.ConfirmTimeout));
             Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message}");
 
