@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Threading.Tasks;
 using Confluent.Kafka;
@@ -29,7 +30,8 @@ namespace Shashlik.EventBus.Kafka
                 var dic = Options.CurrentValue.Properties;
                 var config = new AdminClientConfig(dic);
                 using var adminClient = new AdminClientBuilder(config).Build();
-                await adminClient.CreateTopicsAsync(new[] { new TopicSpecification { Name = topic } }).ConfigureAwait(false);
+                await adminClient.CreateTopicsAsync(new[] { NewTopicSpecification(topic) })
+                    .ConfigureAwait(false);
                 ExistsTopics.Add(topic);
             }
             catch (CreateTopicsException ex)
@@ -40,11 +42,24 @@ namespace Shashlik.EventBus.Kafka
             }
         }
 
+        private TopicSpecification NewTopicSpecification(string name)
+        {
+            var topicSpecification = new TopicSpecification
+            {
+                NumPartitions = Options.CurrentValue.TopicNumPartitions,
+                ReplicationFactor = Options.CurrentValue.TopicReplicationFactor
+            };
+            Options.CurrentValue.ConfigTopic?.Invoke(topicSpecification);
+            topicSpecification.Name = name;
+            return topicSpecification;
+        }
+
         public IProducer<string, byte[]> GetProducer(string topic)
         {
             InitTopic(topic).ConfigureAwait(false).GetAwaiter().GetResult();
+            var producerBuilder = new ProducerBuilder<string, byte[]>(Options.CurrentValue.Properties);
             return Producers.GetOrAdd(topic, _ =>
-                new ProducerBuilder<string, byte[]>(Options.CurrentValue.Properties).Build()
+                producerBuilder.Build()
             );
         }
 

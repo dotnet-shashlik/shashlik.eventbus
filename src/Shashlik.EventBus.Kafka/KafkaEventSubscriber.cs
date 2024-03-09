@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Shashlik.EventBus.Utils;
+
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 // ReSharper disable SimplifyLinqExpressionUseAll
