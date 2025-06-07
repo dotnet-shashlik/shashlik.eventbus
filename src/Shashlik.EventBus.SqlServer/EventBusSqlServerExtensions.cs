@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.EventBus.Utils;
 
 // ReSharper disable AssignNullToNotNullAttribute
@@ -83,6 +84,7 @@ namespace Shashlik.EventBus.SqlServer
             eventBusBuilder.Services.AddSingleton<IMessageStorage, SqlServerMessageStorage>();
             eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, SqlServerMessageStorageInitializer>();
             eventBusBuilder.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
+            eventBusBuilder.Services.AddSingleton<IFreeSqlFactory, SqlServerFreeSqlFactory>();
 
             return eventBusBuilder;
         }

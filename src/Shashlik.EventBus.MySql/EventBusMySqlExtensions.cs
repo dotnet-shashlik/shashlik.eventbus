@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.MySql
@@ -65,7 +68,8 @@ namespace Shashlik.EventBus.MySql
         /// <param name="eventBusBuilder"></param>
         /// <param name="optionsAction"></param>
         /// <returns></returns>
-        public static IEventBusBuilder AddMySql(this IEventBusBuilder eventBusBuilder, Action<EventBusMySqlOptions>? optionsAction = null)
+        public static IEventBusBuilder AddMySql(this IEventBusBuilder eventBusBuilder,
+            Action<EventBusMySqlOptions>? optionsAction = null)
         {
             eventBusBuilder.Services.AddOptions<EventBusMySqlOptions>();
             if (optionsAction != null)
@@ -73,7 +77,7 @@ namespace Shashlik.EventBus.MySql
             eventBusBuilder.Services.AddSingleton<IMessageStorage, MySqlMessageStorage>();
             eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, MySqlMessageStorageInitializer>();
             eventBusBuilder.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
-
+            eventBusBuilder.Services.AddSingleton<IFreeSqlFactory, MySqlFreeSqlFactory>();
             return eventBusBuilder;
         }
     }

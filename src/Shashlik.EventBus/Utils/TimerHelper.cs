@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Timer = System.Timers.Timer;
 
 namespace Shashlik.EventBus.Utils
@@ -21,26 +22,15 @@ namespace Shashlik.EventBus.Utils
             if (expire <= TimeSpan.Zero)
                 throw new ArgumentException("invalid expire.", nameof(expire));
 
-            var timer = new Timer { Interval = expire.TotalMilliseconds, AutoReset = false };
-            timer.Elapsed += (_, _) =>
+            Task.Run(async () =>
             {
-                try
+                using var timer = new PeriodicTimer(expire);
+                while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    using (timer)
-                    {
-                        if (!cancellationToken.IsCancellationRequested)
-                            action();
-
-                        timer.Stop();
-                        timer.Close();
-                    }
+                    action();
+                    return;
                 }
-                catch
-                {
-                    // ignore
-                }
-            };
-            timer.Start();
+            }, cancellationToken);
         }
 
         /// <summary>
@@ -63,33 +53,20 @@ namespace Shashlik.EventBus.Utils
         /// <param name="interval">间隔时间</param>
         /// <param name="cancellationToken">撤销</param>
         /// <return></return>
-        public static void SetInterval(Action action, TimeSpan interval, CancellationToken cancellationToken = default)
+        public static void SetInterval(Action action, TimeSpan interval,
+            CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
             if (interval <= TimeSpan.Zero)
                 throw new ArgumentException("invalid interval.", nameof(interval));
 
-            var timer = new Timer { Interval = interval.TotalMilliseconds, AutoReset = true };
-            timer.Elapsed += (_, _) =>
+            Task.Run(async () =>
             {
-                if (!cancellationToken.IsCancellationRequested)
+                using var timer = new PeriodicTimer(interval);
+                while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
                     action();
-                else
-                    try
-                    {
-                        using (timer)
-                        {
-                            timer.Stop();
-                            timer.Close();
-                        }
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-            };
-            timer.Start();
+            }, cancellationToken);
         }
     }
 }
