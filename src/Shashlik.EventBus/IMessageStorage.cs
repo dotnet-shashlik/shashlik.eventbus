@@ -89,7 +89,7 @@ namespace Shashlik.EventBus
             CancellationToken cancellationToken);
 
         /// <summary>
-        /// 保存发布消息, 自动写入id到message
+        /// 保存发布消息, 自动写入id到message,实现类保证唯一性
         /// </summary>
         /// <param name="message">消息存储模型</param>
         /// <param name="cancellationToken"></param>
