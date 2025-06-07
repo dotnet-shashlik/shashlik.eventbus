@@ -1,7 +1,4 @@
-﻿using System.Data;
-using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Options;
-using Shashlik.EventBus.RelationDbStorage;
+﻿using Shashlik.EventBus.RelationDbStorage;
 
 namespace Shashlik.EventBus.Sqlite;
 
