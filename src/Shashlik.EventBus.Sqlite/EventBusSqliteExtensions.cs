@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.Sqlite
@@ -65,7 +66,8 @@ namespace Shashlik.EventBus.Sqlite
         /// <param name="eventBusBuilder"></param>
         /// <param name="optionsAction"></param>
         /// <returns></returns>
-        public static IEventBusBuilder AddSqlite(this IEventBusBuilder eventBusBuilder, Action<EventBusSqliteOptions>? optionsAction = null)
+        public static IEventBusBuilder AddSqlite(this IEventBusBuilder eventBusBuilder,
+            Action<EventBusSqliteOptions>? optionsAction = null)
         {
             eventBusBuilder.Services.AddOptions<EventBusSqliteOptions>();
             if (optionsAction != null)
@@ -73,6 +75,7 @@ namespace Shashlik.EventBus.Sqlite
             eventBusBuilder.Services.AddSingleton<IMessageStorage, SqliteMessageStorage>();
             eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, SqliteMessageStorageInitializer>();
             eventBusBuilder.Services.AddSingleton<IConnectionString, DefaultConnectionString>();
+            eventBusBuilder.Services.AddSingleton<IFreeSqlFactory, SqliteFreeSqlFactory>();
 
             return eventBusBuilder;
         }
