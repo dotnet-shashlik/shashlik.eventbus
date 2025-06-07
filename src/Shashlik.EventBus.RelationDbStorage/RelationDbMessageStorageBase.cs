@@ -32,13 +32,13 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
             EventName = model.EventName,
             EventBody = model.EventBody,
             CreateTime = model.CreateTime.LongToDateTimeOffset()!.Value,
-            DelayAt = model.DelayAt?.LongToDateTimeOffset(),
-            ExpireTime = model.ExpireTime?.LongToDateTimeOffset(),
+            DelayAt = model.DelayAt.LongToDateTimeOffset(),
+            ExpireTime = model.ExpireTime.LongToDateTimeOffset(),
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.LongToDateTimeOffset()
+            LockEnd = model.LockEnd.LongToDateTimeOffset()
         };
     }
 
@@ -53,13 +53,13 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
             EventHandlerName = model.EventHandlerName,
             EventBody = model.EventBody,
             CreateTime = model.CreateTime.LongToDateTimeOffset()!.Value,
-            DelayAt = model.DelayAt?.LongToDateTimeOffset(),
-            ExpireTime = model.ExpireTime?.LongToDateTimeOffset(),
+            DelayAt = model.DelayAt.LongToDateTimeOffset(),
+            ExpireTime = model.ExpireTime.LongToDateTimeOffset(),
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.LongToDateTimeOffset()
+            LockEnd = model.LockEnd.LongToDateTimeOffset()
         };
     }
 
@@ -72,13 +72,13 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
             EventName = model.EventName,
             EventBody = model.EventBody,
             CreateTime = model.CreateTime.GetLongDate(),
-            DelayAt = model.DelayAt?.GetLongDate(),
-            ExpireTime = model.ExpireTime?.GetLongDate(),
+            DelayAt = model.DelayAt?.GetLongDate() ?? 0,
+            ExpireTime = model.ExpireTime?.GetLongDate() ?? 0,
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.GetLongDate(),
+            LockEnd = model.LockEnd?.GetLongDate() ?? 0,
         };
     }
 
@@ -93,13 +93,13 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
             EventBody = model.EventBody,
             CreateTime = model.CreateTime.GetLongDate(),
             IsDelay = model.DelayAt.HasValue,
-            DelayAt = model.DelayAt?.GetLongDate(),
-            ExpireTime = model.ExpireTime?.GetLongDate(),
+            DelayAt = model.DelayAt?.GetLongDate() ?? 0,
+            ExpireTime = model.ExpireTime?.GetLongDate() ?? 0,
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.GetLongDate()
+            LockEnd = model.LockEnd?.GetLongDate() ?? 0
         };
     }
 

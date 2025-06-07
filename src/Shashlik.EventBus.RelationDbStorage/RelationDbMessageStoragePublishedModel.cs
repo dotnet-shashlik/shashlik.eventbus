@@ -52,13 +52,13 @@ namespace Shashlik.EventBus
         /// 延迟消费时间
         /// </summary>
         [Column("delayAt")]
-        public long? DelayAt { get; set; }
+        public long DelayAt { get; set; }
 
         /// <summary>
         /// 过期时间,0永不过期
         /// </summary>
         [Column("expireTime")]
-        public long? ExpireTime { get; set; }
+        public long ExpireTime { get; set; }
 
         /// <summary>
         /// 事件附加数据
@@ -88,7 +88,7 @@ namespace Shashlik.EventBus
         /// 锁定结束时间
         /// </summary>
         [Column("lockEnd")]
-        public long? LockEnd { get; set; }
+        public long LockEnd { get; set; }
 
         public override string ToString()
         {
