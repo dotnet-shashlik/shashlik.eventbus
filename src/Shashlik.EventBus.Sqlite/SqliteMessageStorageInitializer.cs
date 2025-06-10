@@ -1,6 +1,6 @@
-﻿using System.Data.SQLite;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.Sqlite
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS {Options.CurrentValue.ReceivedTableName}
 CREATE UNIQUE INDEX IF NOT EXISTS  INDEX_{Options.CurrentValue.ReceivedTableName}_msgId ON {Options.CurrentValue.ReceivedTableName} (msgId, eventHandlerName);
 ";
 
-            await using var connection = new SQLiteConnection(ConnectionString.ConnectionString);
+            await using var connection = new SqliteConnection(ConnectionString.ConnectionString);
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             await using var cmd = connection.CreateCommand();
             cmd.CommandText = sql;
