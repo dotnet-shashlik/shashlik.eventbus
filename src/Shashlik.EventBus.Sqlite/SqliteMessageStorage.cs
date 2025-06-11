@@ -64,6 +64,7 @@ VALUES
         var id = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.MsgId == message.MsgId && r.EventHandlerName == message.EventHandlerName)
             .First(r => r.Id);
+        message.Id = id.ToString();
         return id.ToString();
     }
 }

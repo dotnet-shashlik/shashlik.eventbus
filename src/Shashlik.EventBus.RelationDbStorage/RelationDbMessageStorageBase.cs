@@ -116,6 +116,8 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var entity = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.MsgId == msgId)
             .FirstAsync(cancellationToken);
+        if (entity is null)
+            return null;
         return ToModel(entity);
     }
 
@@ -125,6 +127,8 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var id = storageId.ParseTo<long>();
         var entity = await FreeSql.Select<RelationDbMessageStoragePublishedModel>(id)
             .FirstAsync(cancellationToken);
+        if (entity is null)
+            return null;
         return ToModel(entity);
     }
 
@@ -135,6 +139,8 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var entity = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.MsgId == msgId && r.EventHandlerName == eventHandlerDescriptor.EventHandlerName)
             .FirstAsync(cancellationToken);
+        if (entity is null)
+            return null;
         return ToModel(entity);
     }
 
@@ -142,8 +148,10 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
-        var entity = await FreeSql.Select<RelationDbMessageStoragePublishedModel>(id)
+        var entity = await FreeSql.Select<RelationDbMessageStorageReceivedModel>(id)
             .FirstAsync(cancellationToken);
+        if (entity is null)
+            return null;
         return ToModel(entity);
     }
 
@@ -214,6 +222,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var id = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.MsgId == message.MsgId && r.EventHandlerName == message.EventHandlerName)
             .First(r => r.Id);
+        message.Id = id.ToString();
         return id.ToString();
     }
 
