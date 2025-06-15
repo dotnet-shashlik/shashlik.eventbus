@@ -31,22 +31,21 @@ namespace Shashlik.EventBus.RabbitMQ
         private IMessageListener MessageListener { get; }
         private IRabbitMQConnection Connection { get; }
 
-        public Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken cancellationToken)
+        public async Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor,
+            CancellationToken cancellationToken)
         {
             var channel = Connection.GetChannel();
-            // 注册基础通信交换机,类型topic
-            channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
             // 定义队列
-            channel.QueueDeclare(eventHandlerDescriptor.EventHandlerName, true, false, false);
+            await channel.QueueDeclareAsync(eventHandlerDescriptor.EventHandlerName, true, false, false, cancellationToken: cancellationToken);
             // 绑定队列到交换机以及routing key
-            channel.QueueBind(eventHandlerDescriptor.EventHandlerName, Options.CurrentValue.Exchange,
-                eventHandlerDescriptor.EventName);
+            await channel.QueueBindAsync(eventHandlerDescriptor.EventHandlerName, Options.CurrentValue.Exchange,
+                eventHandlerDescriptor.EventName, cancellationToken: cancellationToken);
 
             var eventName = eventHandlerDescriptor.EventName;
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
 
             var consumer = Connection.CreateConsumer(eventHandlerName);
-            consumer.Received += async (_, e) =>
+            consumer.ReceivedAsync += async (_, e) =>
             {
                 if (cancellationToken.IsCancellationRequested)
                     return;
@@ -83,24 +82,25 @@ namespace Shashlik.EventBus.RabbitMQ
                     .ConfigureAwait(false);
                 if (res == MessageReceiveResult.Success)
                     // 一定要在消息接收处理完成后才确认ack
-                    channel.BasicAck(e.DeliveryTag, false);
+                    await channel.BasicAckAsync(e.DeliveryTag, false, cancellationToken);
                 else
-                    channel.BasicReject(e.DeliveryTag, true);
+                    await channel.BasicRejectAsync(e.DeliveryTag, true, cancellationToken);
             };
 
-            consumer.Registered += (_, _) =>
+            consumer.RegisteredAsync += async (_, _) =>
             {
+                await Task.CompletedTask;
                 Logger.LogInformation(
                     $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been registered");
             };
-            consumer.Shutdown += (_, _) =>
+            consumer.ShutdownAsync += async (_, _) =>
             {
+                await Task.CompletedTask;
+
                 Logger.LogWarning(
                     $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been shutdown");
             };
-            channel.BasicConsume(eventHandlerName, false, consumer);
-
-            return Task.CompletedTask;
+            await channel.BasicConsumeAsync(eventHandlerName, false, consumer, cancellationToken: cancellationToken);
         }
     }
 }

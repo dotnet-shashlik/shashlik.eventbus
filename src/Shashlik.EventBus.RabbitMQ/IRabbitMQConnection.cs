@@ -5,8 +5,8 @@ namespace Shashlik.EventBus.RabbitMQ
 {
     public interface IRabbitMQConnection
     {
-        IModel GetChannel();
+        IChannel GetChannel();
 
-        EventingBasicConsumer CreateConsumer(string eventHandlerName);
+        AsyncEventingBasicConsumer CreateConsumer(string eventHandlerName);
     }
 }
