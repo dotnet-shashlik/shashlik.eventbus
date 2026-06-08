@@ -85,9 +85,9 @@ namespace Shashlik.EventBus.MongoDb
             var builder = Builders<MessageStorageModel>.Filter;
             var filter = builder.Empty;
             if (!eventName.IsNullOrWhiteSpace())
-                filter = builder.And(builder.Eq(r => r.EventName, eventName));
+                filter = builder.And(filter, builder.Eq(r => r.EventName, eventName));
             if (!status.IsNullOrWhiteSpace())
-                filter = builder.And(builder.Eq(r => r.Status, status));
+                filter = builder.And(filter, builder.Eq(r => r.Status, status));
             return await mongoCollection.Find(filter)
                 .SortByDescending(r => r.CreateTime)
                 .Skip(skip).Limit(take)
@@ -103,11 +103,11 @@ namespace Shashlik.EventBus.MongoDb
             var builder = Builders<MessageStorageModel>.Filter;
             var filter = builder.Empty;
             if (!eventName.IsNullOrWhiteSpace())
-                filter = builder.And(builder.Eq(r => r.EventName, eventName));
+                filter = builder.And(filter, builder.Eq(r => r.EventName, eventName));
             if (!eventHandlerName.IsNullOrWhiteSpace())
-                filter = builder.And(builder.Eq(r => r.EventHandlerName, eventHandlerName));
+                filter = builder.And(filter, builder.Eq(r => r.EventHandlerName, eventHandlerName));
             if (!status.IsNullOrWhiteSpace())
-                filter = builder.And(builder.Eq(r => r.Status, status));
+                filter = builder.And(filter, builder.Eq(r => r.Status, status));
             return await mongoCollection.Find(filter)
                 .SortByDescending(r => r.CreateTime)
                 .Skip(skip).Limit(take)
@@ -238,15 +238,19 @@ namespace Shashlik.EventBus.MongoDb
             var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
             var now = DateTimeOffset.Now;
             var mongoCollection1 = GetPublishedCollection();
+            // delay 事件只有 DelayAt <= now 才需要重发,否则没到时间。
+            // 非 delay 事件 (DelayAt == null) 用 createTimeLimit 控制"创建多久后才进入重试"。
             var res = await mongoCollection1.FindAsync(r =>
                     r.Environment == environment
-                    && r.CreateTime < createTimeLimit
+                    && ((r.DelayAt == null && r.CreateTime < createTimeLimit) ||
+                        (r.DelayAt != null && r.DelayAt <= now))
                     && r.RetryCount < maxFailedRetryCount
                     && (!r.IsLocking || r.LockEnd < now)
                     && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed),
                 cancellationToken: cancellationToken);
 
-            return await res.ToListAsync(cancellationToken: cancellationToken);
+            var list = await res.ToListAsync(cancellationToken: cancellationToken);
+            return count > 0 ? list.Take(count).ToList() : list;
         }
 
         public async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAsync(
@@ -259,15 +263,18 @@ namespace Shashlik.EventBus.MongoDb
             var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
             var now = DateTimeOffset.Now;
             var mongoCollection = GetReceivedCollection();
+            // delay 事件只有 DelayAt <= now 才需要重发,否则没到时间。
             var res = await mongoCollection.FindAsync(r =>
                     r.Environment == environment
-                    && r.CreateTime < createTimeLimit
+                    && ((r.DelayAt == null && r.CreateTime < createTimeLimit) ||
+                        (r.DelayAt != null && r.DelayAt <= now))
                     && r.RetryCount < maxFailedRetryCount
                     && (!r.IsLocking || r.LockEnd < now)
                     && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed),
                 cancellationToken: cancellationToken);
 
-            return await res.ToListAsync(cancellationToken: cancellationToken);
+            var list = await res.ToListAsync(cancellationToken: cancellationToken);
+            return count > 0 ? list.Take(count).ToList() : list;
         }
 
         public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(

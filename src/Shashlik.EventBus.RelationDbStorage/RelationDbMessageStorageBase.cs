@@ -207,9 +207,11 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
     {
         var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
         var now = DateTimeOffset.Now.GetLongDate();
+        // delay 事件只有 DelayAt <= now 才需要重发,否则没到时间。
         return await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.Environment == environment &&
-                        r.CreateTime < createTimeLimit &&
+                        ((r.DelayAt == null && r.CreateTime < createTimeLimit) ||
+                         (r.DelayAt != null && r.DelayAt <= now)) &&
                         r.RetryCount < maxFailedRetryCount &&
                         (!r.IsLocking || r.LockEnd < now) &&
                         (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
