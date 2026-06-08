@@ -119,31 +119,30 @@ namespace Shashlik.EventBus.MongoDb
             CancellationToken cancellationToken = default)
         {
             IMongoCollection<MessageStorageModel> mongoCollection;
-            MongoDbTransactionContext? mongoDbTransactionContext = null;
+            MongoDbTransactionContext? mongoTx = null;
             if (transactionContext is null)
+            {
                 mongoCollection = GetPublishedCollection();
+            }
+            else if (transactionContext is MongoDbTransactionContext ctx)
+            {
+                mongoTx = ctx;
+                mongoCollection = ctx.ClientSessionHandle.Client
+                    .GetDatabase(Options.CurrentValue.DataBase)
+                    .GetCollection<MessageStorageModel>(Options.CurrentValue.PublishedCollectionName);
+            }
             else
             {
-                if (transactionContext is MongoDbTransactionContext mongoDbTransactionContext1)
-                {
-                    mongoDbTransactionContext = mongoDbTransactionContext1;
-                    mongoCollection = mongoDbTransactionContext.ClientSessionHandle.Client
-                        .GetDatabase(Options.CurrentValue.DataBase)
-                        .GetCollection<MessageStorageModel>(Options.CurrentValue.PublishedCollectionName);
-                }
-                else
-                {
-                    throw new InvalidCastException(
-                        $"[EventBus-MongoDb]Storage only support transaction context of {typeof(MongoDbTransactionContext)}");
-                }
+                throw new InvalidCastException(
+                    $"[EventBus-MongoDb] Storage only supports transaction context of {typeof(MongoDbTransactionContext)}, got {transactionContext.GetType()}");
             }
 
             message.Id = ObjectId.GenerateNewId().ToString();
 
-            if (mongoDbTransactionContext is null)
+            if (mongoTx is null)
                 await mongoCollection.InsertOneAsync(message, new InsertOneOptions { }, cancellationToken);
             else
-                await mongoCollection.InsertOneAsync(mongoDbTransactionContext.ClientSessionHandle,
+                await mongoCollection.InsertOneAsync(mongoTx.ClientSessionHandle,
                     message, new InsertOneOptions { }, cancellationToken);
             return message.Id;
         }
