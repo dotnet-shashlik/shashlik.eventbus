@@ -26,22 +26,35 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messageStorageModel.EventBody is null)
                 throw new InvalidCastException(
                     $"[EventBus] event body content is null, msgId: {messageStorageModel.MsgId}");
-            var eventBody =
-                MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
-            if (eventBody is null)
-                throw new InvalidCastException(
-                    $"[EventBus] event body content deserialize to type of \"{eventHandlerDescriptor.EventType}\" occur error, body: {messageStorageModel.EventBody}");
 
             using var scope = ServiceScopeFactory.CreateScope();
             var eventHandlerInstance =
                 scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
 
-            var method =
-                eventHandlerDescriptor.EventHandlerType.GetMethod("Execute",
-                    new Type[] { eventHandlerDescriptor.EventType, typeof(IDictionary<string, string>) });
+            if (eventHandlerDescriptor.ExecuteDelegate is not null)
+            {
+                // 编译好的委托,快路径
+                await eventHandlerDescriptor.ExecuteDelegate(eventHandlerInstance!, items)
+                    .ConfigureAwait(false);
+                return;
+            }
 
-            var task = (Task?)method!.Invoke(eventHandlerInstance, new object[] { eventBody, items });
-            await task!.ConfigureAwait(false);
+            // 回退路径(理论上不会走到,FindAll 阶段就编好了):反射 + 解包 TargetInvocationException
+            var method = eventHandlerDescriptor.EventHandlerType.GetMethod("Execute",
+                new[] { eventHandlerDescriptor.EventType, typeof(IDictionary<string, string>) });
+            if (method is null)
+                throw new InvalidOperationException(
+                    $"[EventBus] no Execute({eventHandlerDescriptor.EventType}, IDictionary<string,string>) found on {eventHandlerDescriptor.EventHandlerType}");
+
+            try
+            {
+                var task = (Task)method.Invoke(eventHandlerInstance, new object[] { items })!;
+                await task.ConfigureAwait(false);
+            }
+            catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is not null)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+            }
         }
     }
 }
