@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
 using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.DefaultImpl
@@ -35,10 +33,11 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
-            async void Action() => await Retry(cancellationToken).ConfigureAwait(false);
-
+            // 之前 async void Action() 是 TimerHelper 唯一接受的 Action 形态,所以被迫
+            // 退化为 async void(异常无人观察)。这里改成同步 Action,在 Retry 内部
+            // 用 SemaphoreSlim 控并发;Retry 内部 try/catch 兜底,不会拖垮整个循环。
             TimerHelper.SetInterval(
-                Action,
+                () => Retry(cancellationToken).GetAwaiter().GetResult(),
                 TimeSpan.FromSeconds(Options.Value.RetryInterval),
                 cancellationToken);
         }
@@ -75,15 +74,42 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
-            Parallel.ForEach(messages, new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism
-                },
-                item =>
-                {
-                    PublishHandler.LockingHandleAsync(item.Id, cancellationToken).ConfigureAwait(false).GetAwaiter()
-                        .GetResult();
-                });
+            // 之前用 Parallel.ForEach + .GetAwaiter().GetResult() 同步阻塞线程池线程,
+            // 在 ASP.NET Core 上抢占请求线程,并发度被 RetryMaxDegreeOfParallelism 卡死
+            // 但每次仍以同步方式占用一个线程直到下游 publish 完成。改用 SemaphoreSlim
+            // + Task.WhenAll 真正以异步方式并发,单次 batch 的线程占用降到 1。
+            using var semaphore = new SemaphoreSlim(
+                Math.Max(1, Options.Value.RetryMaxDegreeOfParallelism));
+            var tasks = new List<Task>(messages.Count);
+            foreach (var item in messages)
+            {
+                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                tasks.Add(RunOneAsync(item, semaphore, cancellationToken));
+            }
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+        }
+
+        private async Task RunOneAsync(
+            MessageStorageModel item,
+            SemaphoreSlim semaphore,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await PublishHandler
+                    .LockingHandleAsync(item.Id, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // 单条失败不应影响批内其他任务。
+                System.Console.WriteLine(ex);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
     }
 }

@@ -40,10 +40,10 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
-            async void Action() => await Retry(cancellationToken).ConfigureAwait(false);
-            // 重试器执行间隔为5秒
+            // 同步 Action 形态走 TimerHelper,内部 try/catch 不会让异常拖垮 timer。
+            // 真实并发由 Retry 内部的 SemaphoreSlim 控。
             TimerHelper.SetInterval(
-                Action,
+                () => Retry(cancellationToken).GetAwaiter().GetResult(),
                 TimeSpan.FromSeconds(Options.Value.RetryInterval),
                 cancellationToken);
         }
@@ -70,7 +70,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
         private async Task Retry(CancellationToken cancellationToken)
         {
-            // 一次最多读取100条数据
+            // 一次最多读取 Options.RetryLimitCount 条
             var messages = await MessageStorage.GetReceivedMessagesOfNeedRetryAsync(
                 Options.Value.RetryLimitCount,
                 Options.Value.StartRetryAfter,
@@ -80,16 +80,40 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
+            // 见 DefaultPublishedMessageRetryProvider: 用 SemaphoreSlim + Task.WhenAll
+            // 替换 Parallel.ForEach + GetAwaiter().GetResult,真正以异步方式并发。
+            using var semaphore = new SemaphoreSlim(
+                Math.Max(1, Options.Value.RetryMaxDegreeOfParallelism));
+            var tasks = new List<Task>(messages.Count);
+            foreach (var item in messages)
+            {
+                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                tasks.Add(RunOneAsync(item, semaphore, cancellationToken));
+            }
 
-            Parallel.ForEach(messages, new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism
-                },
-                item =>
-                {
-                    ReceivedHandler.LockingHandleAsync(item.Id, cancellationToken).ConfigureAwait(false).GetAwaiter()
-                        .GetResult();
-                });
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+        }
+
+        private async Task RunOneAsync(
+            MessageStorageModel item,
+            SemaphoreSlim semaphore,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await ReceivedHandler
+                    .LockingHandleAsync(item.Id, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex,
+                    $"[EventBus] retry received message \"{item.Id}\" failed");
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
     }
 }
