@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
 using System.Threading.Tasks;
@@ -66,8 +67,14 @@ namespace Shashlik.EventBus.Kafka
         public IConsumer<string, byte[]> CreateConsumer(string groupId, string topic)
         {
             InitTopic(topic).ConfigureAwait(false).GetAwaiter().GetResult();
-            var dic = Options.CurrentValue.Properties;
+            var dic = new Dictionary<string, string>(Options.CurrentValue.Properties, StringComparer.Ordinal);
             dic["group.id"] = groupId;
+            // Confluent.Kafka 2.x defaults enable.auto.offset.store=true, which means
+            // every Consume() call auto-stores the offset. Shashlik's "NACK on failure"
+            // semantics (StoreOffset only when OnReceiveAsync returns Success) become
+            // a no-op. Force false unless the user explicitly set the key.
+            if (!dic.ContainsKey("enable.auto.offset.store"))
+                dic["enable.auto.offset.store"] = "false";
             return Consumers.GetOrAdd(groupId, _ =>
                 new ConsumerBuilder<string, byte[]>(dic).Build()
             );
