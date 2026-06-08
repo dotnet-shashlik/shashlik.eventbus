@@ -61,7 +61,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
-        var entity = await FreeSql.Select<RelationDbMessageStoragePublishedModel>(id)
+        var entity = await FreeSql.Select<RelationDbMessageStorageReceivedModel>(id)
             .FirstAsync(cancellationToken);
         return entity?.ToModel();
     }
