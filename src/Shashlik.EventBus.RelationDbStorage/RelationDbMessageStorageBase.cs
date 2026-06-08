@@ -197,14 +197,38 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
 
     public virtual async Task DeleteExpiresAsync(CancellationToken cancellationToken = default)
     {
+        // 分批删除,避免大表上单条 DELETE 锁住表/分区太久。批量大小 1000,可以根据
+        // 业务量调整。循环退出条件:某次循环无行被删除(全部过期清理完毕)。
+        // FreeSql 的 IDelete<T> 没有稳定的 Limit 支持,所以用"先 select id 列表,再
+        // 按 id 删"两步走。
+        const int batchSize = 1000;
         var now = DateTimeOffset.Now.GetLongDate();
-        await FreeSql.Delete<RelationDbMessageStoragePublishedModel>()
-            .Where(r => r.ExpireTime > 0 && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
-            .ExecuteAffrowsAsync(cancellationToken);
 
-        await FreeSql.Delete<RelationDbMessageStorageReceivedModel>()
-            .Where(r => r.ExpireTime > 0 && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
-            .ExecuteAffrowsAsync(cancellationToken);
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var ids = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+                .Where(r => r.ExpireTime > 0 && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
+                .Limit(batchSize)
+                .ToListAsync(r => r.Id, cancellationToken);
+            if (ids.Count == 0) break;
+            await FreeSql.Delete<RelationDbMessageStoragePublishedModel>()
+                .Where(r => ids.Contains(r.Id))
+                .ExecuteAffrowsAsync(cancellationToken);
+            if (ids.Count < batchSize) break;
+        }
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var ids = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
+                .Where(r => r.ExpireTime > 0 && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
+                .Limit(batchSize)
+                .ToListAsync(r => r.Id, cancellationToken);
+            if (ids.Count == 0) break;
+            await FreeSql.Delete<RelationDbMessageStorageReceivedModel>()
+                .Where(r => ids.Contains(r.Id))
+                .ExecuteAffrowsAsync(cancellationToken);
+            if (ids.Count < batchSize) break;
+        }
     }
 
     public virtual async Task<List<MessageStorageModel>> GetPublishedMessagesOfNeedRetryAsync(
