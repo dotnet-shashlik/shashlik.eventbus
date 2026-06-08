@@ -127,13 +127,22 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
     {
         var entity = message.ToReceivedSaveObject();
 
+        // InsertOrUpdate 走 INSERT ... ON CONFLICT DO UPDATE 一条 SQL,复合唯一键
+        // (MsgId, EventHandlerName) 保证并发不会插入重复行;之后的 SELECT 一定能看到
+        // 当前 (MsgId, EventHandlerName) 对应的那一行(就是 upsert 出来的那行),
+        // 不存在"被并发者覆盖查询结果"的问题。补一行 message.Id 回填,让上层
+        // LockingHandleAsync(storageId) 能拿到正确的 id。
         await FreeSql.InsertOrUpdate<RelationDbMessageStorageReceivedModel>()
             .SetSource(entity, r => new { r.MsgId, r.EventHandlerName })
             .ExecuteAffrowsAsync(cancellationToken);
         var id = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.MsgId == message.MsgId && r.EventHandlerName == message.EventHandlerName)
             .First(r => r.Id);
-        return id.ToString();
+        if (id == 0)
+            throw new InvalidOperationException(
+                $"[EventBus] SaveReceivedAsync: failed to obtain id for msgId={message.MsgId}, handler={message.EventHandlerName}");
+        message.Id = id.ToString();
+        return message.Id;
     }
 
     public virtual async Task UpdatePublishedAsync(string storageId, string status, int retryCount,

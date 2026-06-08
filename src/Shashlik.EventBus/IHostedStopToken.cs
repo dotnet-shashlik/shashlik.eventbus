@@ -11,5 +11,10 @@ namespace Shashlik.EventBus
         /// 应用程序退出token
         /// </summary>
         CancellationToken StopCancellationToken { get; }
+
+        /// <summary>
+        /// 触发取消,由 IHostedService.StopAsync 调用
+        /// </summary>
+        void Cancel();
     }
 }

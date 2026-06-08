@@ -64,7 +64,7 @@ namespace Shashlik.EventBus
 
         public Task StopAsync(CancellationToken _)
         {
-            (HostedStopToken as InternalHostedStopToken)!.Cancel();
+            HostedStopToken.Cancel();
             return Task.CompletedTask;
         }
     }
