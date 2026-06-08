@@ -32,6 +32,7 @@ namespace Shashlik.EventBus
         public static IEventBusBuilder AddEventBus(this IServiceCollection serviceCollection)
         {
             serviceCollection.TryAddSingleton<IMsgIdGenerator, GuidMsgIdGenerator>();
+            serviceCollection.TryAddSingleton<IValidateOptions<EventBusOptions>, EventBusOptionsValidation>();
             serviceCollection.TryAddSingleton<IEventPublisher, DefaultEventPublisher>();
             serviceCollection.TryAddSingleton<IMessageSerializer, DefaultJsonSerializer>();
             serviceCollection.TryAddSingleton<IReceivedMessageRetryProvider, DefaultReceivedMessageRetryProvider>();
