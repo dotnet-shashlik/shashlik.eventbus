@@ -22,87 +22,6 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
 
     protected IFreeSql FreeSql { get; }
 
-    private MessageStorageModel ToModel(RelationDbMessageStoragePublishedModel model)
-    {
-        return new MessageStorageModel
-        {
-            Id = model.Id.ToString(),
-            MsgId = model.MsgId,
-            Environment = model.Environment,
-            EventName = model.EventName,
-            EventBody = model.EventBody,
-            CreateTime = model.CreateTime.LongToDateTimeOffset()!.Value,
-            DelayAt = model.DelayAt?.LongToDateTimeOffset(),
-            ExpireTime = model.ExpireTime?.LongToDateTimeOffset(),
-            EventItems = model.EventItems,
-            RetryCount = model.RetryCount,
-            Status = model.Status,
-            IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.LongToDateTimeOffset()
-        };
-    }
-
-    private MessageStorageModel ToModel(RelationDbMessageStorageReceivedModel model)
-    {
-        return new MessageStorageModel
-        {
-            Id = model.Id.ToString(),
-            MsgId = model.MsgId,
-            Environment = model.Environment,
-            EventName = model.EventName,
-            EventHandlerName = model.EventHandlerName,
-            EventBody = model.EventBody,
-            CreateTime = model.CreateTime.LongToDateTimeOffset()!.Value,
-            DelayAt = model.DelayAt?.LongToDateTimeOffset(),
-            ExpireTime = model.ExpireTime?.LongToDateTimeOffset(),
-            EventItems = model.EventItems,
-            RetryCount = model.RetryCount,
-            Status = model.Status,
-            IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.LongToDateTimeOffset()
-        };
-    }
-
-    public RelationDbMessageStoragePublishedModel ToPublishedSaveObject(MessageStorageModel model)
-    {
-        return new RelationDbMessageStoragePublishedModel
-        {
-            MsgId = model.MsgId,
-            Environment = model.Environment,
-            EventName = model.EventName,
-            EventBody = model.EventBody,
-            CreateTime = model.CreateTime.GetLongDate(),
-            DelayAt = model.DelayAt?.GetLongDate(),
-            ExpireTime = model.ExpireTime?.GetLongDate(),
-            EventItems = model.EventItems,
-            RetryCount = model.RetryCount,
-            Status = model.Status,
-            IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.GetLongDate(),
-        };
-    }
-
-    public RelationDbMessageStorageReceivedModel ToReceivedSaveObject(MessageStorageModel model)
-    {
-        return new RelationDbMessageStorageReceivedModel
-        {
-            MsgId = model.MsgId,
-            Environment = model.Environment,
-            EventName = model.EventName,
-            EventHandlerName = model.EventHandlerName,
-            EventBody = model.EventBody,
-            CreateTime = model.CreateTime.GetLongDate(),
-            IsDelay = model.DelayAt.HasValue,
-            DelayAt = model.DelayAt?.GetLongDate(),
-            ExpireTime = model.ExpireTime?.GetLongDate(),
-            EventItems = model.EventItems,
-            RetryCount = model.RetryCount,
-            Status = model.Status,
-            IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.GetLongDate()
-        };
-    }
-
     public virtual async ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken = default)
     {
         return await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
@@ -116,7 +35,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var entity = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.MsgId == msgId)
             .FirstAsync(cancellationToken);
-        return ToModel(entity);
+        return entity?.ToModel();
     }
 
     public virtual async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId,
@@ -125,7 +44,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var id = storageId.ParseTo<long>();
         var entity = await FreeSql.Select<RelationDbMessageStoragePublishedModel>(id)
             .FirstAsync(cancellationToken);
-        return ToModel(entity);
+        return entity?.ToModel();
     }
 
     public virtual async Task<MessageStorageModel?> FindReceivedByMsgIdAsync(string msgId,
@@ -135,7 +54,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var entity = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.MsgId == msgId && r.EventHandlerName == eventHandlerDescriptor.EventHandlerName)
             .FirstAsync(cancellationToken);
-        return ToModel(entity);
+        return entity?.ToModel();
     }
 
     public virtual async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId,
@@ -144,7 +63,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
         var id = storageId.ParseTo<long>();
         var entity = await FreeSql.Select<RelationDbMessageStoragePublishedModel>(id)
             .FirstAsync(cancellationToken);
-        return ToModel(entity);
+        return entity?.ToModel();
     }
 
     public virtual async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status,
@@ -158,7 +77,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
             .Take(take);
 
         var result = await query.ToListAsync(cancellationToken);
-        return result.Select(ToModel).ToList();
+        return result.Select(r => r.ToModel()).ToList();
     }
 
     public virtual async Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName,
@@ -176,14 +95,14 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
             .Take(take);
 
         var result = await query.ToListAsync(cancellationToken);
-        return result.Select(ToModel).ToList();
+        return result.Select(r => r.ToModel()).ToList();
     }
 
     public virtual async Task<string> SavePublishedAsync(MessageStorageModel message,
         ITransactionContext? transactionContext,
         CancellationToken cancellationToken = default)
     {
-        var entity = ToPublishedSaveObject(message);
+        var entity = message.ToPublishedSaveObject();
         var insert = FreeSql.Insert<RelationDbMessageStoragePublishedModel>()
             .AppendData(entity);
 
@@ -206,7 +125,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
     public virtual async Task<string> SaveReceivedAsync(MessageStorageModel message,
         CancellationToken cancellationToken = default)
     {
-        var entity = ToReceivedSaveObject(message);
+        var entity = message.ToReceivedSaveObject();
 
         await FreeSql.InsertOrUpdate<RelationDbMessageStorageReceivedModel>()
             .SetSource(entity, r => new { r.MsgId, r.EventHandlerName })
@@ -296,7 +215,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
                         (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
             .Limit(count)
             .ToListAsync(cancellationToken)
-            .ContinueWith(t => t.Result.Select(ToModel).ToList(), cancellationToken);
+            .ContinueWith(t => t.Result.Select(r => r.ToModel()).ToList(), cancellationToken);
     }
 
     public virtual async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAsync(
@@ -317,7 +236,7 @@ public abstract class RelationDbMessageStorageBase : IMessageStorage
                         (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
             .Limit(count)
             .ToListAsync(cancellationToken)
-            .ContinueWith(t => t.Result.Select(ToModel).ToList(), cancellationToken);
+            .ContinueWith(t => t.Result.Select(r => r.ToModel()).ToList(), cancellationToken);
     }
 
     public virtual async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(
