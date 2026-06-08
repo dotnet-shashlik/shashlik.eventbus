@@ -16,13 +16,15 @@ namespace Shashlik.EventBus.MemoryStorage
     {
         private readonly ConcurrentDictionary<string, MessageStorageModel> _published = new();
         private readonly ConcurrentDictionary<string, MessageStorageModel> _received = new();
-        private static int _lastId;
-        private static readonly object IdLck = new();
-        private static readonly object DeleteLck = new();
+        // 实例级状态。之前是 static,导致多个 MemoryMessageStorage 实例共享 id 序列
+        // 和删除锁,集成测试里多 WebApplicationFactory 并行跑会相互干扰。
+        private int _lastId;
+        private readonly object _idLock = new();
+        private readonly object _deleteLock = new();
 
-        private static string AutoIncrementId()
+        private string AutoIncrementId()
         {
-            lock (IdLck)
+            lock (_idLock)
             {
                 _lastId++;
             }
@@ -198,7 +200,7 @@ namespace Shashlik.EventBus.MemoryStorage
 
         public void DeleteExpires()
         {
-            lock (DeleteLck)
+            lock (_deleteLock)
             {
                 var items1 = _published
                     .Values
