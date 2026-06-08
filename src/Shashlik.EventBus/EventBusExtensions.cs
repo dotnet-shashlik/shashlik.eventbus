@@ -54,7 +54,9 @@ namespace Shashlik.EventBus
             var options = serviceProvider.GetRequiredService<IOptions<EventBusOptions>>();
             var handlers = eventHandlerFindProvider.FindAll();
             foreach (var eventHandlerDescriptor in handlers)
-                serviceCollection.Add(new ServiceDescriptor(eventHandlerDescriptor.EventHandlerType,
+                // 用 TryAdd 避免重复 AddEventBus 调用(测试里多 WebApplicationFactory
+                // 共用同一 service collection 的场景)抛 InvalidOperationException
+                serviceCollection.TryAdd(new ServiceDescriptor(eventHandlerDescriptor.EventHandlerType,
                     eventHandlerDescriptor.EventHandlerType, options.Value.HandlerServiceLifetime));
 
             return new DefaultEventBusBuilder(serviceCollection);
