@@ -75,16 +75,20 @@ namespace Shashlik.EventBus.DefaultImpl
             var now = DateTimeOffset.Now;
             var eventName = EventNameRuler.GetName(typeof(TEvent));
             var msgId = MsgIdGenerator.GenerateId();
-            additionalItems ??= new Dictionary<string, string>();
-            additionalItems.Add(EventBusConsts.SendAtHeaderKey, now.ToString());
-            additionalItems.Add(EventBusConsts.EventNameHeaderKey, eventName);
-            additionalItems.Add(EventBusConsts.MsgIdHeaderKey, msgId);
+            // 复制到本地字典,避免修改调用方传入的 items
+            // 同时防止重发时 items 里已有 eventbus-* key 导致 Add 抛 ArgumentException
+            var items = additionalItems is null
+                ? new Dictionary<string, string>()
+                : new Dictionary<string, string>(additionalItems);
+            items[EventBusConsts.SendAtHeaderKey] = now.ToString();
+            items[EventBusConsts.EventNameHeaderKey] = eventName;
+            items[EventBusConsts.MsgIdHeaderKey] = msgId;
             if (delayAt.HasValue)
             {
                 if (delayAt.Value <= DateTimeOffset.Now)
                     delayAt = null;
                 else
-                    additionalItems.Add(EventBusConsts.DelayAtHeaderKey, delayAt.ToString() ?? "");
+                    items[EventBusConsts.DelayAtHeaderKey] = delayAt.ToString() ?? "";
             }
 
             MessageStorageModel messageStorageModel = new()
@@ -99,7 +103,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 Status = MessageStatus.Scheduled,
                 IsLocking = false,
                 LockEnd = null,
-                EventItems = MessageSerializer.Serialize(additionalItems),
+                EventItems = MessageSerializer.Serialize(items),
                 EventBody = MessageSerializer.Serialize(@event),
                 DelayAt = delayAt,
             };
@@ -110,7 +114,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 Environment = Options.Value.Environment,
                 MsgId = messageStorageModel.MsgId,
                 MsgBody = messageStorageModel.EventBody,
-                Items = additionalItems,
+                Items = items,
                 SendAt = now,
                 DelayAt = delayAt
             };
