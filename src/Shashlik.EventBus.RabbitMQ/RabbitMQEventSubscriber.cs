@@ -4,11 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using Shashlik.EventBus.Utils;
-
-// ReSharper disable TemplateIsNotCompileTimeConstantProblem
-
-// ReSharper disable AsyncVoidLambda
 
 namespace Shashlik.EventBus.RabbitMQ
 {
@@ -31,22 +28,28 @@ namespace Shashlik.EventBus.RabbitMQ
         private IMessageListener MessageListener { get; }
         private IRabbitMQConnection Connection { get; }
 
-        public Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor, CancellationToken cancellationToken)
+        public async Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor,
+            CancellationToken cancellationToken)
         {
-            var channel = Connection.GetChannel();
+            var channel = await Connection.GetChannelAsync(cancellationToken).ConfigureAwait(false);
             // 注册基础通信交换机,类型topic
-            channel.ExchangeDeclare(Options.CurrentValue.Exchange, "topic", true);
+            await channel.ExchangeDeclareAsync(Options.CurrentValue.Exchange, ExchangeType.Topic, true, false,
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
             // 定义队列
-            channel.QueueDeclare(eventHandlerDescriptor.EventHandlerName, true, false, false);
+            await channel.QueueDeclareAsync(eventHandlerDescriptor.EventHandlerName, true, false, false,
+                    cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
             // 绑定队列到交换机以及routing key
-            channel.QueueBind(eventHandlerDescriptor.EventHandlerName, Options.CurrentValue.Exchange,
-                eventHandlerDescriptor.EventName);
+            await channel.QueueBindAsync(eventHandlerDescriptor.EventHandlerName,
+                Options.CurrentValue.Exchange, eventHandlerDescriptor.EventName,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 
             var eventName = eventHandlerDescriptor.EventName;
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
 
-            var consumer = Connection.CreateConsumer(eventHandlerName);
-            consumer.Received += async (_, e) =>
+            var consumer = Connection.CreateConsumer(eventHandlerName, channel);
+            consumer.ReceivedAsync += async (_, e) =>
             {
                 if (cancellationToken.IsCancellationRequested)
                     return;
@@ -82,25 +85,25 @@ namespace Shashlik.EventBus.RabbitMQ
                     .OnReceiveAsync(eventHandlerName, message, cancellationToken)
                     .ConfigureAwait(false);
                 if (res == MessageReceiveResult.Success)
+                {
                     // 一定要在消息接收处理完成后才确认ack
-                    channel.BasicAck(e.DeliveryTag, false);
+                    await channel.BasicAckAsync(e.DeliveryTag, false).ConfigureAwait(false);
+                }
                 else
-                    channel.BasicReject(e.DeliveryTag, true);
+                {
+                    await channel.BasicRejectAsync(e.DeliveryTag, true).ConfigureAwait(false);
+                }
             };
 
-            consumer.Registered += (_, _) =>
-            {
-                Logger.LogInformation(
-                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been registered");
-            };
-            consumer.Shutdown += (_, _) =>
+            consumer.ShutdownAsync += (_, e) =>
             {
                 Logger.LogWarning(
-                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been shutdown");
+                    $"[EventBus-RabbitMQ] event handler \"{eventHandlerName}\" has been shutdown, initiator: {e.Initiator}, replyCode: {e.ReplyCode}, replyText: {e.ReplyText}");
+                return Task.CompletedTask;
             };
-            channel.BasicConsume(eventHandlerName, false, consumer);
 
-            return Task.CompletedTask;
+            await channel.BasicConsumeAsync(eventHandlerName, false, eventHandlerName, false, false, null,
+                consumer, cancellationToken).ConfigureAwait(false);
         }
     }
 }
