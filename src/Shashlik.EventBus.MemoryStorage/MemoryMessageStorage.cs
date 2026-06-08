@@ -231,14 +231,16 @@ namespace Shashlik.EventBus.MemoryStorage
             int maxFailedRetryCount,
             string environment)
         {
+            // 之前 counter 写成了 0,然后从来不自增(只把入参 count 当本地累加器用了),
+            // 退出条件 'counter > count' 永远不成立,导致整个函数把全表符合的行全返,
+            // 远超 Options.RetryLimitCount 限制。同时方法名叫 "AndLock" 也没真正加锁,
+            // 锁的获取完全靠后续的 LockingHandleAsync -> TryLockPublishedAsync,这里只挑选。
             var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
             var now = DateTimeOffset.Now;
             var res = new List<MessageStorageModel>();
-            int counter = 0;
             foreach (var r in _published.Values)
             {
-                if (counter > count)
-                    return res;
+                if (res.Count >= count) break;
                 if (r.Environment == environment
                     && r.CreateTime < createTimeLimit
                     && r.RetryCount < maxFailedRetryCount
@@ -246,7 +248,6 @@ namespace Shashlik.EventBus.MemoryStorage
                     && (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
                 {
                     res.Add(r);
-                    count++;
                 }
             }
 
