@@ -20,6 +20,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IOptions<EventBusOptions> options,
             IMsgIdGenerator msgIdGenerator,
             IPublishHandler publishHandler,
+            IHostedStopToken hostedStopToken,
             ILogger<DefaultEventPublisher> logger)
         {
             MessageStorage = messageStorage;
@@ -28,6 +29,7 @@ namespace Shashlik.EventBus.DefaultImpl
             Options = options;
             MsgIdGenerator = msgIdGenerator;
             PublishHandler = publishHandler;
+            HostedStopToken = hostedStopToken;
             Logger = logger;
         }
 
@@ -37,6 +39,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMsgIdGenerator MsgIdGenerator { get; }
         private IOptions<EventBusOptions> Options { get; }
         private IPublishHandler PublishHandler { get; }
+        private IHostedStopToken HostedStopToken { get; }
         private ILogger<DefaultEventPublisher> Logger { get; }
 
         public async Task PublishAsync<TEvent>(
@@ -124,11 +127,15 @@ namespace Shashlik.EventBus.DefaultImpl
                 .ConfigureAwait(false);
             // 先持久化,持久化没有错误,异步发送消息
             // 异步发送消息,启动时如果失败,最多循环5次
+            // 用 IHostedStopToken 而非调用方传进来的 cancellationToken —— 否则 HTTP 请求结束
+            // 就会取消发布任务,导致"持久化成功但未发送",只能等 StartRetryAfter 后重试器兜底。
+            // 持久化 + 事务已经保证调用方有理由期待这条消息一定会被发送,发送的取消只应该由
+            // 应用关停触发。
             _ = Task.Run(
                 async () => await Start(transactionContext, messageStorageModel, messageTransferModel,
-                        cancellationToken)
+                        HostedStopToken.StopCancellationToken)
                     .ConfigureAwait(false)
-                , cancellationToken).ConfigureAwait(false);
+                , HostedStopToken.StopCancellationToken).ConfigureAwait(false);
         }
 
         private async Task Start(
@@ -137,7 +144,7 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageTransferModel messageTransferModel,
             CancellationToken cancellationToken)
         {
-            // 等待事务完成
+            // 等待事务完成。TransactionCommitTimeout 是"事务提交等待"超时。
             var now = DateTimeOffset.Now;
             while (!cancellationToken.IsCancellationRequested && transactionContext != null &&
                    !transactionContext.IsDone())
@@ -171,14 +178,13 @@ namespace Shashlik.EventBus.DefaultImpl
             }
 
             // 执行失败的次数
+            // 之前同时复用 TransactionCommitTimeout 作为"消息存活"上限,导致事务耗时 50s
+            // 时发布路径只剩 10s 发送,失败率被人为放大。这里只用 5 次硬上限 + 自然退出
+            // (cancellationToken) 来限定在进程生命周期内的尝试次数;真正的"重发兜底"由
+            // IPublishedMessageRetryProvider 在 StartRetryAfter 之后接手。
             var failCount = 1;
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (messageStorageModel.CreateTime <=
-                    DateTimeOffset.Now.AddSeconds(-Options.Value.TransactionCommitTimeout))
-                    // 超过时间了,就不管了,状态还是SCHEDULED
-                    return;
-
                 // 执行真正的消息发送
                 var handleResult = await PublishHandler
                     .HandleAsync(messageTransferModel, messageStorageModel, cancellationToken)
