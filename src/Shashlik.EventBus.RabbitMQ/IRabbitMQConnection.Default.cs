@@ -102,8 +102,9 @@ namespace Shashlik.EventBus.RabbitMQ
                     args.Body, CancellationToken.None).GetAwaiter().GetResult();
                 return Task.CompletedTask;
             };
-            // 交换机定义,类型topic
-            channel.ExchangeDeclareAsync(Options.CurrentValue.Exchange, ExchangeType.Direct, true, false,
+            // 交换机定义,类型topic(必须和 RabbitMQEventSubscriber.SubscribeAsync
+            // 中声明的类型保持一致,否则两个声明任一先到都会让后到者抛 PreconditionFailed)
+            channel.ExchangeDeclareAsync(Options.CurrentValue.Exchange, ExchangeType.Topic, true, false,
                 cancellationToken: CancellationToken.None).GetAwaiter().GetResult();
         }
 
