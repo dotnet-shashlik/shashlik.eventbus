@@ -31,24 +31,36 @@ namespace Shashlik.EventBus.RabbitMQ
         public async Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken)
         {
-            var channel = await Connection.GetChannelAsync(cancellationToken).ConfigureAwait(false);
-            // 注册基础通信交换机,类型topic
-            await channel.ExchangeDeclareAsync(Options.CurrentValue.Exchange, ExchangeType.Topic, true, false,
-                    cancellationToken: cancellationToken)
+            // 借一个 channel 用于 declare + bind,declare 是 idempotent,
+            // 离开作用域后 channel 归还到池供 publish 路径复用。
+            await using (var lease = await Connection.GetChannelAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var channel = lease.Value
+                    ?? throw new EventBusException("[EventBus-RabbitMQ] failed to rent channel for subscribe");
+                await channel.ExchangeDeclareAsync(Options.CurrentValue.Exchange, ExchangeType.Topic, true, false,
+                        cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+                await channel.QueueDeclareAsync(eventHandlerDescriptor.EventHandlerName, true, false, false,
+                        cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+                await channel.QueueBindAsync(eventHandlerDescriptor.EventHandlerName,
+                    Options.CurrentValue.Exchange, eventHandlerDescriptor.EventName,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+
+            // 再借一个 channel 给 consumer 长期持有。注意 consumer 是和 broker 之间的
+            // 长连接,不能像 publish 那样"用完即还"。这里我们在 EventBusStartup.Build
+            // 流程中创建 N 个 channel(每个 handler 一个),N 由 consumer 数决定。
+            // 由于 consumer 必须独占 channel,且不能跨 handler 复用,我们这里用独立 channel。
+            await using var consumerLease = await Connection.GetChannelAsync(cancellationToken)
                 .ConfigureAwait(false);
-            // 定义队列
-            await channel.QueueDeclareAsync(eventHandlerDescriptor.EventHandlerName, true, false, false,
-                    cancellationToken: cancellationToken)
-                .ConfigureAwait(false);
-            // 绑定队列到交换机以及routing key
-            await channel.QueueBindAsync(eventHandlerDescriptor.EventHandlerName,
-                Options.CurrentValue.Exchange, eventHandlerDescriptor.EventName,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+            var consumerChannel = consumerLease.Value
+                ?? throw new EventBusException("[EventBus-RabbitMQ] failed to rent channel for consumer");
 
             var eventName = eventHandlerDescriptor.EventName;
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
 
-            var consumer = Connection.CreateConsumer(eventHandlerName, channel);
+            var consumer = Connection.CreateConsumer(eventHandlerName, consumerChannel);
             consumer.ReceivedAsync += async (_, e) =>
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -80,18 +92,33 @@ namespace Shashlik.EventBus.RabbitMQ
                 Logger.LogDebug(
                     $"[EventBus-RabbitMQ] received msg: {message}");
 
-                // 处理消息
                 var res = await MessageListener
                     .OnReceiveAsync(eventHandlerName, message, cancellationToken)
                     .ConfigureAwait(false);
                 if (res == MessageReceiveResult.Success)
                 {
-                    // 一定要在消息接收处理完成后才确认ack
-                    await channel.BasicAckAsync(e.DeliveryTag, false).ConfigureAwait(false);
+                    try
+                    {
+                        await consumerChannel.BasicAckAsync(e.DeliveryTag, false).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        // channel 已关闭(借出/归还期间被 close),直接丢弃 lease 让池丢弃对象
+                        consumerLease.IsValid = false;
+                        Logger.LogError(ex, "[EventBus-RabbitMQ] ack failed, channel may be closed");
+                    }
                 }
                 else
                 {
-                    await channel.BasicRejectAsync(e.DeliveryTag, true).ConfigureAwait(false);
+                    try
+                    {
+                        await consumerChannel.BasicRejectAsync(e.DeliveryTag, true).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        consumerLease.IsValid = false;
+                        Logger.LogError(ex, "[EventBus-RabbitMQ] nack failed, channel may be closed");
+                    }
                 }
             };
 
@@ -102,8 +129,9 @@ namespace Shashlik.EventBus.RabbitMQ
                 return Task.CompletedTask;
             };
 
-            await channel.BasicConsumeAsync(eventHandlerName, false, eventHandlerName, false, false, null,
-                consumer, cancellationToken).ConfigureAwait(false);
+            await consumerChannel.BasicConsumeAsync(eventHandlerName, false, eventHandlerName, false, false,
+                    null, consumer, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

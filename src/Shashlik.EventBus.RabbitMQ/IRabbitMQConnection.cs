@@ -2,21 +2,22 @@
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.RabbitMQ
 {
     public interface IRabbitMQConnection
     {
         /// <summary>
-        /// 获取(并按需创建)一个异步 channel
+        /// 借一个 RabbitMQ channel。返回 <see cref="IPoolLease{IChannel}"/>,
+        /// 应当使用 <c>await using var lease = await conn.GetChannelAsync()</c>,
+        /// 离开作用域时 channel 自动归还到池(无效 channel 会被丢弃)。
         /// </summary>
-        ValueTask<IChannel> GetChannelAsync(CancellationToken cancellationToken = default);
+        ValueTask<IPoolLease<IChannel>> GetChannelAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// 创建一个异步消息消费者
+        /// 创建一个异步消息消费者,长期持有(不参与池租借)。
         /// </summary>
-        /// <param name="eventHandlerName">事件处理名称(同时作为 queue 名和 consumer tag)</param>
-        /// <param name="channel">要绑定的 channel</param>
         AsyncEventingBasicConsumer CreateConsumer(string eventHandlerName, IChannel channel);
     }
 }

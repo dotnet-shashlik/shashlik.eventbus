@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.DefaultImpl;
+using Shashlik.EventBus.Utils;
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 
@@ -33,6 +34,7 @@ namespace Shashlik.EventBus
         {
             serviceCollection.TryAddSingleton<IMsgIdGenerator, GuidMsgIdGenerator>();
             serviceCollection.TryAddSingleton<IValidateOptions<EventBusOptions>, EventBusOptionsValidation>();
+            serviceCollection.TryAddSingleton<IObjectPoolProvider, DefaultObjectPoolProvider>();
             serviceCollection.TryAddSingleton<IEventPublisher, DefaultEventPublisher>();
             serviceCollection.TryAddSingleton<IMessageSerializer, DefaultJsonSerializer>();
             serviceCollection.TryAddSingleton<IReceivedMessageRetryProvider, DefaultReceivedMessageRetryProvider>();

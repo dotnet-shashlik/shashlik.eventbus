@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -30,8 +31,13 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public async Task SendAsync(MessageTransferModel message)
         {
-            var channel = await Connection.GetChannelAsync().ConfigureAwait(false);
-            // 7.x: BasicProperties is a concrete class, not created from the channel.
+            // 7.x: 通道从池借出,using 离开作用域时自动归还
+            // (channel 已关闭则直接 dispose,不归还)。
+            await using var lease = await Connection.GetChannelAsync().ConfigureAwait(false);
+            var channel = lease.Value;
+            if (channel is null)
+                throw new EventBusException("[EventBus-RabbitMQ] failed to rent channel from pool");
+
             var basicProperties = new BasicProperties
             {
                 MessageId = message.MsgId,
@@ -43,9 +49,6 @@ namespace Shashlik.EventBus.RabbitMQ
                 true,
                 basicProperties,
                 MessageSerializer.SerializeToBytes(message)).ConfigureAwait(false);
-            // RabbitMQ.Client 7.x removed WaitForConfirmsOrDie*. Publisher confirms are
-            // configured per-channel via CreateChannelOptions and tracked automatically.
-            // The publish above will throw on negative confirmations when tracking is on.
             Logger.LogDebug($"[EventBus-RabbitMQ] send msg success: {message}");
         }
     }
