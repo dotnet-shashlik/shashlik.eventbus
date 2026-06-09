@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.MySql", "Shashlik.EventBus.MySql\Shashlik.EventBus.MySql.csproj", "{D2D076C2-FCC0-4908-9007-19E87BF7A644}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.RabbitMQ", "Shashlik.EventBus.RabbitMQ\Shashlik.EventBus.RabbitMQ.csproj", "{5ECE0633-74F1-46A3-A341-F606FBD3581B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.Abstract", "Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj", "{CF90295E-F92C-4198-AAAA-9D219D42B0E4}"
@@ -20,13 +18,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{D22B2A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.Kafka", "Shashlik.EventBus.Kafka\Shashlik.EventBus.Kafka.csproj", "{03A6AB99-AC29-409D-80DA-44BA94D6ED76}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.PostgreSQL", "Shashlik.EventBus.PostgreSQL\Shashlik.EventBus.PostgreSQL.csproj", "{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.MemoryQueue", "Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj", "{26E090A3-1289-4A1E-A47F-CDA314CD82B4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.MemoryStorage", "Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj", "{26D9C32A-0CED-404D-8477-1A554C8CCB48}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.SqlServer", "Shashlik.EventBus.SqlServer\Shashlik.EventBus.SqlServer.csproj", "{54F609CD-6E3A-4ED6-8E3E-53DCD597F7F4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shashlik.EventBus.RelationDbStorage", "Shashlik.EventBus.RelationDbStorage\Shashlik.EventBus.RelationDbStorage.csproj", "{37C51439-7225-4AA9-92B0-49E1E6FBCC6D}"
 EndProject
@@ -54,17 +48,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Kafka.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MemoryStorage.Tests", "tests\Shashlik.EventBus.MemoryStorage.Tests\Shashlik.EventBus.MemoryStorage.Tests.csproj", "{7477DFCC-BDDC-498A-A5E7-34E876DE64C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.MySql.Tests", "tests\Shashlik.EventBus.MySql.Tests\Shashlik.EventBus.MySql.Tests.csproj", "{9DD7AAC8-0F26-4D0A-9AE3-5AD5D8DB7B87}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.PostgreSQL.Tests", "tests\Shashlik.EventBus.PostgreSQL.Tests\Shashlik.EventBus.PostgreSQL.Tests.csproj", "{A485C9B6-2348-4A6C-9BEC-445BC0ED1CA7}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests", "tests\Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests\Shashlik.EventBus.RabbitMQ.MsgWithoutLosing.Tests.csproj", "{2ECFEF64-F757-448E-BF02-0EECD746CDB4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.RabbitMQ.Tests", "tests\Shashlik.EventBus.RabbitMQ.Tests\Shashlik.EventBus.RabbitMQ.Tests.csproj", "{A9EEBA66-1919-4858-8E76-F8657CAFD03E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.SendMsgWithoutLosing.Tests", "tests\Shashlik.EventBus.SendMsgWithoutLosing.Tests\Shashlik.EventBus.SendMsgWithoutLosing.Tests.csproj", "{6E48906E-AE49-449B-916D-72F0CECFBAE4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.SqlServer.Tests", "tests\Shashlik.EventBus.SqlServer.Tests\Shashlik.EventBus.SqlServer.Tests.csproj", "{714DE6CF-44DD-4E4B-ACEC-D3D902F0639E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Tests", "tests\Shashlik.EventBus.Tests\Shashlik.EventBus.Tests.csproj", "{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}"
 EndProject
@@ -84,20 +72,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Pulsar.Ms
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Pulsar.Tests", "tests\Shashlik.EventBus.Pulsar.Tests\Shashlik.EventBus.Pulsar.Tests.csproj", "{1C7BC7E0-D206-4AD4-8814-307931D568A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Sqlite", "Shashlik.EventBus.Sqlite\Shashlik.EventBus.Sqlite.csproj", "{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Sqlite.Tests", "tests\Shashlik.EventBus.Sqlite.Tests\Shashlik.EventBus.Sqlite.Tests.csproj", "{18D4F748-BFB1-4B35-933E-089318134C67}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D2D076C2-FCC0-4908-9007-19E87BF7A644}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D2D076C2-FCC0-4908-9007-19E87BF7A644}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D2D076C2-FCC0-4908-9007-19E87BF7A644}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D2D076C2-FCC0-4908-9007-19E87BF7A644}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5ECE0633-74F1-46A3-A341-F606FBD3581B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5ECE0633-74F1-46A3-A341-F606FBD3581B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5ECE0633-74F1-46A3-A341-F606FBD3581B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -114,10 +94,6 @@ Global
 		{03A6AB99-AC29-409D-80DA-44BA94D6ED76}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03A6AB99-AC29-409D-80DA-44BA94D6ED76}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03A6AB99-AC29-409D-80DA-44BA94D6ED76}.Release|Any CPU.Build.0 = Release|Any CPU
-		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{90BA6F49-BF60-4D86-B1DE-8DE62E44E8D0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{26E090A3-1289-4A1E-A47F-CDA314CD82B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{26E090A3-1289-4A1E-A47F-CDA314CD82B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26E090A3-1289-4A1E-A47F-CDA314CD82B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -126,10 +102,6 @@ Global
 		{26D9C32A-0CED-404D-8477-1A554C8CCB48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26D9C32A-0CED-404D-8477-1A554C8CCB48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26D9C32A-0CED-404D-8477-1A554C8CCB48}.Release|Any CPU.Build.0 = Release|Any CPU
-		{54F609CD-6E3A-4ED6-8E3E-53DCD597F7F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{54F609CD-6E3A-4ED6-8E3E-53DCD597F7F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{54F609CD-6E3A-4ED6-8E3E-53DCD597F7F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{54F609CD-6E3A-4ED6-8E3E-53DCD597F7F4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{37C51439-7225-4AA9-92B0-49E1E6FBCC6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{37C51439-7225-4AA9-92B0-49E1E6FBCC6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37C51439-7225-4AA9-92B0-49E1E6FBCC6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -158,14 +130,6 @@ Global
 		{7477DFCC-BDDC-498A-A5E7-34E876DE64C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7477DFCC-BDDC-498A-A5E7-34E876DE64C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7477DFCC-BDDC-498A-A5E7-34E876DE64C2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9DD7AAC8-0F26-4D0A-9AE3-5AD5D8DB7B87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9DD7AAC8-0F26-4D0A-9AE3-5AD5D8DB7B87}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9DD7AAC8-0F26-4D0A-9AE3-5AD5D8DB7B87}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9DD7AAC8-0F26-4D0A-9AE3-5AD5D8DB7B87}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A485C9B6-2348-4A6C-9BEC-445BC0ED1CA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A485C9B6-2348-4A6C-9BEC-445BC0ED1CA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A485C9B6-2348-4A6C-9BEC-445BC0ED1CA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A485C9B6-2348-4A6C-9BEC-445BC0ED1CA7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2ECFEF64-F757-448E-BF02-0EECD746CDB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2ECFEF64-F757-448E-BF02-0EECD746CDB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2ECFEF64-F757-448E-BF02-0EECD746CDB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -178,10 +142,6 @@ Global
 		{6E48906E-AE49-449B-916D-72F0CECFBAE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E48906E-AE49-449B-916D-72F0CECFBAE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E48906E-AE49-449B-916D-72F0CECFBAE4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{714DE6CF-44DD-4E4B-ACEC-D3D902F0639E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{714DE6CF-44DD-4E4B-ACEC-D3D902F0639E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{714DE6CF-44DD-4E4B-ACEC-D3D902F0639E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{714DE6CF-44DD-4E4B-ACEC-D3D902F0639E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -218,14 +178,6 @@ Global
 		{1C7BC7E0-D206-4AD4-8814-307931D568A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C7BC7E0-D206-4AD4-8814-307931D568A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C7BC7E0-D206-4AD4-8814-307931D568A2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2184B762-1BA3-4106-8000-0E2BF9AD3B1C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{18D4F748-BFB1-4B35-933E-089318134C67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{18D4F748-BFB1-4B35-933E-089318134C67}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{18D4F748-BFB1-4B35-933E-089318134C67}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{18D4F748-BFB1-4B35-933E-089318134C67}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -236,19 +188,15 @@ Global
 		{79C2FC0F-00CA-4A4C-AA36-A99D98FB5991} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{E2EA68A5-D253-4060-96AA-CA853C74C7E0} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{7477DFCC-BDDC-498A-A5E7-34E876DE64C2} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
-		{9DD7AAC8-0F26-4D0A-9AE3-5AD5D8DB7B87} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
-		{A485C9B6-2348-4A6C-9BEC-445BC0ED1CA7} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{2ECFEF64-F757-448E-BF02-0EECD746CDB4} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{A9EEBA66-1919-4858-8E76-F8657CAFD03E} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{6E48906E-AE49-449B-916D-72F0CECFBAE4} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
-		{714DE6CF-44DD-4E4B-ACEC-D3D902F0639E} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{8BDE4317-F2FE-48FD-AE8C-27F469476FF1} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{CD9B8B26-9CC3-4576-A574-7A59D1C69DFD} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{FEC12797-3C0C-465F-BD05-0EF0761925C6} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{2E0989DE-5914-45CA-9D74-DED626AF4C06} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{242D0F43-5E51-4DC6-8055-D8B8104FABC2} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 		{1C7BC7E0-D206-4AD4-8814-307931D568A2} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
-		{18D4F748-BFB1-4B35-933E-089318134C67} = {91A4AD7C-779D-4399-92E4-5323B9BD40FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {729D4F44-0236-45DD-B26E-9DEE0CA5908A}

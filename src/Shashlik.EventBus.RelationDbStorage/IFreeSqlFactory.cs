@@ -1,7 +1,7 @@
 ﻿namespace Shashlik.EventBus.RelationDbStorage;
 
 /// <summary>
-/// free sql 实例工厂,不注册到service,避免和应用应用free sql冲突
+/// free sql 实例工厂,不注册到service,避免和应用free sql冲突
 /// </summary>
 public interface IFreeSqlFactory
 {
