@@ -15,7 +15,9 @@ namespace Shashlik.EventBus.MemoryStorage
     public class MemoryMessageStorage : IMessageStorage
     {
         private readonly ConcurrentDictionary<string, MessageStorageModel> _published = new();
+
         private readonly ConcurrentDictionary<string, MessageStorageModel> _received = new();
+
         // 实例级状态。之前是 static,导致多个 MemoryMessageStorage 实例共享 id 序列
         // 和删除锁,集成测试里多 WebApplicationFactory 并行跑会相互干扰。
         private int _lastId;
@@ -64,11 +66,12 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(_received.GetOrDefault(storageId));
         }
 
-        public Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip,
-            int take,
-            CancellationToken cancellationToken)
+        public Task<List<MessageStorageModel>> SearchPublishedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime,
+            string? eventName, string? status, int skip, int take, CancellationToken cancellationToken)
         {
             var list = _published.Values
+                .Where(r => r.CreateTime >= beginTime && r.CreateTime <= endTime && r.Environment == environment)
                 .WhereIf(!eventName.IsNullOrWhiteSpace(), r => r.EventName == eventName)
                 .WhereIf(!status.IsNullOrWhiteSpace(), r => r.Status == status)
                 .Skip(skip)
@@ -77,11 +80,14 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(list);
         }
 
-        public Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName, string? eventHandlerName,
+        public Task<List<MessageStorageModel>> SearchReceivedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime,
+            string? eventName, string? eventHandlerName,
             string? status, int skip, int take,
             CancellationToken cancellationToken)
         {
             var list = _received.Values
+                .Where(r => r.CreateTime >= beginTime && r.CreateTime <= endTime && r.Environment == environment)
                 .WhereIf(!eventName.IsNullOrWhiteSpace(), r => r.EventName == eventName)
                 .WhereIf(!eventHandlerName.IsNullOrWhiteSpace(), r => r.EventHandlerName == eventHandlerName)
                 .WhereIf(!status.IsNullOrWhiteSpace(), r => r.Status == status)
@@ -192,20 +198,21 @@ namespace Shashlik.EventBus.MemoryStorage
             }
         }
 
-        public Task DeleteExpiresAsync(CancellationToken cancellationToken)
+        public Task DeleteExpiresAsync(int retryFailedMax, CancellationToken cancellationToken)
         {
-            DeleteExpires();
+            DeleteExpires(retryFailedMax);
             return Task.CompletedTask;
         }
 
-        public void DeleteExpires()
+        private void DeleteExpires(int retryFailedMax)
         {
             lock (_deleteLock)
             {
                 var items1 = _published
                     .Values
                     .Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now)
-                    .Where(r => r.Status == MessageStatus.Succeeded)
+                    .Where(r => r.Status == MessageStatus.Succeeded ||
+                                (r.Status == MessageStatus.Failed && r.RetryCount >= retryFailedMax))
                     .ToList();
                 foreach (var item in items1)
                     _published.TryRemove(item.Id, out _);
@@ -213,7 +220,8 @@ namespace Shashlik.EventBus.MemoryStorage
                 var items2 = _received
                     .Values
                     .Where(r => r.ExpireTime.HasValue && r.ExpireTime < DateTimeOffset.Now)
-                    .Where(r => r.Status == MessageStatus.Succeeded)
+                    .Where(r => r.Status == MessageStatus.Succeeded ||
+                                (r.Status == MessageStatus.Failed && r.RetryCount >= retryFailedMax))
                     .ToList();
                 foreach (var item in items2)
                     _received.TryRemove(item.Id, out _);
@@ -227,7 +235,7 @@ namespace Shashlik.EventBus.MemoryStorage
                 GetPublishedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
         }
 
-        public List<MessageStorageModel> GetPublishedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond,
+        private List<MessageStorageModel> GetPublishedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond,
             int maxFailedRetryCount,
             string environment)
         {
@@ -263,17 +271,26 @@ namespace Shashlik.EventBus.MemoryStorage
                 GetReceivedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
         }
 
-        public Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken)
+        public Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(string environment,
+            DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_published.Values.GroupBy(x => x.Status).ToDictionary(x => x.Key, x => x.Count()));
+            return Task.FromResult(_published.Values
+                .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.LockEnd == endTime)
+                .GroupBy(x => x.Status)
+                .ToDictionary(x => x.Key, x => x.Count()));
         }
 
-        public Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken)
+        public Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(string environment,
+            DateTimeOffset beginTime,
+            DateTimeOffset endTime, CancellationToken cancellationToken)
         {
-            return Task.FromResult(_received.Values.GroupBy(x => x.Status).ToDictionary(x => x.Key, x => x.Count()));
+            return Task.FromResult(_received.Values
+                .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.LockEnd == endTime)
+                .GroupBy(x => x.Status)
+                .ToDictionary(x => x.Key, x => x.Count()));
         }
 
-        public List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond,
+        private List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond,
             int maxFailedRetryCount,
             string environment)
         {

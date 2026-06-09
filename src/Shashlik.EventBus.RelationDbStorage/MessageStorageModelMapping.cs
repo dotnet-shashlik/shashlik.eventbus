@@ -21,14 +21,14 @@ internal static class MessageStorageModelMapping
             Environment = entity.Environment,
             EventName = entity.EventName,
             EventBody = entity.EventBody,
-            CreateTime = entity.CreateTime.LongToDateTimeOffset()!.Value,
-            DelayAt = entity.DelayAt?.LongToDateTimeOffset(),
-            ExpireTime = entity.ExpireTime?.LongToDateTimeOffset(),
+            CreateTime = entity.CreateTime,
+            DelayAt = entity.DelayAt,
+            ExpireTime = entity.ExpireTime,
             EventItems = entity.EventItems,
             RetryCount = entity.RetryCount,
             Status = entity.Status,
             IsLocking = entity.IsLocking,
-            LockEnd = entity.LockEnd?.LongToDateTimeOffset()
+            LockEnd = entity.LockEnd
         };
     }
 
@@ -42,14 +42,14 @@ internal static class MessageStorageModelMapping
             EventName = entity.EventName,
             EventHandlerName = entity.EventHandlerName,
             EventBody = entity.EventBody,
-            CreateTime = entity.CreateTime.LongToDateTimeOffset()!.Value,
-            DelayAt = entity.DelayAt?.LongToDateTimeOffset(),
-            ExpireTime = entity.ExpireTime?.LongToDateTimeOffset(),
+            CreateTime = entity.CreateTime,
+            DelayAt = entity.DelayAt,
+            ExpireTime = entity.ExpireTime,
             EventItems = entity.EventItems,
             RetryCount = entity.RetryCount,
             Status = entity.Status,
             IsLocking = entity.IsLocking,
-            LockEnd = entity.LockEnd?.LongToDateTimeOffset()
+            LockEnd = entity.LockEnd
         };
     }
 
@@ -61,14 +61,15 @@ internal static class MessageStorageModelMapping
             Environment = model.Environment,
             EventName = model.EventName,
             EventBody = model.EventBody,
-            CreateTime = model.CreateTime.GetLongDate(),
-            DelayAt = model.DelayAt?.GetLongDate(),
-            ExpireTime = model.ExpireTime?.GetLongDate(),
+            CreateTime = model.CreateTime,
+            IsDelay = model.DelayAt.HasValue,
+            DelayAt = model.DelayAt,
+            ExpireTime = model.ExpireTime,
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.GetLongDate(),
+            LockEnd = model.LockEnd
         };
     }
 
@@ -81,15 +82,15 @@ internal static class MessageStorageModelMapping
             EventName = model.EventName,
             EventHandlerName = model.EventHandlerName,
             EventBody = model.EventBody,
-            CreateTime = model.CreateTime.GetLongDate(),
+            CreateTime = model.CreateTime,
             IsDelay = model.DelayAt.HasValue,
-            DelayAt = model.DelayAt?.GetLongDate(),
-            ExpireTime = model.ExpireTime?.GetLongDate(),
+            DelayAt = model.DelayAt,
+            ExpireTime = model.ExpireTime,
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEnd = model.LockEnd?.GetLongDate()
+            LockEnd = model.LockEnd
         };
     }
 }

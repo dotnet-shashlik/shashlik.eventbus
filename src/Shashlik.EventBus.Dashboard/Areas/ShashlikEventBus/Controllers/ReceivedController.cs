@@ -7,26 +7,33 @@ namespace Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Controllers;
 public class ReceivedController : BaseDashboardController
 {
     private readonly IMessageStorage _messageStorage;
+    private readonly IOptionsMonitor<EventBusOptions> _optionsMonitor;
 
-    public ReceivedController(IOptionsMonitor<EventBusDashboardOption> options, IMessageStorage messageStorage) : base(options)
+    public ReceivedController(IOptionsMonitor<EventBusDashboardOption> options, IMessageStorage messageStorage,
+        IOptionsMonitor<EventBusOptions> optionsMonitor) : base(options)
     {
         _messageStorage = messageStorage;
+        _optionsMonitor = optionsMonitor;
     }
 
 
-    public async Task<IActionResult> Index(string? eventName, string? eventHandlerName, string? status,
+    public async Task<IActionResult> Index(DateTimeOffset beginTime, DateTimeOffset endTime, 
+        string? eventName, string? eventHandlerName, string? status,
         int pageSize = 20, int pageIndex = 1)
     {
         ViewBag.Title = "Received";
         ViewBag.Page = "Received";
         var model = new MessageViewModel();
-        model.StatusCount = await _messageStorage.GetReceivedMessageStatusCountAsync(CancellationToken.None);
+        model.StatusCount = await _messageStorage.GetReceivedMessageStatusCountAsync(
+            _optionsMonitor.CurrentValue.Environment,
+            beginTime, endTime, CancellationToken.None);
         if (string.IsNullOrEmpty(status) && model.StatusCount.Keys.Count > 0)
         {
             status = model.StatusCount.Keys.First();
         }
 
-        model.Messages = await _messageStorage.SearchReceivedAsync(eventName, eventHandlerName, status,
+        model.Messages = await _messageStorage.SearchReceivedAsync(_optionsMonitor.CurrentValue.Environment,
+            beginTime, endTime, eventName, eventHandlerName, status,
             (pageIndex - 1) * pageSize,
             pageSize, CancellationToken.None);
         model.PageIndex = pageIndex;

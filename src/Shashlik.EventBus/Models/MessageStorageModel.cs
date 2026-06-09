@@ -20,7 +20,7 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 业务消息 id(全局唯一)
         /// </summary>
-        public string MsgId { get; init; } = default!;
+        public string MsgId { get; init; } = string.Empty;
 
         /// <summary>
         /// 环境变量
@@ -70,7 +70,7 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 状态(参见 <see cref="MessageStatus"/>)
         /// </summary>
-        public string Status { get; set; } = default!;
+        public string Status { get; set; } = string.Empty;
 
         /// <summary>
         /// 是否已锁定

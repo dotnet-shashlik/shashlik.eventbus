@@ -1,5 +1,5 @@
-using System;
 using FreeSql;
+using FreeSql.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -20,14 +20,19 @@ public class DefaultFreeSqlFactory : IFreeSqlFactory
         var freeSql = new FreeSqlBuilder()
             .UseConnectionString(opts.DataType, opts.ConnectionString)
             .UseMonitorCommand(cmd => logger.LogDebug($"Sql: {cmd.CommandText}"))
+            .UseNameConvert(NameConvertType.PascalCaseToUnderscoreWithLower)
             .Build();
+
+        var schemaPrefix = options.Value.Schema;
+        if (string.IsNullOrWhiteSpace(schemaPrefix))
+            schemaPrefix = $"{schemaPrefix}.";
 
         freeSql.Aop.ConfigEntity += (_, e) =>
         {
             if (e.EntityType == typeof(RelationDbMessageStoragePublishedModel))
-                e.ModifyResult.Name = $"{opts.PublishedTableName}";
+                e.ModifyResult.Name = $"{schemaPrefix}{opts.PublishedTableName}";
             else if (e.EntityType == typeof(RelationDbMessageStorageReceivedModel))
-                e.ModifyResult.Name = $"{opts.ReceivedTableName}";
+                e.ModifyResult.Name = $"{schemaPrefix}{opts.ReceivedTableName}";
         };
 
         _freeSql = freeSql;

@@ -7,26 +7,33 @@ namespace Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Controllers;
 public class PublishedController : BaseDashboardController
 {
     private readonly IMessageStorage _messageStorage;
+    private readonly IOptionsMonitor<EventBusOptions> _optionsMonitor;
 
-    public PublishedController(IOptionsMonitor<EventBusDashboardOption> options, IMessageStorage messageStorage) :
+    public PublishedController(IOptionsMonitor<EventBusDashboardOption> options, IMessageStorage messageStorage,
+        IOptionsMonitor<EventBusOptions> optionsMonitor) :
         base(options)
     {
         _messageStorage = messageStorage;
+        _optionsMonitor = optionsMonitor;
     }
 
 
-    public async Task<IActionResult> Index(string? eventName, string? status, int pageSize = 20, int pageIndex = 1)
+    public async Task<IActionResult> Index(DateTimeOffset beginTime, DateTimeOffset endTime, string? eventName,
+        string? status, int pageSize = 20, int pageIndex = 1)
     {
         ViewBag.Title = "Published";
         ViewBag.Page = "Published";
         var model = new MessageViewModel();
-        model.StatusCount = await _messageStorage.GetPublishedMessageStatusCountsAsync(CancellationToken.None);
+        model.StatusCount =
+            await _messageStorage.GetPublishedMessageStatusCountsAsync(_optionsMonitor.CurrentValue.Environment,
+                beginTime, endTime, CancellationToken.None);
         if (string.IsNullOrEmpty(status) && model.StatusCount.Keys.Count > 0)
         {
             status = model.StatusCount.Keys.First();
         }
 
-        model.Messages = await _messageStorage.SearchPublishedAsync(eventName, status, (pageIndex - 1) * pageSize,
+        model.Messages = await _messageStorage.SearchPublishedAsync(_optionsMonitor.CurrentValue.Environment,
+            beginTime, endTime, eventName, status, (pageIndex - 1) * pageSize,
             pageSize, CancellationToken.None);
         model.PageIndex = pageIndex;
         model.PageSize = pageSize;

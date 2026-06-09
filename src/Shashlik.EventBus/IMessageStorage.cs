@@ -55,18 +55,26 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 查询已发布的消息数据
         /// </summary>
+        /// <param name="environment"></param>
+        /// <param name="beginTime"></param>
+        /// <param name="endTime"></param>
         /// <param name="eventName">事件名称</param>
         /// <param name="status">状态</param>
         /// <param name="skip">skip</param>
         /// <param name="take">take</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip, int take,
+        Task<List<MessageStorageModel>> SearchPublishedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime,
+            string? eventName, string? status, int skip, int take,
             CancellationToken cancellationToken);
 
         /// <summary>
         /// 查询已接收的消息数据
         /// </summary>
+        /// <param name="environment"></param>
+        /// <param name="beginTime"></param>
+        /// <param name="endTime"></param>
         /// <param name="eventName">事件名称</param>
         /// <param name="eventHandlerName">事件处理类名称</param>
         /// <param name="status">状态</param>
@@ -74,8 +82,9 @@ namespace Shashlik.EventBus
         /// <param name="take">take</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName, string? eventHandlerName, string? status,
-            int skip, int take,
+        Task<List<MessageStorageModel>> SearchReceivedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime,
+            string? eventName, string? eventHandlerName, string? status, int skip, int take,
             CancellationToken cancellationToken);
 
         /// <summary>
@@ -141,7 +150,7 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 删除已过期的数据
         /// </summary>
-        Task DeleteExpiresAsync(CancellationToken cancellationToken);
+        Task DeleteExpiresAsync(int retryFailedMax, CancellationToken cancellationToken);
 
         /// <summary>
         /// 获取已发布的消息需要重试发送的数据
@@ -170,15 +179,23 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 获取已发布的消息各种状态的数量
         /// </summary>
+        /// <param name="environment"></param>
+        /// <param name="beginTime"></param>
+        /// <param name="endTime"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(CancellationToken cancellationToken);
+        Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime, CancellationToken cancellationToken);
 
         /// <summary>
         /// 获取已接收的消息各种状态的数量
         /// </summary>
+        /// <param name="environment"></param>
+        /// <param name="beginTime"></param>
+        /// <param name="endTime"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(CancellationToken cancellationToken);
+        Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime, CancellationToken cancellationToken);
     }
 }

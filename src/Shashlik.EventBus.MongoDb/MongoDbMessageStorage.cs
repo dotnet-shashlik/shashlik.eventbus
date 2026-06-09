@@ -52,7 +52,8 @@ namespace Shashlik.EventBus.MongoDb
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId,
+            CancellationToken cancellationToken)
         {
             var mongoCollection = GetPublishedCollection();
             var msg = await mongoCollection.FindAsync(r => r.Id == storageId, cancellationToken: cancellationToken);
@@ -70,20 +71,24 @@ namespace Shashlik.EventBus.MongoDb
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId, CancellationToken cancellationToken)
+        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId,
+            CancellationToken cancellationToken)
         {
             var mongoCollection = GetReceivedCollection();
             var msg = await mongoCollection.FindAsync(r => r.Id == storageId, cancellationToken: cancellationToken);
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status, int skip,
-            int take,
+        public async Task<List<MessageStorageModel>> SearchPublishedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime, string? eventName, string? status, int skip, int take,
             CancellationToken cancellationToken)
         {
             var mongoCollection = GetPublishedCollection();
             var builder = Builders<MessageStorageModel>.Filter;
             var filter = builder.Empty;
+            filter = builder.And(filter, builder.Gte(r => r.CreateTime, beginTime));
+            filter = builder.And(filter, builder.Lte(r => r.CreateTime, endTime));
+            filter = builder.And(filter, builder.Eq(r => r.Environment, environment));
             if (!eventName.IsNullOrWhiteSpace())
                 filter = builder.And(filter, builder.Eq(r => r.EventName, eventName));
             if (!status.IsNullOrWhiteSpace())
@@ -94,14 +99,16 @@ namespace Shashlik.EventBus.MongoDb
                 .ToListAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName, string? eventHandlerName,
-            string? status, int skip,
-            int take,
+        public async Task<List<MessageStorageModel>> SearchReceivedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime, string? eventName, string? eventHandlerName, string? status, int skip, int take,
             CancellationToken cancellationToken)
         {
             var mongoCollection = GetReceivedCollection();
             var builder = Builders<MessageStorageModel>.Filter;
             var filter = builder.Empty;
+            filter = builder.And(filter, builder.Gte(r => r.CreateTime, beginTime));
+            filter = builder.And(filter, builder.Lte(r => r.CreateTime, endTime));
+            filter = builder.And(filter, builder.Eq(r => r.Environment, environment));
             if (!eventName.IsNullOrWhiteSpace())
                 filter = builder.And(filter, builder.Eq(r => r.EventName, eventName));
             if (!eventHandlerName.IsNullOrWhiteSpace())
@@ -156,7 +163,8 @@ namespace Shashlik.EventBus.MongoDb
             return message.Id;
         }
 
-        public async Task UpdatePublishedAsync(string storageId, string status, int retryCount, DateTimeOffset? expireTime,
+        public async Task UpdatePublishedAsync(string storageId, string status, int retryCount,
+            DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
             var mongoCollection = GetPublishedCollection();
@@ -215,15 +223,24 @@ namespace Shashlik.EventBus.MongoDb
             return res is not null;
         }
 
-        public async Task DeleteExpiresAsync(CancellationToken cancellationToken = default)
+        public async Task DeleteExpiresAsync(int retryFailedMax, CancellationToken cancellationToken = default)
         {
             var mongoCollection1 = GetReceivedCollection();
             await mongoCollection1.DeleteManyAsync(r =>
                     r.ExpireTime < DateTimeOffset.Now && r.Status == MessageStatus.Succeeded,
                 cancellationToken: cancellationToken);
+            await mongoCollection1.DeleteManyAsync(r =>
+                    r.ExpireTime < DateTimeOffset.Now && r.Status == MessageStatus.Failed &&
+                    r.RetryCount >= retryFailedMax,
+                cancellationToken: cancellationToken);
+
             var mongoCollection2 = GetPublishedCollection();
             await mongoCollection2.DeleteManyAsync(r =>
                     r.ExpireTime < DateTimeOffset.Now && r.Status == MessageStatus.Succeeded,
+                cancellationToken: cancellationToken);
+            await mongoCollection2.DeleteManyAsync(r =>
+                    r.ExpireTime < DateTimeOffset.Now && r.Status == MessageStatus.Failed &&
+                    r.RetryCount >= retryFailedMax,
                 cancellationToken: cancellationToken);
         }
 
@@ -276,14 +293,16 @@ namespace Shashlik.EventBus.MongoDb
             return count > 0 ? list.Take(count).ToList() : list;
         }
 
-        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(
-            CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(string environment,
+            DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
         {
             var mongoCollection = GetPublishedCollection();
             var res = await mongoCollection.Aggregate(new AggregateOptions
                 {
                     AllowDiskUse = true,
                 })
+                .Match(r => r.Environment == environment
+                            && r.CreateTime >= beginTime && r.CreateTime <= endTime)
                 .Group(r => r.Status, r => new
                 {
                     r.Key,
@@ -293,14 +312,16 @@ namespace Shashlik.EventBus.MongoDb
             return res.ToDictionary(r => r.Key, r => r.Count);
         }
 
-        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(
-            CancellationToken cancellationToken)
+        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(string environment,
+            DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
         {
             var mongoCollection = GetReceivedCollection();
             var res = await mongoCollection.Aggregate(new AggregateOptions
                 {
                     AllowDiskUse = true,
                 })
+                .Match(r => r.Environment == environment
+                            && r.CreateTime >= beginTime && r.CreateTime <= endTime)
                 .Group(r => r.Status, r => new
                 {
                     r.Key,

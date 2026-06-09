@@ -24,6 +24,11 @@ public class EventBusRelationDbOptions
     public string ConnectionString { get; private set; } = string.Empty;
 
     /// <summary>
+    /// 数据库Schema
+    /// </summary>
+    public string Schema { get; set; } = string.Empty;
+
+    /// <summary>
     /// 已发布表名
     /// </summary>
     public string PublishedTableName { get; set; } = "eventbus_published";

@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -66,10 +67,13 @@ public class RelationDbMessageStorage : IMessageStorage
         return entity?.ToModel();
     }
 
-    public virtual async Task<List<MessageStorageModel>> SearchPublishedAsync(string? eventName, string? status,
+    public virtual async Task<List<MessageStorageModel>> SearchPublishedAsync(string environment,
+        DateTimeOffset beginTime,
+        DateTimeOffset endTime, string? eventName, string? status,
         int skip, int take, CancellationToken cancellationToken)
     {
         var query = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+            .Where(r => r.CreateTime >= beginTime && r.CreateTime <= endTime && r.Environment == environment)
             .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
             .WhereIf(!string.IsNullOrEmpty(status), r => r.Status == status)
             .OrderBy(r => r.CreateTime)
@@ -80,13 +84,16 @@ public class RelationDbMessageStorage : IMessageStorage
         return result.Select(r => r.ToModel()).ToList();
     }
 
-    public virtual async Task<List<MessageStorageModel>> SearchReceivedAsync(string? eventName,
+    public virtual async Task<List<MessageStorageModel>> SearchReceivedAsync(string environment,
+        DateTimeOffset beginTime,
+        DateTimeOffset endTime, string? eventName,
         string? eventHandlerName,
         string? status, int skip,
         int take,
         CancellationToken cancellationToken)
     {
         var query = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
+            .Where(r => r.CreateTime >= beginTime && r.CreateTime <= endTime && r.Environment == environment)
             .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
             .WhereIf(!string.IsNullOrEmpty(eventHandlerName), r => r.EventHandlerName == eventHandlerName)
             .WhereIf(!string.IsNullOrEmpty(status), r => r.Status == status)
@@ -152,7 +159,7 @@ public class RelationDbMessageStorage : IMessageStorage
         await FreeSql.Update<RelationDbMessageStoragePublishedModel>(id)
             .Set(r => r.Status, status)
             .Set(r => r.RetryCount, retryCount)
-            .Set(r => r.ExpireTime, expireTime?.GetLongDate() ?? 0)
+            .Set(r => r.ExpireTime, expireTime)
             .ExecuteAffrowsAsync(cancellationToken);
     }
 
@@ -161,11 +168,10 @@ public class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken = default)
     {
         var id = storageId.ParseTo<long>();
-
         await FreeSql.Update<RelationDbMessageStorageReceivedModel>(id)
             .Set(r => r.Status, status)
             .Set(r => r.RetryCount, retryCount)
-            .Set(r => r.ExpireTime, expireTime?.GetLongDate() ?? 0)
+            .Set(r => r.ExpireTime, expireTime)
             .ExecuteAffrowsAsync(cancellationToken);
     }
 
@@ -173,12 +179,11 @@ public class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
-
-        var nowLong = DateTimeOffset.Now.GetLongDate();
+        var now = DateTimeOffset.Now;
         return await FreeSql.Update<RelationDbMessageStoragePublishedModel>(id)
-            .Where(r => !r.IsLocking || r.LockEnd < nowLong)
+            .Where(r => !r.IsLocking || r.LockEnd < now)
             .Set(r => r.IsLocking, true)
-            .Set(r => r.LockEnd, lockEndAt.GetLongDate())
+            .Set(r => r.LockEnd, lockEndAt)
             .ExecuteAffrowsAsync(cancellationToken) == 1;
     }
 
@@ -186,30 +191,37 @@ public class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
-
-        var nowLong = DateTimeOffset.Now.GetLongDate();
+        var now = DateTimeOffset.Now;
         return await FreeSql.Update<RelationDbMessageStorageReceivedModel>(id)
-            .Where(r => !r.IsLocking || r.LockEnd < nowLong)
+            .Where(r => !r.IsLocking || r.LockEnd < now)
             .Set(r => r.IsLocking, true)
-            .Set(r => r.LockEnd, lockEndAt.GetLongDate())
+            .Set(r => r.LockEnd, lockEndAt)
             .ExecuteAffrowsAsync(cancellationToken) == 1;
     }
 
-    public virtual async Task DeleteExpiresAsync(CancellationToken cancellationToken = default)
+    public virtual async Task DeleteExpiresAsync(int retryFailedMax, CancellationToken cancellationToken = default)
     {
         // 分批删除,避免大表上单条 DELETE 锁住表/分区太久。批量大小 1000,可以根据
         // 业务量调整。循环退出条件:某次循环无行被删除(全部过期清理完毕)。
         // FreeSql 的 IDelete<T> 没有稳定的 Limit 支持,所以用"先 select id 列表,再
         // 按 id 删"两步走。
         const int batchSize = 1000;
-        var now = DateTimeOffset.Now.GetLongDate();
+        var now = DateTimeOffset.Now;
 
         while (!cancellationToken.IsCancellationRequested)
         {
             var ids = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
-                .Where(r => r.ExpireTime > 0 && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
+                .Where(r => r.ExpireTime != null && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
+
+            var idsFailed = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+                .Where(r => r.ExpireTime != null && r.ExpireTime < now && r.Status == MessageStatus.Failed &&
+                            r.RetryCount >= retryFailedMax)
+                .Limit(batchSize)
+                .ToListAsync(r => r.Id, cancellationToken);
+            if (idsFailed.Count > 0)
+                ids.AddRange(idsFailed);
             if (ids.Count == 0) break;
             await FreeSql.Delete<RelationDbMessageStoragePublishedModel>()
                 .Where(r => ids.Contains(r.Id))
@@ -220,9 +232,18 @@ public class RelationDbMessageStorage : IMessageStorage
         while (!cancellationToken.IsCancellationRequested)
         {
             var ids = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
-                .Where(r => r.ExpireTime > 0 && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
+                .Where(r => r.ExpireTime != null && r.ExpireTime < now && r.Status == MessageStatus.Succeeded)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
+
+            var idsFailed = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
+                .Where(r => r.ExpireTime != null && r.ExpireTime < now && r.Status == MessageStatus.Failed &&
+                            r.RetryCount >= retryFailedMax)
+                .Limit(batchSize)
+                .ToListAsync(r => r.Id, cancellationToken);
+            if (idsFailed.Count > 0)
+                ids.AddRange(idsFailed);
+
             if (ids.Count == 0) break;
             await FreeSql.Delete<RelationDbMessageStorageReceivedModel>()
                 .Where(r => ids.Contains(r.Id))
@@ -238,16 +259,32 @@ public class RelationDbMessageStorage : IMessageStorage
         string environment,
         CancellationToken cancellationToken = default)
     {
-        var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-        var now = DateTimeOffset.Now.GetLongDate();
-        // delay 事件只有 DelayAt <= now 才需要重发,否则没到时间。
-        return await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+        var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
+        var now = DateTimeOffset.Now;
+        // 普通消息
+        var normalQuery = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.Environment == environment &&
-                        ((r.DelayAt == null && r.CreateTime < createTimeLimit) ||
-                         (r.DelayAt != null && r.DelayAt <= now)) &&
+                        r.Status.In(MessageStatus.Scheduled, MessageStatus.Failed) &&
+                        r.IsDelay == false &&
+                        r.CreateTime < createTimeLimit &&
                         r.RetryCount < maxFailedRetryCount &&
-                        (!r.IsLocking || r.LockEnd < now) &&
-                        (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
+                        (!r.IsLocking || r.LockEnd < now))
+            .OrderByDescending(r => r.CreateTime);
+
+        // 延迟消息
+        var delayQuery = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+            .Where(r => r.Environment == environment &&
+                        r.Status.In(MessageStatus.Scheduled, MessageStatus.Failed) &&
+                        r.IsDelay == true &&
+                        r.DelayAt <= now &&
+                        r.RetryCount < maxFailedRetryCount &&
+                        (!r.IsLocking || r.LockEnd < now))
+            .OrderByDescending(r => r.CreateTime);
+
+        // 合并并排序、限制数量
+        return await normalQuery
+            .UnionAll(delayQuery)
+            .OrderByDescending(r => r.CreateTime)
             .Limit(count)
             .ToListAsync(cancellationToken)
             .ContinueWith(t => t.Result.Select(r => r.ToModel()).ToList(), cancellationToken);
@@ -260,33 +297,53 @@ public class RelationDbMessageStorage : IMessageStorage
         string environment,
         CancellationToken cancellationToken = default)
     {
-        var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond).GetLongDate();
-        var now = DateTimeOffset.Now.GetLongDate();
-        return await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
+        var createTimeLimit = DateTimeOffset.Now.AddSeconds(-delayRetrySecond);
+        var now = DateTimeOffset.Now;
+        // 普通消息
+        var normalQuery = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.Environment == environment &&
-                        ((!r.IsDelay && r.CreateTime < createTimeLimit) ||
-                         (r.IsDelay && r.DelayAt <= now)) &&
+                        r.Status.In(MessageStatus.Scheduled, MessageStatus.Failed) &&
+                        r.IsDelay == false &&
+                        r.CreateTime < createTimeLimit &&
                         r.RetryCount < maxFailedRetryCount &&
-                        (!r.IsLocking || r.LockEnd < DateTimeOffset.Now.GetLongDate()) &&
-                        (r.Status == MessageStatus.Scheduled || r.Status == MessageStatus.Failed))
+                        (!r.IsLocking || r.LockEnd < now))
+            .OrderByDescending(r => r.CreateTime);
+
+        // 延迟消息
+        var delayQuery = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
+            .Where(r => r.Environment == environment &&
+                        r.Status.In(MessageStatus.Scheduled, MessageStatus.Failed) &&
+                        r.IsDelay == true &&
+                        r.DelayAt <= now &&
+                        r.RetryCount < maxFailedRetryCount &&
+                        (!r.IsLocking || r.LockEnd < now))
+            .OrderByDescending(r => r.CreateTime);
+
+        // 合并并排序、限制数量
+        return await normalQuery
+            .UnionAll(delayQuery)
+            .OrderByDescending(r => r.CreateTime)
             .Limit(count)
             .ToListAsync(cancellationToken)
             .ContinueWith(t => t.Result.Select(r => r.ToModel()).ToList(), cancellationToken);
     }
 
     public virtual async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(
-        CancellationToken cancellationToken)
+        string environment, DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
     {
         var result = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+            .Where(r => r.CreateTime >= beginTime && r.CreateTime <= endTime && r.Environment == environment)
             .GroupBy(r => r.Status)
             .ToListAsync(g => new { g.Key, Count = g.Count() }, cancellationToken);
         return result.ToDictionary(r => r.Key ?? string.Empty, r => r.Count);
     }
 
     public virtual async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(
+        string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
         CancellationToken cancellationToken)
     {
         var result = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
+            .Where(r => r.CreateTime >= beginTime && r.CreateTime <= endTime && r.Environment == environment)
             .GroupBy(r => r.Status)
             .ToListAsync(g => new { g.Key, Count = g.Count() }, cancellationToken);
         return result.ToDictionary(r => r.Key ?? string.Empty, r => r.Count);
