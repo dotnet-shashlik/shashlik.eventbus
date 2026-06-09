@@ -1,10 +1,7 @@
-﻿using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using Shashlik.EventBus.Utils;
-
-// ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
 namespace Shashlik.EventBus.Kafka
 {
@@ -27,7 +24,10 @@ namespace Shashlik.EventBus.Kafka
 
         public async Task SendAsync(MessageTransferModel message)
         {
-            var producer = Connection.GetProducer(message.EventName);
+            // 从池借一个 producer,用完归还
+            await using var lease = await Connection.GetProducer(message.EventName).ConfigureAwait(false);
+            var producer = lease.Value
+                ?? throw new EventBusException("[EventBus-Kafka] failed to rent producer from pool");
 
             var result = await producer.ProduceAsync(message.EventName, new Message<string, byte[]>
             {
