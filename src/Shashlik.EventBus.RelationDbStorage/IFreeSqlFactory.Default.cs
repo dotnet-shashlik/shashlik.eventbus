@@ -9,7 +9,7 @@ namespace Shashlik.EventBus.RelationDbStorage;
 /// <see cref="IFreeSqlFactory"/> 的默认实现:根据 <see cref="EventBusRelationDbOptions.DataType"/>
 /// 选用对应的 FreeSql Provider,所有方言(MySQL/PG/SqlServer/Sqlite/...)走同一份代码。
 /// </summary>
-public class DefaultFreeSqlFactory : IFreeSqlFactory
+internal class DefaultFreeSqlFactory : IFreeSqlFactory
 {
     public DefaultFreeSqlFactory(
         IOptions<EventBusRelationDbOptions> options,

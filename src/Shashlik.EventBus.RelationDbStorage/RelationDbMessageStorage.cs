@@ -14,7 +14,7 @@ namespace Shashlik.EventBus.RelationDbStorage;
 /// <summary>
 /// FreeSql 跨方言的 IMessageStorage 默认实现。直接使用,不再需要 4 个方言包各自继承。
 /// </summary>
-public class RelationDbMessageStorage : IMessageStorage
+internal class RelationDbMessageStorage : IMessageStorage
 {
     public RelationDbMessageStorage(IFreeSqlFactory freeSqlFactory)
     {

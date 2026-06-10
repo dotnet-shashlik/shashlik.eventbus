@@ -11,7 +11,7 @@ namespace Shashlik.EventBus.RelationDbStorage;
 /// 调用 <c>CodeFirst.SyncStructure</c> 同步实体模型到物理表(自动建表 + 已声明索引)。
 /// 子类可以重写 <see cref="InitializeAsync"/> 增加方言特定的 DDL/视图/种子数据等。
 /// </summary>
-public abstract class RelationDbMessageStorageInitializerBase : IMessageStorageInitializer
+internal class RelationDbMessageStorageInitializerBase : IMessageStorageInitializer
 {
     protected RelationDbMessageStorageInitializerBase(IFreeSqlFactory freeSqlFactory)
     {
@@ -41,7 +41,7 @@ public abstract class RelationDbMessageStorageInitializerBase : IMessageStorageI
 /// 框架在 <see cref="RelationDbExtensions.AddRelationDb"/> 中默认注册此实现,
 /// 应用方可继续注册自己的子类来扩展 DDL。
 /// </summary>
-public class DefaultRelationDbMessageStorageInitializer : RelationDbMessageStorageInitializerBase
+internal class DefaultRelationDbMessageStorageInitializer : RelationDbMessageStorageInitializerBase
 {
     public DefaultRelationDbMessageStorageInitializer(IFreeSqlFactory freeSqlFactory)
         : base(freeSqlFactory)
