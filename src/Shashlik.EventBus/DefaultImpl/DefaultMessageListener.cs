@@ -92,7 +92,9 @@ namespace Shashlik.EventBus.DefaultImpl
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, $"[EventBus] message listener handle message occur error");
+                // 详细记录错误,便于排查"OnReceiveAsync 返回 Failed"的根因
+                Logger.LogError(ex,
+                    $"[EventBus] message listener handle message occur error, handlerName={eventHandlerName}, msgId={message?.MsgId}");
                 return MessageReceiveResult.Failed;
             }
         }

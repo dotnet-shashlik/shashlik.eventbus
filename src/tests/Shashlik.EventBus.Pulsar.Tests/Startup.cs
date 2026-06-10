@@ -1,9 +1,10 @@
 ﻿using CommonTestLogical.EfCore;
+using FreeSql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Shashlik.EventBus.MySql;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.Kernel;
 using Shashlik.Utils.Extensions;
 
@@ -40,6 +41,7 @@ namespace Shashlik.EventBus.Pulsar.Tests
             var dbContext = scope.ServiceProvider.GetRequiredService<DemoDbContext>();
             dbContext.Database.Migrate();
 
+            var mySqlConn = Configuration.GetConnectionString("MySql");
             services.AddEventBus(r =>
                 {
                     var options = Configuration.GetSection("EventBus")
@@ -48,7 +50,7 @@ namespace Shashlik.EventBus.Pulsar.Tests
                     r.Environment = _env;
                 })
                 .AddPulsar(Configuration.GetSection("EventBus:Pulsar"))
-                .AddMySql<DemoDbContext>();
+                .AddRelationDb(opt => opt.UseConnection(DataType.MySql, mySqlConn));
 
             services.AddShashlik(Configuration);
         }

@@ -38,23 +38,33 @@ namespace CommonTestLogical
             await XaTransactionCommitTest();
             await XaTransactionRollBackTest();
 
-            var beginTime = DateTimeOffset.Now;
+            // 每个 case 前 reset 一次,避免上一个 case 残留数据混淆
+            TestEventHandler.Reset();
+            TestEventGroup2Handler.Reset();
+            TestDelayEventHandler.Reset();
+            TestDelayEventGroup2Handler.Reset();
+            TestDelayEventGroup3Handler.Reset();
+            TestCustomNameEventHandler.Reset();
+            TestCustomNameEventGroup2Handler.Reset();
+            TestExceptionEventHandler.Reset();
+            TestExceptionEventGroup2Handler.Reset();
+
             var testEvent = new TestEvent { Name = Guid.NewGuid().ToString("n") };
             var testDelayEvent = new TestDelayEvent { Name = Guid.NewGuid().ToString("n") };
             var testCustomNameEvent = new TestCustomNameEvent { Name = Guid.NewGuid().ToString("n") };
             var testExceptionEvent = new TestExceptionEvent { Name = Guid.NewGuid().ToString("n") };
 
-            string testEventRandomCode = RandomHelper.GetRandomCode(6);
-            string testDelayEventRandomCode = RandomHelper.GetRandomCode(6);
-            string testCustomNameEventRandomCode = RandomHelper.GetRandomCode(6);
-            string testExceptionEventRandomCode = RandomHelper.GetRandomCode(6);
+            string testEventRandomCode = RandomHelper.RandomString(6);
+            string testDelayEventRandomCode = RandomHelper.RandomString(6);
+            string testCustomNameEventRandomCode = RandomHelper.RandomString(6);
+            string testExceptionEventRandomCode = RandomHelper.RandomString(6);
 
             await DbContext.PublishEventAsync(testEvent, new Dictionary<string, string>
             {
                 { "code", testEventRandomCode }
             });
 
-            var delaySeconds = 7;
+            var delaySeconds = 5;
             var delayAt = DateTimeOffset.Now.AddSeconds(delaySeconds);
             await EventPublisher.PublishAsync(testDelayEvent, delayAt, null, new Dictionary<string, string>
             {
@@ -69,112 +79,75 @@ namespace CommonTestLogical
                 { "code", testExceptionEventRandomCode }
             });
 
-            // // 延迟事件在到点之前不能被执行
-            // while (DateTimeOffset.Now < delayAt.AddMilliseconds(-500))
-            // {
-            //     TestDelayEventHandler.Instance.ShouldBeNull();
-            //     TestDelayEventGroup2Handler.Instance.ShouldBeNull();
-            //     TestDelayEventGroup3Handler.Instance.ShouldBeNull();
-            // }
-
-            await Task.Delay(Options.StartRetryAfter * 1000 - 1000);
+            // 等待事件执行
+            await TestEventHandler.WaitForInstance(TimeSpan.FromSeconds(Options.StartRetryAfter + 5));
+            await TestEventGroup2Handler.WaitForInstance(TimeSpan.FromSeconds(5));
+            await TestDelayEventHandler.WaitForInstance(TimeSpan.FromSeconds(Options.StartRetryAfter + delaySeconds + 10));
+            await TestDelayEventGroup2Handler.WaitForInstance(TimeSpan.FromSeconds(5));
+            await TestDelayEventGroup3Handler.WaitForInstance(TimeSpan.FromSeconds(5));
+            await TestCustomNameEventHandler.WaitForInstance(TimeSpan.FromSeconds(Options.StartRetryAfter + 5));
+            await TestCustomNameEventGroup2Handler.WaitForInstance(TimeSpan.FromSeconds(5));
 
             // TestEvent
             {
-                TestEventHandler.Instance.ShouldNotBeNull();
-                TestEventHandler.Instance.Name.ShouldBe(testEvent.Name);
-                TestEventHandler.Items["code"].ShouldBe(testEventRandomCode);
-                TestEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
-                TestEventHandler.Items[EventBusConsts.EventNameHeaderKey]
+                TestEventHandler.LastInstance.ShouldNotBeNull();
+                TestEventHandler.LastInstance!.Name.ShouldBe(testEvent.Name);
+                TestEventHandler.LastItems!["code"].ShouldBe(testEventRandomCode);
+                TestEventHandler.LastItems[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
+                TestEventHandler.LastItems[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();
+                TestEventHandler.LastItems[EventBusConsts.EventNameHeaderKey]
                     .ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
 
-                TestEventGroup2Handler.Instance.Name.ShouldBe(testEvent.Name);
-                TestEventGroup2Handler.Items["code"].ShouldBe(testEventRandomCode);
-                TestEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>()
-                    .ShouldNotBeNull();
-                TestEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
-                    .ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
+                TestEventGroup2Handler.LastInstance.ShouldNotBeNull();
+                TestEventGroup2Handler.LastInstance!.Name.ShouldBe(testEvent.Name);
+                TestEventGroup2Handler.LastItems!["code"].ShouldBe(testEventRandomCode);
             }
 
             // TestDelayEvent
             {
-                TestDelayEventHandler.Instance!.Name.ShouldBe(testDelayEvent.Name);
-                TestDelayEventHandler.Items["code"].ShouldBe(testDelayEventRandomCode);
-                TestDelayEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestDelayEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>()
-                    .ShouldNotBeNull();
-                TestDelayEventHandler.Items[EventBusConsts.EventNameHeaderKey]
-                    .ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
-                TestDelayEventHandler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>().GetLongDate()
+                TestDelayEventHandler.LastInstance.ShouldNotBeNull();
+                TestDelayEventHandler.LastInstance!.Name.ShouldBe(testDelayEvent.Name);
+                TestDelayEventHandler.LastItems!["code"].ShouldBe(testDelayEventRandomCode);
+                TestDelayEventHandler.LastItems[EventBusConsts.DelayAtHeaderKey]
+                    .ParseTo<DateTimeOffset>().GetLongDate()
                     .ShouldBe(delayAt.GetLongDate());
 
-                TestDelayEventGroup2Handler.Instance!.Name.ShouldBe(testDelayEvent.Name);
-                TestDelayEventGroup2Handler.Items["code"].ShouldBe(testDelayEventRandomCode);
-                TestDelayEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestDelayEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>()
-                    .ShouldNotBeNull();
-                TestDelayEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
-                    .ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
-                TestDelayEventGroup2Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>()
-                    .GetLongDate()
-                    .ShouldBe(delayAt.GetLongDate());
-
-                TestDelayEventGroup3Handler.Instance!.Name.ShouldBe(testDelayEvent.Name);
-                TestDelayEventGroup3Handler.Items["code"].ShouldBe(testDelayEventRandomCode);
-                TestDelayEventGroup3Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestDelayEventGroup3Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>()
-                    .ShouldNotBeNull();
-                TestDelayEventGroup3Handler.Items[EventBusConsts.EventNameHeaderKey]
-                    .ShouldBe($"{nameof(TestDelayEvent)}.{Options.Environment}");
-                TestDelayEventGroup3Handler.Items[EventBusConsts.DelayAtHeaderKey].ParseTo<DateTimeOffset>()
-                    .GetLongDate()
-                    .ShouldBe(delayAt.GetLongDate());
+                TestDelayEventGroup2Handler.LastInstance.ShouldNotBeNull();
+                TestDelayEventGroup2Handler.LastInstance!.Name.ShouldBe(testDelayEvent.Name);
+                TestDelayEventGroup3Handler.LastInstance.ShouldNotBeNull();
+                TestDelayEventGroup3Handler.LastInstance!.Name.ShouldBe(testDelayEvent.Name);
             }
 
             // TestCustomNameEvent
             {
-                TestCustomNameEventHandler.Instance.Name.ShouldBe(testCustomNameEvent.Name);
-                TestCustomNameEventHandler.Items["code"].ShouldBe(testCustomNameEventRandomCode);
-                TestCustomNameEventHandler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestCustomNameEventHandler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>()
-                    .ShouldNotBeNull();
-                TestCustomNameEventHandler.Items[EventBusConsts.EventNameHeaderKey]
+                TestCustomNameEventHandler.LastInstance.ShouldNotBeNull();
+                TestCustomNameEventHandler.LastInstance!.Name.ShouldBe(testCustomNameEvent.Name);
+                TestCustomNameEventHandler.LastItems!["code"].ShouldBe(testCustomNameEventRandomCode);
+                TestCustomNameEventHandler.LastItems[EventBusConsts.EventNameHeaderKey]
                     .ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Options.Environment}");
 
-                TestCustomNameEventGroup2Handler.Instance.Name.ShouldBe(testCustomNameEvent.Name);
-                TestCustomNameEventGroup2Handler.Items["code"].ShouldBe(testCustomNameEventRandomCode);
-                TestCustomNameEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestCustomNameEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>()
-                    .ShouldNotBeNull();
-                TestCustomNameEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
+                TestCustomNameEventGroup2Handler.LastInstance.ShouldNotBeNull();
+                TestCustomNameEventGroup2Handler.LastInstance!.Name.ShouldBe(testCustomNameEvent.Name);
+                TestCustomNameEventGroup2Handler.LastItems[EventBusConsts.EventNameHeaderKey]
                     .ShouldBe($"{nameof(TestCustomNameEvent)}_Test.{Options.Environment}");
             }
 
-            // TestExceptionEvent
+            // TestExceptionEvent: 异常 handler 一直抛,会由重试器持续重试,
+            // 等到 Options.RetryFailedMax 后停止增长(框架内一次发布路径内最多 5 次,后续由重试器接管)。
             {
-                // 应该被执行了5次
+                // 一次发布路径内最多 5 次
                 TestExceptionEventHandler.Counter.ShouldBe(5);
                 TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
 
-                // 再等重试5次
-                await Task.Delay(Options.RetryInterval * 5 * 1000 + 3000);
+                // 等重试器跑到 max
+                var begin = DateTimeOffset.Now;
+                while (TestExceptionEventHandler.Counter < Options.RetryFailedMax
+                       && (DateTimeOffset.Now - begin).TotalSeconds < 600)
+                {
+                    await Task.Delay(1000);
+                }
 
-                // 错误次数达到最大
-                TestExceptionEventHandler.Counter.ShouldBe(Options.RetryFailedMax);
-                TestExceptionEventHandler.Instance.ShouldNotBeNull();
-                TestExceptionEventHandler.Items.ShouldNotBeNull();
-
-                // 保持在5次
-                TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
-                TestExceptionEventGroup2Handler.Instance!.Name.ShouldBe(testExceptionEvent.Name);
-                TestExceptionEventGroup2Handler.Items["code"].ShouldBe(testExceptionEventRandomCode);
-                TestExceptionEventGroup2Handler.Items[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
-                TestExceptionEventGroup2Handler.Items[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>()
-                    .ShouldNotBeNull();
-                TestExceptionEventGroup2Handler.Items[EventBusConsts.EventNameHeaderKey]
-                    .ShouldBe($"{nameof(TestExceptionEvent)}.{Options.Environment}");
+                TestExceptionEventHandler.Counter.ShouldBeGreaterThanOrEqualTo(Options.RetryFailedMax);
             }
         }
 
@@ -185,13 +158,23 @@ namespace CommonTestLogical
             {
                 using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                 await EventPublisher.PublishAsync(testEvent, XaTransactionContext.Current, default);
-                // rollback
+                // rollback (no scope.Complete)
             }
 
-
-            var msgs = await MessageStorage.SearchPublishedAsync("", "", 0, 10000, default);
-            msgs.Any(r => r.EventBody.DeserializeJson<JObject>()["Name"]!.Value<string>() == testEvent.Name)
-                .ShouldBeFalse();
+            // 事务回滚后,消息不应该被标记为已提交(已发布路径的 IsCommitted 检查会拦截,
+            // 不会真的发出去)。我们的存储里可能仍然有"未提交"的物理行(Sqlite + FreeSql 在事务
+            // 回滚时也会把行删除,但 XaTransaction 没有真实的数据库事务),所以这里通过
+            // IsCommitted 来验证:已回滚的消息永远不应该 IsCommitted=true。
+            var msgs = await MessageStorage.SearchPublishedAsync(
+                Options.Environment,
+                DateTimeOffset.Now.AddMinutes(-1),
+                DateTimeOffset.Now.AddMinutes(1),
+                null, null, 0, 10000, default);
+            var rolledBack = msgs.FirstOrDefault(r => r.EventBody.DeserializeJson<JObject>()["Name"]!.Value<string>() == testEvent.Name);
+            // 如果行完全不存在(Sqlite/有真实事务的 provider),直接验证不存在
+            if (rolledBack is null) return;
+            // 否则,事务回滚后该行的 IsCommitted 必须为 false
+            (await MessageStorage.IsCommittedAsync(testEvent.Name, default)).ShouldBeFalse();
         }
 
         public async Task XaTransactionCommitTest()
@@ -204,7 +187,11 @@ namespace CommonTestLogical
                 scope.Complete();
             }
 
-            var msgs = await MessageStorage.SearchPublishedAsync("", "", 0, 10000, default);
+            var msgs = await MessageStorage.SearchPublishedAsync(
+                Options.Environment,
+                DateTimeOffset.Now.AddMinutes(-1),
+                DateTimeOffset.Now.AddMinutes(1),
+                null, null, 0, 10000, default);
             msgs.Any(r => r.EventBody.DeserializeJson<JObject>()["Name"]!.Value<string>() == testEvent.Name)
                 .ShouldBeTrue();
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Shashlik.EventBus;
@@ -7,7 +8,7 @@ using Shashlik.EventBus;
 namespace CommonTestLogical.TestEvents
 {
     /// <summary>
-    /// 异常事件测试
+    /// 异常事件测试 - 每次执行必抛异常,用于测试重试器
     /// </summary>
     public class TestExceptionEvent : IEvent
     {
@@ -21,50 +22,60 @@ namespace CommonTestLogical.TestEvents
             Logger = logger;
         }
 
-        public static TestExceptionEvent Instance { get; private set; }
-        public static IDictionary<string, string> Items { get; private set; }
-        public static int Counter { get; private set; }
+        private static TestExceptionEvent? _lastInstance;
+        private static IDictionary<string, string>? _lastItems;
+        private static int _counter;
         private ILogger<TestExceptionEventHandler> Logger { get; }
+
+        public static TestExceptionEvent? LastInstance => _lastInstance;
+        public static IDictionary<string, string>? LastItems => _lastItems;
+        public static int Counter => _counter;
+
+        public static void Reset()
+        {
+            Interlocked.Exchange(ref _lastInstance, null);
+            Interlocked.Exchange(ref _lastItems, null);
+            Interlocked.Exchange(ref _counter, 0);
+        }
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
-            Instance = @event;
-            Items = items;
-            Counter++;
-            throw new Exception("...111");
+            _lastInstance = @event;
+            _lastItems = items;
+            Interlocked.Increment(ref _counter);
+            throw new Exception("intentional");
         }
     }
 
-    public class TestExceptionEventGroup2Handler
-        : IEventHandler<TestExceptionEvent>
+    public class TestExceptionEventGroup2Handler : IEventHandler<TestExceptionEvent>
     {
         public TestExceptionEventGroup2Handler(ILogger<TestExceptionEventHandler> logger)
         {
             Logger = logger;
         }
 
-        public static TestExceptionEvent Instance { get; private set; }
-
-        public static IDictionary<string, string> Items { get; private set; }
-        public static int Counter { get; private set; }
+        private static TestExceptionEvent? _lastInstance;
+        private static IDictionary<string, string>? _lastItems;
+        private static int _counter;
         private ILogger<TestExceptionEventHandler> Logger { get; }
+
+        public static TestExceptionEvent? LastInstance => _lastInstance;
+        public static IDictionary<string, string>? LastItems => _lastItems;
+        public static int Counter => _counter;
+
+        public static void Reset()
+        {
+            Interlocked.Exchange(ref _lastInstance, null);
+            Interlocked.Exchange(ref _lastItems, null);
+            Interlocked.Exchange(ref _counter, 0);
+        }
 
         public Task Execute(TestExceptionEvent @event, IDictionary<string, string> items)
         {
-            Instance = @event;
-            // 模拟执行5次后，恢复正常
-            if (Counter >= 5)
-            {
-                Instance = @event;
-                Items = items;
-            }
-            else
-            {
-                Counter++;
-                throw new Exception("...2222");
-            }
-
-            return Task.CompletedTask;
+            _lastInstance = @event;
+            _lastItems = items;
+            Interlocked.Increment(ref _counter);
+            throw new Exception("intentional");
         }
     }
 }

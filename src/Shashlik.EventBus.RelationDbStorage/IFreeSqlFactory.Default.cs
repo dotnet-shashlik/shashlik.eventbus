@@ -24,7 +24,7 @@ public class DefaultFreeSqlFactory : IFreeSqlFactory
             .Build();
 
         var schemaPrefix = options.Value.Schema;
-        if (string.IsNullOrWhiteSpace(schemaPrefix))
+        if (!string.IsNullOrWhiteSpace(schemaPrefix))
             schemaPrefix = $"{schemaPrefix}.";
 
         freeSql.Aop.ConfigEntity += (_, e) =>

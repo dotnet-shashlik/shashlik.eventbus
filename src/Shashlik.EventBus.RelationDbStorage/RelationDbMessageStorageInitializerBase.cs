@@ -35,3 +35,16 @@ public abstract class RelationDbMessageStorageInitializerBase : IMessageStorageI
         await Task.CompletedTask;
     }
 }
+
+/// <summary>
+/// 默认的关系型数据库存储初始化器,直接使用基类行为。
+/// 框架在 <see cref="RelationDbExtensions.AddRelationDb"/> 中默认注册此实现,
+/// 应用方可继续注册自己的子类来扩展 DDL。
+/// </summary>
+public class DefaultRelationDbMessageStorageInitializer : RelationDbMessageStorageInitializerBase
+{
+    public DefaultRelationDbMessageStorageInitializer(IFreeSqlFactory freeSqlFactory)
+        : base(freeSqlFactory)
+    {
+    }
+}

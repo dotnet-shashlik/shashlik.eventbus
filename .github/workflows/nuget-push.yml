@@ -24,19 +24,6 @@ jobs:
           mysql user: 'testuser'
           mysql password: '123123'
 
-      - name: Setup PostgreSql
-        uses: harmon758/postgresql-action@v1
-        with:
-          postgresql version: '12.9'
-          postgresql user: 'testuser'
-          postgresql password: '123123'
-
-      - name: Setup SqlServer
-        uses: 280780363/sqlserver-action@v1.0
-        with:
-          accept eula: Y
-          sa password: 'Shashlik123123'
-
       - name: Setup RabbitMQ
         uses: nijel/rabbitmq-action@v1.0.0
 

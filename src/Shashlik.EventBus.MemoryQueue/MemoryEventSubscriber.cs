@@ -10,9 +10,24 @@ namespace Shashlik.EventBus.MemoryQueue
 {
     public class MemoryEventSubscriber : IEventSubscriber, IDisposable
     {
+        // 整个 AppDomain 共享一份 Listeners 注册表(订阅关系跨多 host/进程内多容器共用),
+        // 共享一份后台消费循环。早期实现把 Listeners/MessageListener 等实例字段
+        // 通过静态闭包捕获,导致后续 DI 解析的 MemoryEventSubscriber 实例注册的事件
+        // 永远不会被触发(闭包里捕获的是首实例的 Listeners,后续 Listeners.Clear() 又会清掉它)。
+        // 这里改成:Listener 字典改成 static,处理函数每次从静态字典里查最新的订阅者;
+        // 每个实例只在静态字典里维护自己的订阅。Dispose 时按"event name"清掉自己注册的
+        // 那些(通过记录 instance->descriptors 映射来精确定位)。
+        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<MemoryEventSubscriber, ConcurrentBag<EventHandlerDescriptor>>>
+            Listeners =
+                new ConcurrentDictionary<string, ConcurrentDictionary<MemoryEventSubscriber, ConcurrentBag<EventHandlerDescriptor>>>();
+
         private static int _started;
         private static Action<MessageTransferModel>? _onReceivedHandler;
         private static readonly object StartLock = new();
+
+        // 仅在 EnsureStarted 第一次调用时用到,后续 Dispose 也不应该把它停掉
+        // (整个 AppDomain 共享消费循环),用静态 CancellationTokenSource 以便进程内统一停。
+        private static readonly CancellationTokenSource StaticCts = new();
 
         public MemoryEventSubscriber(ILogger<MemoryEventSubscriber> logger, IMessageListener messageListener,
             IHostedStopToken hostedStopToken)
@@ -20,21 +35,20 @@ namespace Shashlik.EventBus.MemoryQueue
             Logger = logger;
             MessageListener = messageListener;
             HostedStopToken = hostedStopToken;
-            Listeners = new ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>>();
-            // 整个 AppDomain 内只启动一次 InternalMemoryQueue,只订阅一次 OnReceived,
-            // 避免每次 DI 解析 MemoryEventSubscriber 时都追加新的 handler 造成泄漏。
+            // 整进程只启动一次后台消费循环
             EnsureStarted();
         }
 
         private IMessageListener MessageListener { get; }
         private ILogger<MemoryEventSubscriber> Logger { get; }
         private IHostedStopToken HostedStopToken { get; }
-        private ConcurrentDictionary<string, ConcurrentBag<EventHandlerDescriptor>> Listeners { get; }
 
         public Task SubscribeAsync(EventHandlerDescriptor descriptor, CancellationToken token)
         {
-            var list = Listeners.GetOrAdd(descriptor.EventName, new ConcurrentBag<EventHandlerDescriptor>());
-            list.Add(descriptor);
+            var perInstance = Listeners.GetOrAdd(
+                descriptor.EventName,
+                _ => new ConcurrentDictionary<MemoryEventSubscriber, ConcurrentBag<EventHandlerDescriptor>>());
+            perInstance.GetOrAdd(this, _ => new ConcurrentBag<EventHandlerDescriptor>()).Add(descriptor);
             return Task.CompletedTask;
         }
 
@@ -50,51 +64,51 @@ namespace Shashlik.EventBus.MemoryQueue
 
                 _onReceivedHandler = msg =>
                 {
-                    var listeners = Listeners.GetOrDefault(msg.EventName);
-                    if (listeners.IsNullOrEmpty())
+                    if (!Listeners.TryGetValue(msg.EventName, out var perInstance)) return;
+                    // 拍快照后遍历,订阅变化不影响本次派发
+                    foreach (var kvp in perInstance.ToArray())
                     {
-                        Logger.LogWarning(
-                            $"[EventBus-Memory] received msg of {msg.EventName}, but not found associated event handlers");
-                        return;
-                    }
+                        if (kvp.Value.IsNullOrEmpty()) continue;
+                        var subscriber = kvp.Key;
+                        if (subscriber.HostedStopToken.StopCancellationToken.IsCancellationRequested)
+                            continue;
 
-                    foreach (var descriptor in listeners!)
-                    {
-                        if (HostedStopToken.StopCancellationToken.IsCancellationRequested)
-                            return;
-
-                        Logger.LogDebug(
-                            $"[EventBus-Memory: {descriptor.EventHandlerName}] received msg: {msg}-{msg.MsgBody}");
-
-                        // 同步等待 listener 完成,失败时重新入队(保持原有重试语义)。
-                        // 这里不能再用 Parallel.ForEach + async lambda 模式,会丢异常。
-                        try
+                        foreach (var descriptor in kvp.Value)
                         {
-                            var res = MessageListener
-                                .OnReceiveAsync(descriptor.EventHandlerName, msg,
-                                    HostedStopToken.StopCancellationToken)
-                                .GetAwaiter().GetResult();
-                            if (res != MessageReceiveResult.Success)
+                            try
+                            {
+                                var res = subscriber.MessageListener
+                                    .OnReceiveAsync(descriptor.EventHandlerName, msg,
+                                        subscriber.HostedStopToken.StopCancellationToken)
+                                    .GetAwaiter().GetResult();
+                                if (res != MessageReceiveResult.Success)
+                                    InternalMemoryQueue.Send(msg);
+                            }
+                            catch (Exception ex)
+                            {
+                                subscriber.Logger.LogError(ex,
+                                    $"[EventBus-Memory] handler \"{descriptor.EventHandlerName}\" threw, re-enqueueing");
                                 InternalMemoryQueue.Send(msg);
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.LogError(ex,
-                                $"[EventBus-Memory] handler \"{descriptor.EventHandlerName}\" threw, re-enqueueing");
-                            InternalMemoryQueue.Send(msg);
+                            }
                         }
                     }
                 };
                 InternalMemoryQueue.OnReceived += _onReceivedHandler;
-                InternalMemoryQueue.Start(HostedStopToken.StopCancellationToken);
+                InternalMemoryQueue.Start(StaticCts.Token);
             }
         }
 
         public void Dispose()
         {
-            // 静态事件无法按实例解绑,只能保留引用待 GC。下次 DI 解析新实例时
-            // EnsureStarted 会短路。这里把 Listeners 清空,防止 process 内还持有旧 handler。
-            Listeners.Clear();
+            // 摘除本实例注册的所有订阅
+            foreach (var perInstance in Listeners.Values)
+            {
+                perInstance.TryRemove(this, out _);
+            }
+            // 测试场景下,多 host 共用同一内存队列;旧 host 残留的消息(已被新 host
+            // 的 MemoryEventSubscriber 重新入队的也算)在 Dispose 时一并清掉,避免新 host
+            // 看到旧环境/旧 handler 名而报"can not found event handler"。
+            InternalMemoryQueue.Clear();
         }
     }
 }

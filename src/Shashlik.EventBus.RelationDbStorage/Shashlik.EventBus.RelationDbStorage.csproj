@@ -1,21 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <Import Project="..\..\common.xml" />
     <PropertyGroup>
         <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
         <IsPackable>true</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
-      <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
+        <ProjectReference Include="..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj"/>
+        <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj"/>
     </ItemGroup>
     <ItemGroup>
-      <!-- FreeSql 核心 + 4 个方言 provider,框架默认全部带上。
-           应用层 ORM 自由(EF Core / Dapper / NHibernate 都能用),
-           只要能拿到 IDbTransaction 即可包装成 ITransactionContext。 -->
-      <PackageReference Include="FreeSql" Version="3.5.207" />
-      <PackageReference Include="FreeSql.Provider.MySqlConnector" Version="3.5.207" />
-      <PackageReference Include="FreeSql.Provider.PostgreSQL" Version="3.5.207" />
-      <PackageReference Include="FreeSql.Provider.SqlServer" Version="3.5.207" />
-      <PackageReference Include="FreeSql.Provider.Sqlite" Version="3.5.207" />
+        <PackageReference Include="FreeSql"/>
+        <PackageReference Include="FreeSql.Provider.MySqlConnector"/>
+        <PackageReference Include="FreeSql.Provider.PostgreSQL"/>
+        <PackageReference Include="FreeSql.Provider.SqlServer"/>
+        <PackageReference Include="FreeSql.Provider.Sqlite"/>
     </ItemGroup>
 </Project>

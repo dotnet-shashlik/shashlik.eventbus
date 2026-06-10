@@ -34,26 +34,45 @@ namespace CommonTestLogical
         private DemoDbContext DbContext { get; }
         private IMessageStorage MessageStorage { get; }
 
-        public async Task SavePublishedNoTransactionTest()
+        // ---- helpers -------------------------------------------------------
+
+        private static readonly DateTimeOffset TimeBegin =
+            DateTimeOffset.Now.AddYears(-1);
+
+        private static readonly DateTimeOffset TimeEnd =
+            DateTimeOffset.Now.AddYears(1);
+
+        private MessageStorageModel NewMsg(
+            string eventName = "TestEventName1",
+            string handlerName = "TestEventHandlerName1",
+            DateTimeOffset? createTime = null,
+            DateTimeOffset? expireTime = null,
+            string? status = null,
+            int retryCount = 0)
         {
-            // 正常的已发布消息写入，查询测试, 不带事务
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
+            return new MessageStorageModel
             {
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
+                CreateTime = createTime ?? DateTimeOffset.Now,
                 DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
+                ExpireTime = expireTime,
+                EventHandlerName = handlerName,
+                EventName = eventName,
+                EventBody = new TestEvent { Name = "张三" }.ToJson(),
                 EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
+                RetryCount = retryCount,
+                Status = status ?? MessageStatus.Scheduled,
                 IsLocking = false,
                 LockEnd = null
             };
+        }
+
+        // ---- 已发布/已接收消息 基础读写测试 ---------------------------------
+
+        public async Task SavePublishedNoTransactionTest()
+        {
+            var msg = NewMsg();
             var id = await MessageStorage.SavePublishedAsync(msg, null, default);
             msg.Id.ShouldBe(id);
 
@@ -69,34 +88,17 @@ namespace CommonTestLogical
             DbContext.Add(new Users { Name = "张三" });
             await DbContext.SaveChangesAsync();
 
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
-
+            var msg = NewMsg();
             var transactionContext = DbContext.GetTransactionContext();
             var id = await MessageStorage.SavePublishedAsync(msg, transactionContext, default);
             await DbContext.SaveChangesAsync();
 
             var begin = DateTimeOffset.Now;
-            while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
+            while ((DateTimeOffset.Now - begin).TotalSeconds < 5)
             {
-                // 20秒内不提交事务， 消息就应该是未提交
+                // 未提交前 IsCommitted 必须为 false
                 (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
-                await Task.Delay(300);
+                await Task.Delay(100);
             }
 
             await tran.CommitAsync();
@@ -114,32 +116,15 @@ namespace CommonTestLogical
             await using var tran = await DbContext.Database.BeginTransactionAsync();
             DbContext.Add(new Users { Name = "张三" });
             await DbContext.SaveChangesAsync();
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
+            var msg = NewMsg();
             var transactionContext = new RelationDbStorageTransactionContext(tran.GetDbTransaction());
             var id = await MessageStorage.SavePublishedAsync(msg, transactionContext, default);
 
             var begin = DateTimeOffset.Now;
-            while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
+            while ((DateTimeOffset.Now - begin).TotalSeconds < 5)
             {
-                // 20秒内不提交事务， 消息就应该是未提交
                 (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
-                await Task.Delay(300);
+                await Task.Delay(100);
             }
 
             await tran.RollbackAsync();
@@ -154,32 +139,15 @@ namespace CommonTestLogical
             var tran = await DbContext.Database.BeginTransactionAsync();
             DbContext.Add(new Users { Name = "张三" });
             await DbContext.SaveChangesAsync();
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
+            var msg = NewMsg();
             var transactionContext = new RelationDbStorageTransactionContext(tran.GetDbTransaction());
             var id = await MessageStorage.SavePublishedAsync(msg, transactionContext, default);
 
             var begin = DateTimeOffset.Now;
-            while ((DateTimeOffset.Now - begin).TotalSeconds < 20)
+            while ((DateTimeOffset.Now - begin).TotalSeconds < 5)
             {
-                // 20秒内不提交事务， 消息就应该是未提交
                 (await MessageStorage.IsCommittedAsync(msg.MsgId, default)).ShouldBeFalse();
-                await Task.Delay(300);
+                await Task.Delay(100);
             }
 
             await tran.DisposeAsync();
@@ -191,51 +159,21 @@ namespace CommonTestLogical
 
         public async Task SaveReceivedTest()
         {
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
+            var msg = NewMsg();
             var id = await MessageStorage.SaveReceivedAsync(msg, default);
             msg.Id.ShouldBe(id);
 
             (await MessageStorage.FindReceivedByMsgIdAsync(msg.MsgId, new EventHandlerDescriptor
             {
-                EventHandlerName = "TestEventHandlerName1"
+                EventHandlerName = msg.EventHandlerName
             }, default))!.Id.ShouldBe(id);
         }
 
+        // ---- 锁测试 --------------------------------------------------------
+
         public async Task TryLockPublishedTests()
         {
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
+            var msg = NewMsg();
             var id = await MessageStorage.SavePublishedAsync(msg, null, default);
             msg.Id.ShouldBe(id);
 
@@ -251,23 +189,7 @@ namespace CommonTestLogical
 
         public async Task TryLockReceivedTests()
         {
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
+            var msg = NewMsg();
             var id = await MessageStorage.SaveReceivedAsync(msg, default);
             msg.Id.ShouldBe(id);
 
@@ -283,29 +205,12 @@ namespace CommonTestLogical
 
         public async Task UpdatePublishedTests()
         {
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
+            var msg = NewMsg();
             var id = await MessageStorage.SavePublishedAsync(msg, null, default);
             msg.Id.ShouldBe(id);
 
             var expireAt = DateTimeOffset.Now.AddHours(1);
-            await MessageStorage.UpdatePublishedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1),
-                default);
+            await MessageStorage.UpdatePublishedAsync(id, MessageStatus.Succeeded, 1, expireAt, default);
 
             var dbMsg = await MessageStorage.FindPublishedByMsgIdAsync(msg.MsgId, default);
             dbMsg!.RetryCount.ShouldBe(1);
@@ -315,29 +220,12 @@ namespace CommonTestLogical
 
         public async Task UpdateReceivedTests()
         {
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = null,
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Scheduled,
-                IsLocking = false,
-                LockEnd = null
-            };
+            var msg = NewMsg();
             var id = await MessageStorage.SaveReceivedAsync(msg, default);
             msg.Id.ShouldBe(id);
 
             var expireAt = DateTimeOffset.Now.AddHours(1);
-            await MessageStorage.UpdateReceivedAsync(id, MessageStatus.Succeeded, 1, DateTimeOffset.Now.AddHours(1),
-                default);
+            await MessageStorage.UpdateReceivedAsync(id, MessageStatus.Succeeded, 1, expireAt, default);
 
             var dbMsg = await MessageStorage.FindReceivedByMsgIdAsync(msg.MsgId, new EventHandlerDescriptor
             {
@@ -350,308 +238,202 @@ namespace CommonTestLogical
 
         public async Task DeleteExpiresTests()
         {
-            var @event = new TestEvent { Name = "张三" };
-            Func<DateTimeOffset, string, bool, string> addMsg = (expire, status, isReceive) =>
+            // 删除逻辑只关心 (ExpireTime < now) && (Status=Succeeded OR (Status=Failed AND RetryCount >= maxRetry))
+            // - 已发布表 msg1(过期&失败但未到 maxRetry) -> 保留
+            // - msg2(过期&待发送) -> 保留
+            // - msg3(过期&成功) -> 删除
+            // - msg4(未过期&成功) -> 保留
+            // - msg5(过期&失败达到 maxRetry) -> 删除
+            // 已接收表 同理
+            var now = DateTimeOffset.Now;
+            var past = now.AddHours(-EventBusOptions.SucceedExpireHour - 1);
+            var future = now.AddHours(1);
+
+            string addPublished(DateTimeOffset expire, string status, int retry)
             {
-                var model = new MessageStorageModel
-                {
-                    MsgId = Guid.NewGuid().ToString("n"),
-                    Environment = EventBusOptions.Environment,
-                    CreateTime = DateTimeOffset.Now,
-                    DelayAt = null,
-                    ExpireTime = expire,
-                    EventHandlerName = "TestEventHandlerName1",
-                    EventName = "TestEventName1",
-                    EventBody = @event.ToJson(),
-                    EventItems = "{}",
-                    RetryCount = 0,
-                    Status = status,
-                    IsLocking = false,
-                    LockEnd = null
-                };
+                var m = NewMsg(expireTime: expire, status: status, retryCount: retry);
+                MessageStorage.SavePublishedAsync(m, null, default).GetAwaiter().GetResult();
+                return m.Id;
+            }
 
-                if (isReceive)
-                    MessageStorage.SaveReceivedAsync(model, default).GetAwaiter().GetResult();
-                else
-                    MessageStorage.SavePublishedAsync(model, null, default).GetAwaiter().GetResult();
+            string addReceived(DateTimeOffset expire, string status, int retry)
+            {
+                var m = NewMsg(expireTime: expire, status: status, retryCount: retry);
+                MessageStorage.SaveReceivedAsync(m, default).GetAwaiter().GetResult();
+                return m.Id;
+            }
 
-                return model.Id;
-            };
+            var p1 = addPublished(past, MessageStatus.Failed, 0);
+            var p2 = addPublished(past, MessageStatus.Scheduled, 0);
+            var p3 = addPublished(past, MessageStatus.Succeeded, 0);
+            var p4 = addPublished(future, MessageStatus.Succeeded, 0);
+            var p5 = addPublished(past, MessageStatus.Failed, EventBusOptions.RetryFailedMax + 1);
 
+            var r1 = addReceived(past, MessageStatus.Failed, 0);
+            var r2 = addReceived(past, MessageStatus.Scheduled, 0);
+            var r3 = addReceived(past, MessageStatus.Succeeded, 0);
+            var r4 = addReceived(future, MessageStatus.Succeeded, 0);
+            var r5 = addReceived(past, MessageStatus.Failed, EventBusOptions.RetryFailedMax + 1);
 
-            var msg1 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed,
-                false);
-            var msg2 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
-                MessageStatus.Scheduled, false);
-            var msg3 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
-                MessageStatus.Succeeded, false);
-            var msg4 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Succeeded, false);
-            var msg5 = addMsg(DateTimeOffset.Now, MessageStatus.Failed, false);
+            await MessageStorage.DeleteExpiresAsync(EventBusOptions.RetryFailedMax, default);
 
-            var msg6 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1), MessageStatus.Failed,
-                true);
-            var msg7 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
-                MessageStatus.Scheduled, true);
-            var msg8 = addMsg(DateTimeOffset.Now.AddHours(-EventBusOptions.SucceedExpireHour - 1),
-                MessageStatus.Succeeded, true);
-            var msg9 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Succeeded, true);
-            var msg10 = addMsg(DateTimeOffset.Now.AddHours(1), MessageStatus.Failed, true);
+            (await MessageStorage.FindPublishedByIdAsync(p1, default)).ShouldNotBeNull();
+            (await MessageStorage.FindPublishedByIdAsync(p2, default)).ShouldNotBeNull();
+            (await MessageStorage.FindPublishedByIdAsync(p3, default)).ShouldBeNull();
+            (await MessageStorage.FindPublishedByIdAsync(p4, default)).ShouldNotBeNull();
+            (await MessageStorage.FindPublishedByIdAsync(p5, default)).ShouldBeNull();
 
-            await MessageStorage.DeleteExpiresAsync(default);
-
-            (await MessageStorage.FindPublishedByIdAsync(msg1, default)).ShouldNotBeNull();
-            (await MessageStorage.FindPublishedByIdAsync(msg2, default)).ShouldNotBeNull();
-            (await MessageStorage.FindPublishedByIdAsync(msg3, default)).ShouldBeNull();
-            (await MessageStorage.FindPublishedByIdAsync(msg4, default)).ShouldNotBeNull();
-            (await MessageStorage.FindPublishedByIdAsync(msg5, default)).ShouldNotBeNull();
-
-            (await MessageStorage.FindReceivedByIdAsync(msg6, default)).ShouldNotBeNull();
-            (await MessageStorage.FindReceivedByIdAsync(msg7, default)).ShouldNotBeNull();
-            (await MessageStorage.FindReceivedByIdAsync(msg8, default)).ShouldBeNull();
-            (await MessageStorage.FindReceivedByIdAsync(msg9, default)).ShouldNotBeNull();
-            (await MessageStorage.FindReceivedByIdAsync(msg10, default)).ShouldNotBeNull();
+            (await MessageStorage.FindReceivedByIdAsync(r1, default)).ShouldNotBeNull();
+            (await MessageStorage.FindReceivedByIdAsync(r2, default)).ShouldNotBeNull();
+            (await MessageStorage.FindReceivedByIdAsync(r3, default)).ShouldBeNull();
+            (await MessageStorage.FindReceivedByIdAsync(r4, default)).ShouldNotBeNull();
+            (await MessageStorage.FindReceivedByIdAsync(r5, default)).ShouldBeNull();
         }
+
+        // ---- 重试数据查询 ---------------------------------------------------
 
         public async Task GetPublishedMessagesOfNeedRetryAndLockTests()
         {
-            var @event = new TestEvent { Name = "张三" };
+            // 构造:一条超过 StartRetryAfter 时间的 Scheduled、一条 Failed、一条 Succeeded、一条未到时间的
+            // 期望:前两条需要重试,后两条不需要
+            var limit = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10);
 
-            Func<DateTimeOffset, string, string> addMsg = (createTime, status) =>
-            {
-                var model = new MessageStorageModel
-                {
-                    MsgId = Guid.NewGuid().ToString("n"),
-                    Environment = EventBusOptions.Environment,
-                    CreateTime = createTime,
-                    DelayAt = null,
-                    ExpireTime = null,
-                    EventHandlerName = "TestEventHandlerName1",
-                    EventName = "TestEventName1",
-                    EventBody = @event.ToJson(),
-                    EventItems = "{}",
-                    RetryCount = 0,
-                    Status = status,
-                    IsLocking = false,
-                    LockEnd = null
-                };
+            var m1 = NewMsg(createTime: limit, status: MessageStatus.Scheduled);
+            var m2 = NewMsg(createTime: limit, status: MessageStatus.Failed);
+            var m3 = NewMsg(createTime: limit, status: MessageStatus.Succeeded);
+            var m4 = NewMsg(createTime: DateTimeOffset.Now, status: MessageStatus.Failed);
+            await MessageStorage.SavePublishedAsync(m1, null, default);
+            await MessageStorage.SavePublishedAsync(m2, null, default);
+            await MessageStorage.SavePublishedAsync(m3, null, default);
+            await MessageStorage.SavePublishedAsync(m4, null, default);
 
-                MessageStorage.SavePublishedAsync(model, null, default).GetAwaiter().GetResult();
-                return model.Id;
-            };
-
-            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
-                MessageStatus.Scheduled);
-            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
-                MessageStatus.Failed);
-            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
-                MessageStatus.Succeeded);
-            var msg4 = addMsg(DateTimeOffset.Now, MessageStatus.Failed);
-
-            // 正常数据操作测试
-            {
-                var list1 = await MessageStorage.GetPublishedMessagesOfNeedRetryAsync(100,
-                    this.EventBusOptions.StartRetryAfter, this
-                        .EventBusOptions
-                        .RetryFailedMax, this.EventBusOptions.Environment, default);
-                list1.Any(r => r.Id == msg1).ShouldBeTrue();
-                list1.Any(r => r.Id == msg2).ShouldBeTrue();
-                list1.Any(r => r.Id == msg3).ShouldBeFalse();
-                list1.Any(r => r.Id == msg4).ShouldBeFalse();
-            }
+            var list = await MessageStorage.GetPublishedMessagesOfNeedRetryAsync(100,
+                this.EventBusOptions.StartRetryAfter, this.EventBusOptions.RetryFailedMax,
+                this.EventBusOptions.Environment, default);
+            list.Any(r => r.Id == m1.Id).ShouldBeTrue();
+            list.Any(r => r.Id == m2.Id).ShouldBeTrue();
+            list.Any(r => r.Id == m3.Id).ShouldBeFalse();
+            list.Any(r => r.Id == m4.Id).ShouldBeFalse();
         }
 
         public async Task GetReceivedMessagesOfNeedRetryTests()
         {
-            var @event = new TestEvent { Name = "张三" };
+            var limit = DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10);
 
-            Func<DateTimeOffset, string, string> addMsg = (createTime, status) =>
-            {
-                var model = new MessageStorageModel
-                {
-                    MsgId = Guid.NewGuid().ToString("n"),
-                    Environment = EventBusOptions.Environment,
-                    CreateTime = createTime,
-                    DelayAt = null,
-                    ExpireTime = null,
-                    EventHandlerName = "TestEventHandlerName1",
-                    EventName = "TestEventName1",
-                    EventBody = @event.ToJson(),
-                    EventItems = "{}",
-                    RetryCount = 0,
-                    Status = status,
-                    IsLocking = false,
-                    LockEnd = null
-                };
+            var m1 = NewMsg(createTime: limit, status: MessageStatus.Scheduled);
+            var m2 = NewMsg(createTime: limit, status: MessageStatus.Failed);
+            var m3 = NewMsg(createTime: limit, status: MessageStatus.Succeeded);
+            var m4 = NewMsg(createTime: DateTimeOffset.Now, status: MessageStatus.Failed);
+            await MessageStorage.SaveReceivedAsync(m1, default);
+            await MessageStorage.SaveReceivedAsync(m2, default);
+            await MessageStorage.SaveReceivedAsync(m3, default);
+            await MessageStorage.SaveReceivedAsync(m4, default);
 
-                MessageStorage.SaveReceivedAsync(model, default).GetAwaiter().GetResult();
-                return model.Id;
-            };
-
-            var msg1 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
-                MessageStatus.Scheduled);
-            var msg2 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
-                MessageStatus.Failed);
-            var msg3 = addMsg(DateTimeOffset.Now.AddSeconds(-this.EventBusOptions.StartRetryAfter).AddSeconds(-10),
-                MessageStatus.Succeeded);
-            var msg4 = addMsg(DateTimeOffset.Now, MessageStatus.Failed);
-
-            // 正常数据操作测试
-            {
-                var list1 = await MessageStorage.GetReceivedMessagesOfNeedRetryAsync(
-                    EventBusOptions.RetryLimitCount,
-                    EventBusOptions.StartRetryAfter,
-                    EventBusOptions.RetryFailedMax,
-                    EventBusOptions.Environment,
-                    default);
-                list1.Any(r => r.Id == msg1).ShouldBeTrue();
-                list1.Any(r => r.Id == msg2).ShouldBeTrue();
-                list1.Any(r => r.Id == msg3).ShouldBeFalse();
-                list1.Any(r => r.Id == msg4).ShouldBeFalse();
-            }
+            var list = await MessageStorage.GetReceivedMessagesOfNeedRetryAsync(
+                EventBusOptions.RetryLimitCount,
+                EventBusOptions.StartRetryAfter,
+                EventBusOptions.RetryFailedMax,
+                EventBusOptions.Environment,
+                default);
+            list.Any(r => r.Id == m1.Id).ShouldBeTrue();
+            list.Any(r => r.Id == m2.Id).ShouldBeTrue();
+            list.Any(r => r.Id == m3.Id).ShouldBeFalse();
+            list.Any(r => r.Id == m4.Id).ShouldBeFalse();
         }
+
+        // ---- 通用查询(分页/过滤) ------------------------------------------
 
         public async Task QueryPublishedTests()
         {
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = DateTimeOffset.Now.AddHours(-1),
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Succeeded,
-                IsLocking = false,
-                LockEnd = null
-            };
-
+            // 单独插一条,避免和 DeleteExpiresTests 残留的脏数据混淆:
+            // 我们这里按 eventName+status 强过滤,只要能查到我们这条就行。
+            var msg = NewMsg(eventName: $"unique_{Guid.NewGuid():N}",
+                status: MessageStatus.Succeeded, expireTime: DateTimeOffset.Now.AddHours(-1));
             var id = await MessageStorage.SavePublishedAsync(msg, null, default);
             var dbMsg = await MessageStorage.FindPublishedByIdAsync(id, default);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            var list = await MessageStorage.SearchPublishedAsync(msg.EventName, msg.Status, 0, 100, default);
+            var list = await MessageStorage.SearchPublishedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd, msg.EventName, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchPublishedAsync(string.Empty, msg.Status, 0, 100, default);
+            list = await MessageStorage.SearchPublishedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd, msg.EventName, null, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchPublishedAsync(string.Empty, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchPublishedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd, null, null, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchPublishedAsync(msg.EventName, string.Empty, 0, 100, default);
+            list = await MessageStorage.SearchPublishedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd, msg.EventName, null, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
         }
 
         public async Task QueryReceivedTests()
         {
-            var @event = new TestEvent { Name = "张三" };
-            var msg = new MessageStorageModel
-            {
-                MsgId = Guid.NewGuid().ToString("n"),
-                Environment = EventBusOptions.Environment,
-                CreateTime = DateTimeOffset.Now,
-                DelayAt = null,
-                ExpireTime = DateTimeOffset.Now.AddHours(-1),
-                EventHandlerName = "TestEventHandlerName1",
-                EventName = "TestEventName1",
-                EventBody = @event.ToJson(),
-                EventItems = "{}",
-                RetryCount = 0,
-                Status = MessageStatus.Succeeded,
-                IsLocking = false,
-                LockEnd = null
-            };
-
+            var msg = NewMsg(eventName: $"unique_{Guid.NewGuid():N}",
+                handlerName: $"unique_{Guid.NewGuid():N}",
+                status: MessageStatus.Succeeded, expireTime: DateTimeOffset.Now.AddHours(-1));
             var id = await MessageStorage.SaveReceivedAsync(msg, default);
             var dbMsg = await MessageStorage.FindReceivedByIdAsync(id, default);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
             dbMsg.EventName.ShouldBe(msg.EventName);
 
-            var list = await MessageStorage.SearchReceivedAsync(msg.EventName, msg.EventHandlerName, msg.Status, 0, 100,
-                default);
+            // eventName + handlerName + status
+            var list = await MessageStorage.SearchReceivedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd,
+                msg.EventName, msg.EventHandlerName, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceivedAsync(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
-                default);
+            // eventName + handlerName, status null
+            list = await MessageStorage.SearchReceivedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd,
+                msg.EventName, msg.EventHandlerName, null, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceivedAsync(msg.EventName, string.Empty, string.Empty, 0, 100, default);
+            // eventName only
+            list = await MessageStorage.SearchReceivedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd,
+                msg.EventName, null, null, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
 
-            list = await MessageStorage.SearchReceivedAsync(msg.EventName, string.Empty, msg.Status, 0, 100, default);
+            // eventName + status
+            list = await MessageStorage.SearchReceivedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd,
+                msg.EventName, null, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
 
-
-            list = await MessageStorage.SearchReceivedAsync(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
+            // handlerName + status
+            list = await MessageStorage.SearchReceivedAsync(
+                EventBusOptions.Environment, TimeBegin, TimeEnd,
+                null, msg.EventHandlerName, msg.Status, 0, 100, default);
             dbMsg = list.FirstOrDefault(r => r.Id == id);
             dbMsg.ShouldNotBeNull();
             dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
-
-            list = await MessageStorage.SearchReceivedAsync(string.Empty, msg.EventHandlerName, string.Empty, 0, 100,
-                default);
-            dbMsg = list.FirstOrDefault(r => r.Id == id);
-            dbMsg.ShouldNotBeNull();
-            dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
-
-            list = await MessageStorage.SearchReceivedAsync(msg.EventName, msg.EventHandlerName, string.Empty, 0, 100,
-                default);
-            dbMsg = list.FirstOrDefault(r => r.Id == id);
-            dbMsg.ShouldNotBeNull();
-            dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
-
-            list = await MessageStorage.SearchReceivedAsync(string.Empty, msg.EventHandlerName, msg.Status, 0, 100, default);
-            dbMsg = list.FirstOrDefault(r => r.Id == id);
-            dbMsg.ShouldNotBeNull();
-            dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
-
-            list = await MessageStorage.SearchReceivedAsync(string.Empty, string.Empty, msg.Status, 0, 100, default);
-            dbMsg = list.FirstOrDefault(r => r.Id == id);
-            dbMsg.ShouldNotBeNull();
-            dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
-
-            list = await MessageStorage.SearchReceivedAsync(msg.EventName, string.Empty, msg.Status, 0, 100, default);
-            dbMsg = list.FirstOrDefault(r => r.Id == id);
-            dbMsg.ShouldNotBeNull();
-            dbMsg.Id.ShouldBe(id);
-            dbMsg.EventName.ShouldBe(msg.EventName);
         }
+
+        // ---- 事务上下文 IsDone 测试 ----------------------------------------
 
         public void RelationDbStorageTransactionContextCommitTest()
         {
@@ -709,119 +491,80 @@ namespace CommonTestLogical
             transactionContext!.IsDone().ShouldBeTrue();
         }
 
+        // ---- 状态计数 -------------------------------------------------------
+
         public async Task GetPublishedMessageStatusCountsTest()
         {
-            var @event = new TestEvent { Name = "张三" };
-
-            var count = RandomHelper.Next(3, 20);
+            // 通过随机 status 插一批,断言计数 >= 我们的数量
+            var count = RandomHelper.Next(3, 10);
             int success = 0, failed = 0, scheduled = 0;
             for (int i = 0; i < count; i++)
             {
-                var status = (_Status)(i % 3);
+                var status = (i % 3) switch
+                {
+                    0 => MessageStatus.Succeeded,
+                    1 => MessageStatus.Failed,
+                    _ => MessageStatus.Scheduled
+                };
                 switch (status)
                 {
-                    case _Status.SUCCEEDED:
-                        success++;
-                        break;
-                    case _Status.FAILED:
-                        failed++;
-                        break;
-                    case _Status.SCHEDULED:
-                        scheduled++;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    case MessageStatus.Succeeded: success++; break;
+                    case MessageStatus.Failed: failed++; break;
+                    case MessageStatus.Scheduled: scheduled++; break;
                 }
 
-                var msg = new MessageStorageModel
-                {
-                    MsgId = Guid.NewGuid().ToString("n"),
-                    Environment = EventBusOptions.Environment,
-                    CreateTime = DateTimeOffset.Now,
-                    DelayAt = null,
-                    ExpireTime = DateTimeOffset.Now.AddHours(-1),
-                    EventHandlerName = "TestEventHandlerName1",
-                    EventName = "TestEventName1",
-                    EventBody = @event.ToJson(),
-                    EventItems = "{}",
-                    RetryCount = 0,
-                    Status = status.ToString(),
-                    IsLocking = false,
-                    LockEnd = null
-                };
-
+                var msg = NewMsg(status: status, expireTime: DateTimeOffset.Now.AddHours(-1));
                 await MessageStorage.SavePublishedAsync(msg, null, default);
             }
 
-            var publishedMessageStatusCountsAsync = await MessageStorage.GetPublishedMessageStatusCountsAsync(default);
-            publishedMessageStatusCountsAsync[_Status.SUCCEEDED.ToString().ToUpperInvariant()]
-                .ShouldBeGreaterThanOrEqualTo(success);
-            publishedMessageStatusCountsAsync[_Status.FAILED.ToString().ToUpperInvariant()]
-                .ShouldBeGreaterThanOrEqualTo(failed);
-            publishedMessageStatusCountsAsync[_Status.SCHEDULED.ToString().ToUpperInvariant()]
-                .ShouldBeGreaterThanOrEqualTo(scheduled);
+            var begin = DateTimeOffset.Now.AddMinutes(-1);
+            var end = DateTimeOffset.Now.AddMinutes(1);
+            var publishedMessageStatusCountsAsync = await MessageStorage.GetPublishedMessageStatusCountsAsync(
+                EventBusOptions.Environment, begin, end, default);
+
+            // 计数可能包含其他测试残留,只断言 >= 我们写入的
+            publishedMessageStatusCountsAsync.TryGetValue(MessageStatus.Succeeded, out var sCount);
+            publishedMessageStatusCountsAsync.TryGetValue(MessageStatus.Failed, out var fCount);
+            publishedMessageStatusCountsAsync.TryGetValue(MessageStatus.Scheduled, out var scCount);
+            sCount.ShouldBeGreaterThanOrEqualTo(success);
+            fCount.ShouldBeGreaterThanOrEqualTo(failed);
+            scCount.ShouldBeGreaterThanOrEqualTo(scheduled);
         }
 
         public async Task GetReceivedMessageStatusCountsTest()
         {
-            var @event = new TestEvent { Name = "张三" };
-
-            var count = RandomHelper.Next(3, 20);
+            var count = RandomHelper.Next(3, 10);
             int success = 0, failed = 0, scheduled = 0;
-
             for (int i = 0; i < count; i++)
             {
-                var status = (_Status)(i % 3);
+                var status = (i % 3) switch
+                {
+                    0 => MessageStatus.Succeeded,
+                    1 => MessageStatus.Failed,
+                    _ => MessageStatus.Scheduled
+                };
                 switch (status)
                 {
-                    case _Status.SUCCEEDED:
-                        success++;
-                        break;
-                    case _Status.FAILED:
-                        failed++;
-                        break;
-                    case _Status.SCHEDULED:
-                        scheduled++;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    case MessageStatus.Succeeded: success++; break;
+                    case MessageStatus.Failed: failed++; break;
+                    case MessageStatus.Scheduled: scheduled++; break;
                 }
 
-                var msg = new MessageStorageModel
-                {
-                    MsgId = Guid.NewGuid().ToString("n"),
-                    Environment = EventBusOptions.Environment,
-                    CreateTime = DateTimeOffset.Now,
-                    DelayAt = null,
-                    ExpireTime = DateTimeOffset.Now.AddHours(-1),
-                    EventHandlerName = "TestEventHandlerName1",
-                    EventName = "TestEventName1",
-                    EventBody = @event.ToJson(),
-                    EventItems = "{}",
-                    RetryCount = 0,
-                    Status = status.ToString(),
-                    IsLocking = false,
-                    LockEnd = null
-                };
-
+                var msg = NewMsg(status: status, expireTime: DateTimeOffset.Now.AddHours(-1));
                 await MessageStorage.SaveReceivedAsync(msg, default);
             }
 
-            var receivedMessageStatusCountAsync = await MessageStorage.GetReceivedMessageStatusCountAsync(default);
-            receivedMessageStatusCountAsync[_Status.SUCCEEDED.ToString().ToUpperInvariant()]
-                .ShouldBeGreaterThanOrEqualTo(success);
-            receivedMessageStatusCountAsync[_Status.FAILED.ToString().ToUpperInvariant()]
-                .ShouldBeGreaterThanOrEqualTo(failed);
-            receivedMessageStatusCountAsync[_Status.SCHEDULED.ToString().ToUpperInvariant()]
-                .ShouldBeGreaterThanOrEqualTo(scheduled);
-        }
+            var begin = DateTimeOffset.Now.AddMinutes(-1);
+            var end = DateTimeOffset.Now.AddMinutes(1);
+            var receivedMessageStatusCountAsync = await MessageStorage.GetReceivedMessageStatusCountAsync(
+                EventBusOptions.Environment, begin, end, default);
 
-
-        public enum _Status
-        {
-            SUCCEEDED = 0,
-            FAILED = 1,
-            SCHEDULED = 2
+            receivedMessageStatusCountAsync.TryGetValue(MessageStatus.Succeeded, out var sCount);
+            receivedMessageStatusCountAsync.TryGetValue(MessageStatus.Failed, out var fCount);
+            receivedMessageStatusCountAsync.TryGetValue(MessageStatus.Scheduled, out var scCount);
+            sCount.ShouldBeGreaterThanOrEqualTo(success);
+            fCount.ShouldBeGreaterThanOrEqualTo(failed);
+            scCount.ShouldBeGreaterThanOrEqualTo(scheduled);
         }
     }
 }

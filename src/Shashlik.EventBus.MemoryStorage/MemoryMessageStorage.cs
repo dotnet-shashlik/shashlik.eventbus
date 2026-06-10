@@ -190,9 +190,12 @@ namespace Shashlik.EventBus.MemoryStorage
                 return Task.FromResult(false);
         }
 
+        private static readonly object ModelUpdateLock = new();
         private void LockAndUpdate(MessageStorageModel model, Action<MessageStorageModel> update)
         {
-            lock (this)
+            // 之前是 lock(this),会序列化所有 TryLock* 调用,且警告"不要 lock(this)"。
+            // 这里用一个静态锁串行化锁状态变更(对单实例内存存储已经足够)。
+            lock (ModelUpdateLock)
             {
                 update(model);
             }
@@ -275,7 +278,7 @@ namespace Shashlik.EventBus.MemoryStorage
             DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
         {
             return Task.FromResult(_published.Values
-                .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.LockEnd == endTime)
+                .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.CreateTime <= endTime)
                 .GroupBy(x => x.Status)
                 .ToDictionary(x => x.Key, x => x.Count()));
         }
@@ -285,7 +288,7 @@ namespace Shashlik.EventBus.MemoryStorage
             DateTimeOffset endTime, CancellationToken cancellationToken)
         {
             return Task.FromResult(_received.Values
-                .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.LockEnd == endTime)
+                .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.CreateTime <= endTime)
                 .GroupBy(x => x.Status)
                 .ToDictionary(x => x.Key, x => x.Count()));
         }

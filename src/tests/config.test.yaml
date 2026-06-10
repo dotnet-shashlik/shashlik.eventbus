@@ -1,8 +1,8 @@
 ﻿ConnectionStrings:
-  MySql: server=localhost;database=eventbustest;user id=root;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
-  PostgreSql: server=localhost;database=eventbustest;user id=testuser;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
+  MySql: server=localhost;port=3306;database=eventbustest;user id=root;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
+  PostgreSql: server=localhost;port=5433;database=eventbustest;user id=pguser;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
   SqlServer: server=localhost;database=eventbustest;user id=sa;password=Shashlik123123;Encrypt=True;TrustServerCertificate=True;
-  MongoDb: mongodb://mongo:123123@localhost:27017/?authSource=admin
+  MongoDb: mongodb://root:123123@localhost:27017/?authSource=admin
 
 EventBus:
   # 最大重试次数
@@ -25,7 +25,10 @@ EventBus:
       "allow.auto.create.topics": "true"
   RabbitMQ:
     Host: localhost
+    Port: 55672
+    UserName: rabbit
+    Password: 123123
   Pulsar:
     ServiceUrl: pulsar://localhost
   Redis:
-    Conn: localhost,password=123123,defaultDatabase=1
+    Conn: localhost,password=,defaultDatabase=1

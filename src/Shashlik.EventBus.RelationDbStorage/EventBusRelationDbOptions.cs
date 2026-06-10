@@ -11,42 +11,49 @@ namespace Shashlik.EventBus.RelationDbStorage;
 /// <see cref="System.Data.IDbTransaction"/>,都可以包成
 /// <see cref="ITransactionContext"/> 传进来以参与 EventBus 的事务。</para>
 /// </summary>
-public class EventBusRelationDbOptions
-{
-    /// <summary>
-    /// FreeSql 方言(DataType.MySql / PostgreSQL / SqlServer / Sqlite / Oracle / Dameng ...)
-    /// </summary>
-    public DataType DataType { get; private set; }
-
-    /// <summary>
-    /// 数据库连接串
-    /// </summary>
-    public string ConnectionString { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// 数据库Schema
-    /// </summary>
-    public string Schema { get; set; } = string.Empty;
-
-    /// <summary>
-    /// 已发布表名
-    /// </summary>
-    public string PublishedTableName { get; set; } = "eventbus_published";
-
-    /// <summary>
-    /// 已接收表名
-    /// </summary>
-    public string ReceivedTableName { get; set; } = "eventbus_received";
-
-    /// <summary>
-    /// 配置 FreeSql 方言
-    /// </summary>
-    public EventBusRelationDbOptions UseConnection(DataType dataType, string connectionString)
+    public class EventBusRelationDbOptions
     {
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new ArgumentException("connectionString cannot be empty", nameof(connectionString));
-        DataType = dataType;
-        ConnectionString = connectionString;
-        return this;
+        /// <summary>
+        /// FreeSql 方言(DataType.MySql / PostgreSQL / SqlServer / Sqlite / Oracle / Dameng ...)
+        /// </summary>
+        public DataType DataType { get; private set; }
+
+        /// <summary>
+        /// 数据库连接串
+        /// </summary>
+        public string ConnectionString { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// 是否已通过 <see cref="UseConnection"/> 显式配置。DataType.MySql 的数值是 0,
+        /// 与 default(DataType) 相同,不能仅靠 DataType 判是否配置过,需要这个标记。
+        /// </summary>
+        public bool IsConfigured { get; private set; }
+
+        /// <summary>
+        /// 数据库Schema
+        /// </summary>
+        public string Schema { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 已发布表名
+        /// </summary>
+        public string PublishedTableName { get; set; } = "eventbus_published";
+
+        /// <summary>
+        /// 已接收表名
+        /// </summary>
+        public string ReceivedTableName { get; set; } = "eventbus_received";
+
+        /// <summary>
+        /// 配置 FreeSql 方言
+        /// </summary>
+        public EventBusRelationDbOptions UseConnection(DataType dataType, string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new ArgumentException("connectionString cannot be empty", nameof(connectionString));
+            DataType = dataType;
+            ConnectionString = connectionString;
+            IsConfigured = true;
+            return this;
+        }
     }
-}

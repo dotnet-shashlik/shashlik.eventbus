@@ -13,9 +13,9 @@ namespace Shashlik.EventBus
     /// </summary>
     [Table]
     [FreeSqlIndex("ix_eventbus_received_msg_id_handler", "MsgId,EventHandlerName", IsUnique = true)]
-    [FreeSqlIndex("ix_eventbus_received_create_time", "CreateTime DESC,Status,EventName")]
-    [FreeSqlIndex("ix_eventbus_received_expire_time", "Status,RetryCount,ExpireTime")]
-    [FreeSqlIndex("ix_eventbus_received_retry", "IsDelay,Status,IsLocking,DelayAt,RetryCount,CreateTime DESC")]
+    [FreeSqlIndex("ix_eventbus_received_create_time", "CreateTimeTicks DESC,Status,EventName")]
+    [FreeSqlIndex("ix_eventbus_received_expire_time", "Status,RetryCount,ExpireTimeTicks")]
+    [FreeSqlIndex("ix_eventbus_received_retry", "IsDelay,Status,IsLocking,DelayAtTicks,RetryCount,CreateTimeTicks DESC")]
     public class RelationDbMessageStorageReceivedModel
     {
         /// <summary>
@@ -50,9 +50,9 @@ namespace Shashlik.EventBus
         public string EventBody { get; set; }
 
         /// <summary>
-        /// 创建时间
+        /// 创建时间(UTC ticks)
         /// </summary>
-        public DateTimeOffset CreateTime { get; set; }
+        public long CreateTimeTicks { get; set; }
 
         /// <summary>
         /// 是否延迟消费
@@ -60,14 +60,14 @@ namespace Shashlik.EventBus
         public bool IsDelay { get; set; }
 
         /// <summary>
-        /// 延迟消费时间
+        /// 延迟消费时间(UTC ticks)
         /// </summary>
-        public DateTimeOffset? DelayAt { get; set; }
+        public long? DelayAtTicks { get; set; }
 
         /// <summary>
-        /// 过期时间,0永不过期
+        /// 过期时间,0永不过期(UTC ticks)
         /// </summary>
-        public DateTimeOffset? ExpireTime { get; set; }
+        public long? ExpireTimeTicks { get; set; }
 
         /// <summary>
         /// 事件附加数据
@@ -90,9 +90,9 @@ namespace Shashlik.EventBus
         public bool IsLocking { get; set; }
 
         /// <summary>
-        /// 锁定结束时间
+        /// 锁定结束时间(UTC ticks)
         /// </summary>
-        public DateTimeOffset? LockEnd { get; set; }
+        public long? LockEndTicks { get; set; }
 
         public override string ToString()
         {

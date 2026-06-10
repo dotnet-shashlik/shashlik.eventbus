@@ -30,8 +30,12 @@ namespace Shashlik.EventBus.SendMsgWithoutLosing.Tests
             await eventPublisher.PublishAsync(new SendMsgWithoutLosingTestEvent { Name = name }, null);
 
             await Task.Delay(options.StartRetryAfter * 1000 + 500);
-            var list = await messageStorage.SearchPublishedAsync(eventNameRuler.GetName(typeof(SendMsgWithoutLosingTestEvent)), null, 0, 20,
-                default);
+            var list = await messageStorage.SearchPublishedAsync(
+                options.Environment,
+                DateTimeOffset.Now.AddMinutes(-1),
+                DateTimeOffset.Now.AddMinutes(1),
+                eventNameRuler.GetName(typeof(SendMsgWithoutLosingTestEvent)),
+                null, 0, 20, default);
             list.Count.ShouldBe(1);
             var item = list[0];
             var id = item.Id;

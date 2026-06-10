@@ -19,13 +19,16 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventNameRuler EventNameRuler { get; }
         private IEventHandlerNameRuler EventHandlerNameRuler { get; }
 
-        private static IDictionary<string, EventHandlerDescriptor>? _cache;
-        private static readonly object CacheLock = new();
+        // 把 cache 从 static 改成 instance 级,避免不同 EventBusOptions.Environment
+        // (同一进程跑多套测试 / 多 host) 共用一份缓存导致"找不到 handler"的问题。
+        // 同时保留缓存以避免重复扫描程序集。
+        private IDictionary<string, EventHandlerDescriptor>? _cache;
+        private readonly object _cacheLock = new();
 
         public IEnumerable<EventHandlerDescriptor> FindAll()
         {
             if (_cache is not null) return _cache.Values;
-            lock (CacheLock)
+            lock (_cacheLock)
             {
                 if (_cache is not null) return _cache.Values;
 
@@ -73,7 +76,8 @@ namespace Shashlik.EventBus.DefaultImpl
         /// 避免运行时 method.Invoke + TargetInvocationException 包装。
         /// 失败时返回 null,调用方会回退到反射路径(并解包 TargetInvocationException)。
         /// </summary>
-        private static Func<object, IDictionary<string, string>, Task>? BuildExecuteDelegate(Type handlerType,
+        private static Func<object, object, IDictionary<string, string>, Task>? BuildExecuteDelegate(
+            Type handlerType,
             Type eventType)
         {
             try
@@ -83,12 +87,13 @@ namespace Shashlik.EventBus.DefaultImpl
                 if (method is null)
                     return null;
 
-                // handlerInstance.Execute((T)@event, items) 的运行时适配
-                return (instance, @event) =>
+                // handlerInstance.Execute((T)@event, items) 的运行时适配。
+                // 参数顺序:(handlerInstance, @event, items)
+                return (instance, @event, items) =>
                 {
                     try
                     {
-                        var result = method.Invoke(instance, new[] { @event, (IDictionary<string, string>?)null });
+                        var result = method.Invoke(instance, new[] { @event, (object)items! });
                         return (Task)result!;
                     }
                     catch (TargetInvocationException ex) when (ex.InnerException is not null)

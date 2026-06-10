@@ -31,10 +31,13 @@ namespace Shashlik.EventBus.DefaultImpl
             var eventHandlerInstance =
                 scope.ServiceProvider.GetRequiredService(eventHandlerDescriptor.EventHandlerType);
 
+            // 序列化 eventBody -> @event,委托路径和回退路径都需要
+            var @event = MessageSerializer.Deserialize(messageStorageModel.EventBody, eventHandlerDescriptor.EventType);
+
             if (eventHandlerDescriptor.ExecuteDelegate is not null)
             {
                 // 编译好的委托,快路径
-                await eventHandlerDescriptor.ExecuteDelegate(eventHandlerInstance!, items)
+                await eventHandlerDescriptor.ExecuteDelegate(eventHandlerInstance!, @event!, items)
                     .ConfigureAwait(false);
                 return;
             }
@@ -48,7 +51,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
             try
             {
-                var task = (Task)method.Invoke(eventHandlerInstance, new object[] { items })!;
+                var task = (Task)method.Invoke(eventHandlerInstance, new[] { @event!, (object)items! })!;
                 await task.ConfigureAwait(false);
             }
             catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is not null)
