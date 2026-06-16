@@ -17,11 +17,10 @@ namespace Shashlik.EventBus.RelationDbStorage;
 /// </summary>
 internal static class MessageStorageModelMapping
 {
-    private static DateTimeOffset TicksToDto(long ticks) =>
-        new DateTimeOffset(ticks, TimeSpan.Zero);
+    private static DateTimeOffset TicksToDto(long ticks) => new DateTimeOffset(ticks, TimeSpan.Zero).ToLocalTime();
 
     private static DateTimeOffset? TicksToDto(long? ticks) =>
-        ticks.HasValue ? (DateTimeOffset?)TicksToDto(ticks.Value) : null;
+        ticks.HasValue ? TicksToDto(ticks.Value) : null;
 
     private static long TicksToDb(DateTimeOffset dt) =>
         dt.UtcTicks;

@@ -53,7 +53,7 @@ namespace Shashlik.EventBus.DefaultImpl
             var item = await MessageStorage.FindReceivedByIdAsync(id, cancellationToken).ConfigureAwait(false);
             if (item is null)
                 throw new ArgumentException($"[EventBus] can not found received message of id: {id}", nameof(id));
-            var descriptor = EventHandlerFindProvider.GetByName(item.EventHandlerName);
+            var descriptor = EventHandlerFindProvider.GetByName(item.EventHandlerName!);
             if (descriptor is null)
             {
                 Logger.LogWarning(
@@ -61,7 +61,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 return new HandleResult(false, item);
             }
 
-            var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems)
+            var items = MessageSerializer.Deserialize<IDictionary<string, string>>(item.EventItems!)
                         ?? new Dictionary<string, string>();
             Logger.LogDebug(
                 $"[EventBus] begin invoke event handler, event: {item.EventName}, handler: {item.EventHandlerName}, msgId: {item.MsgId}");
