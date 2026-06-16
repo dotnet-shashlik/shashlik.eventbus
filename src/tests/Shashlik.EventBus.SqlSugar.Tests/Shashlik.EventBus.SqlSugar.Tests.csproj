@@ -11,12 +11,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="NetEscapades.Configuration.Yaml" />
-    <PackageReference Include="SqlSugar">
-      <NoWarn>NU1701</NoWarn>
-    </PackageReference>
     <PackageReference Include="MySql.Data" />
     <PackageReference Include="FreeSql.Provider.MySql" />
-
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit" />

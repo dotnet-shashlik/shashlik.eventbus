@@ -1,4 +1,5 @@
-using FreeSql;
+using System.ComponentModel.DataAnnotations;
+using System.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,8 @@ using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.Kernel;
 using Shashlik.Utils.Extensions;
 using SqlSugar;
+using DataType = FreeSql.DataType;
+using DbType = SqlSugar.DbType;
 
 namespace Shashlik.EventBus.SqlSugar.Tests
 {
