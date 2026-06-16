@@ -33,7 +33,7 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageStorageModel messageStorageModel,
             CancellationToken cancellationToken = default)
         {
-            return await HandleAsync(messageStorageModel.Id, messageTransferModel, messageStorageModel, false,
+            return await HandleAsync(messageStorageModel.Id!, messageTransferModel, messageStorageModel, false,
                 cancellationToken);
         }
 
@@ -71,7 +71,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         MsgId = messageStorageModel.MsgId,
                         MsgBody = messageStorageModel.EventBody,
                         Items = MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel
-                            .EventItems),
+                            .EventItems!),
                         SendAt = messageStorageModel.CreateTime,
                         DelayAt = messageStorageModel.DelayAt
                     };
@@ -82,7 +82,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                     // 消息发送没问题就更新数据库状态
                     await MessageStorage.UpdatePublishedAsync(
-                            messageStorageModel.Id,
+                            messageStorageModel.Id!,
                             MessageStatus.Succeeded,
                             ++messageStorageModel.RetryCount,
                             DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),
@@ -105,7 +105,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 try
                 {
                     await MessageStorage.UpdatePublishedAsync(
-                            messageStorageModel.Id,
+                            messageStorageModel.Id!,
                             MessageStatus.Failed,
                             ++messageStorageModel.RetryCount,
                             null,

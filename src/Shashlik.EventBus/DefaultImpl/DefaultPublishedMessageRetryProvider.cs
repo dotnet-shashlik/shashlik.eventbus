@@ -55,7 +55,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 Environment = messageStorageModel.Environment,
                 MsgId = messageStorageModel.MsgId,
                 MsgBody = messageStorageModel.EventBody,
-                Items = MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel.EventItems),
+                Items = MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel.EventItems!),
                 SendAt = DateTimeOffset.Now,
                 DelayAt = messageStorageModel.DelayAt,
             };
@@ -98,7 +98,7 @@ namespace Shashlik.EventBus.DefaultImpl
             try
             {
                 await PublishHandler
-                    .LockingHandleAsync(item.Id, cancellationToken)
+                    .LockingHandleAsync(item.Id!, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (Exception ex)

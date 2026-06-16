@@ -102,7 +102,7 @@ namespace Shashlik.EventBus.DefaultImpl
             try
             {
                 await ReceivedHandler
-                    .LockingHandleAsync(item.Id, cancellationToken)
+                    .LockingHandleAsync(item.Id!, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (Exception ex)

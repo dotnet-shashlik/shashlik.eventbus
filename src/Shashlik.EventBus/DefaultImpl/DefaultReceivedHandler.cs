@@ -35,7 +35,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IDictionary<string, string> items,
             EventHandlerDescriptor descriptor, CancellationToken cancellationToken)
         {
-            return await HandleAsync(messageStorageModel.Id, messageStorageModel, items, descriptor, false,
+            return await HandleAsync(messageStorageModel.Id!, messageStorageModel, items, descriptor, false,
                 cancellationToken);
         }
 
@@ -67,7 +67,7 @@ namespace Shashlik.EventBus.DefaultImpl
                         return new HandleResult(true);
                     }
 
-                    descriptor ??= EventHandlerFindProvider.GetByName(messageStorageModel.EventHandlerName);
+                    descriptor ??= EventHandlerFindProvider.GetByName(messageStorageModel.EventHandlerName!);
                     if (descriptor is null)
                     {
                         Logger.LogWarning(
@@ -75,14 +75,14 @@ namespace Shashlik.EventBus.DefaultImpl
                         return new HandleResult(true);
                     }
 
-                    items ??= MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel.EventItems)
+                    items ??= MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel.EventItems!)
                               ?? new Dictionary<string, string>();
 
                     // 执行事件消费
                     await EventHandlerInvoker.InvokeAsync(messageStorageModel, items, descriptor).ConfigureAwait(false);
                     // 消息处理没问题就更新数据库状态
                     await MessageStorage.UpdateReceivedAsync(
-                            messageStorageModel.Id,
+                            messageStorageModel.Id!,
                             MessageStatus.Succeeded,
                             ++messageStorageModel.RetryCount,
                             DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),
@@ -103,7 +103,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 try
                 {
                     await MessageStorage.UpdateReceivedAsync(
-                            messageStorageModel.Id,
+                            messageStorageModel.Id!,
                             MessageStatus.Failed,
                             ++messageStorageModel.RetryCount,
                             null,

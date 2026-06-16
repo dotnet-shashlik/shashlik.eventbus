@@ -25,7 +25,7 @@ namespace Shashlik.EventBus.Utils
             if (res is not null)
                 return res;
 
-            var allLib = (dependencyContext ?? DependencyContext.Default)
+            var allLib = ((dependencyContext ?? DependencyContext.Default)!)
                 .RuntimeLibraries
                 .OrderBy(r => r.Name)
                 .ToList();

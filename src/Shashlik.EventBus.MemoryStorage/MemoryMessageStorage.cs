@@ -218,7 +218,7 @@ namespace Shashlik.EventBus.MemoryStorage
                                 (r.Status == MessageStatus.Failed && r.RetryCount >= retryFailedMax))
                     .ToList();
                 foreach (var item in items1)
-                    _published.TryRemove(item.Id, out _);
+                    _published.TryRemove(item.Id!, out _);
 
                 var items2 = _received
                     .Values
@@ -227,7 +227,7 @@ namespace Shashlik.EventBus.MemoryStorage
                                 (r.Status == MessageStatus.Failed && r.RetryCount >= retryFailedMax))
                     .ToList();
                 foreach (var item in items2)
-                    _received.TryRemove(item.Id, out _);
+                    _received.TryRemove(item.Id!, out _);
             }
         }
 

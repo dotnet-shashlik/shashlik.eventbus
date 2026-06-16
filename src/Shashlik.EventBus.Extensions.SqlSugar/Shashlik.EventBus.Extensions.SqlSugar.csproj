@@ -9,6 +9,8 @@
         <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="SqlSugar" />
+        <PackageReference Include="SqlSugar">
+            <NoWarn>NU1701</NoWarn>
+        </PackageReference>
     </ItemGroup>
 </Project>

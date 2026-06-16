@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -36,6 +37,6 @@ namespace Shashlik.EventBus
         /// 创建 descriptor 时一次编译,运行时直接调用,避免每条消息走反射 + TargetInvocationException 包装)。
         /// 参数:(handlerInstance, @event, items) -> Task
         /// </summary>
-        internal Func<object, object, IDictionary<string, string>, Task>? ExecuteDelegate { get; set; }
+        internal Func<object, object, IDictionary<string, string>, Task> ExecuteDelegate { get; set; }
     }
 }

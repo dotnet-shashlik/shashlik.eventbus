@@ -45,7 +45,6 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IEventHandlerFindProvider, DefaultEventHandlerFindProvider>();
             serviceCollection.TryAddSingleton<IExpiredMessageProvider, DefaultExpiredMessageProvider>();
             serviceCollection.TryAddSingleton<IMessageListener, DefaultMessageListener>();
-            serviceCollection.TryAddSingleton<IRetryProvider, DefaultRetryProvider>();
             serviceCollection.TryAddSingleton<IPublishHandler, DefaultPublishHandler>();
             serviceCollection.TryAddSingleton<IReceivedHandler, DefaultReceivedHandler>();
 
