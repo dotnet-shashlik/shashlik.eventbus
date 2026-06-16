@@ -342,3 +342,6 @@ upload
 /src/Health.Api/nlog.config
 /nugetPackages
 /src/config.test.local.yaml
+
+# CodeGraph tool local index
+.codegraph/
