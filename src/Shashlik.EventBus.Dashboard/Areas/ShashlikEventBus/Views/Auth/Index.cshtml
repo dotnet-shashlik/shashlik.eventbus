@@ -1,21 +1,16 @@
 ﻿@model Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Models.MessageViewModel
 
-<div style="width:50%; margin: 200px auto;">
-    <h2>Shshlik.EventBus.Dashboard</h2>
+<div class="login-card">
+    <h2>EventBus Dashboard</h2>
+    <p>Enter the dashboard secret to access the event bus management panel.</p>
     <form method="post" enctype="multipart/form-data">
-        <div class="input-group">
-            <input type="password" name="Secret" class="form-control" placeholder="Please enter shashlik eventbus dashboard secret">
-            <span class="input-group-btn">
-                <button class="btn btn-primary" type="submit">Login</button>
-            </span>
+        <div class="mb-3">
+            <input type="password" name="Secret" class="form-control" placeholder="Secret" autofocus>
         </div>
-
         @if (ViewBag.Error != null)
         {
-            <span style="color: red">@ViewBag.Error</span>
+            <div class="alert alert-danger py-2" style="font-size:.85rem;">@ViewBag.Error</div>
         }
+        <button class="btn btn-primary w-100" type="submit">Login</button>
     </form>
 </div>
-<script>
- 
-</script>

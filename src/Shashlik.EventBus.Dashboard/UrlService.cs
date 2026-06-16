@@ -25,35 +25,27 @@ public class UrlService
         }
 
         var queryDic = new Dictionary<string, string>();
-        foreach (var s in queryString.Split('&'))
+        if (!string.IsNullOrEmpty(queryString))
         {
-            var queryData = s.Split('=');
-            if (string.IsNullOrEmpty(queryData[0]))
+            foreach (var pair in queryString.Split('&'))
             {
-                continue;
-            }
+                var idx = pair.IndexOf('=');
+                if (idx < 0)
+                {
+                    if (!string.IsNullOrEmpty(pair))
+                        queryDic[Uri.UnescapeDataString(pair)] = string.Empty;
+                    continue;
+                }
 
-            if (queryData.Length < 2)
-            {
-                queryDic[queryData[0]] = string.Empty;
-            }
-            else
-            {
-                queryDic[queryData[0]] = queryData[1];
-            }
-
-            if (queryData[0] == query)
-            {
-                queryDic[queryData[0]] = value;
+                var key = Uri.UnescapeDataString(pair[..idx]);
+                var val = Uri.UnescapeDataString(pair[(idx + 1)..]);
+                queryDic[key] = val;
             }
         }
 
-        if (!queryDic.ContainsKey(query))
-        {
-            queryDic[query] = value;
-        }
+        queryDic[query] = value;
 
-        uri.Query = string.Join('&', queryDic.Select(x => $"{x.Key}={x.Value}"));
-        return uri.Uri.PathAndQuery.ToString();
+        uri.Query = string.Join('&', queryDic.Select(x => $"{Uri.EscapeDataString(x.Key)}={Uri.EscapeDataString(x.Value)}"));
+        return uri.Uri.PathAndQuery;
     }
 }

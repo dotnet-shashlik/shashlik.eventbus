@@ -1,32 +1,72 @@
 ﻿<!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@ViewBag.Title</title>
+    <title>@ViewBag.Title - EventBus Dashboard</title>
     <link rel="stylesheet" href="@ViewData["UrlPrefix"]/static/bootstrap.min.css"/>
+    <style>
+        body { background: #f5f6fa; }
+        .navbar { box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+        .navbar-brand { font-weight: 700; letter-spacing: .5px; }
+        .sidebar { background: #fff; border-right: 1px solid #e3e6f0; min-height: calc(100vh - 56px); }
+        .sidebar .list-group-item { border: none; border-radius: .375rem; margin-bottom: 2px; padding: .55rem 1rem; font-size: .875rem; }
+        .sidebar .list-group-item a { text-decoration: none; color: #333; }
+        .sidebar .list-group-item:hover { background: #eef2ff; }
+        .sidebar .list-group-item.active-item { background: #4f46e5; }
+        .sidebar .list-group-item.active-item a { color: #fff; }
+        .sidebar .list-group-item.active-item .badge { background: rgba(255,255,255,.25) !important; color: #fff; }
+        .main-content { min-height: calc(100vh - 56px); }
+        .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); border-radius: .5rem; }
+        .table th { font-size: .8rem; text-transform: uppercase; color: #6b7280; letter-spacing: .5px; border-bottom-width: 1px; }
+        .table td { font-size: .85rem; vertical-align: middle; }
+        .status-badge { font-size: .75rem; padding: .25em .6em; border-radius: .375rem; }
+        .status-SCHEDULED { background: #fef3c7; color: #92400e; }
+        .status-SUCCEEDED { background: #d1fae5; color: #065f46; }
+        .status-FAILED { background: #fee2e2; color: #991b1b; }
+        .btn-retry { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+        .btn-retry:hover { background: #4338ca; border-color: #4338ca; color: #fff; }
+        .filter-card { background: #fff; border-radius: .5rem; padding: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 1rem; }
+        .filter-card label { font-size: .8rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; }
+        .filter-card .form-control, .filter-card .form-select { font-size: .85rem; }
+        .page-link { color: #4f46e5; }
+        .page-item.active .page-link { background: #4f46e5; border-color: #4f46e5; }
+    </style>
 </head>
 <body>
-<div>
-    <nav class="navbar navbar-expand navbar-dark bg-dark" aria-label="Second navbar example">
+    <nav class="navbar navbar-expand navbar-dark" style="background: #1e1b4b;" aria-label="Dashboard navigation">
         <div class="container-fluid">
-            <a class="navbar-brand" href="@ViewData["UrlPrefix"]">EventBus Dashboard</a>
-
+            <a class="navbar-brand" href="@ViewData["UrlPrefix"]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-lightning-charge-fill me-1" viewBox="0 0 16 16"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .367.834l-8 9a.5.5 0 0 1-.842-.4L6.862 9.5H3a.5.5 0 0 1-.367-.834l8-9a.5.5 0 0 1 .618-.098z"/></svg>
+                EventBus Dashboard
+            </a>
             <div class="collapse navbar-collapse" id="navbarsExample02">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link @(ViewBag.Page == "Published" ? "active": "")" href="@Url.Action("Index", "Published")">Published</a>
+                        @{
+                            var pubRouteVals = new Dictionary<string, string>
+                            {
+                                ["beginTime"] = DateTimeOffset.Now.AddDays(-7).ToString("yyyy-MM-dd"),
+                                ["endTime"] = DateTimeOffset.Now.AddDays(1).ToString("yyyy-MM-dd")
+                            };
+                        }
+                        <a class="nav-link @(ViewBag.Page == "Published" ? "active": "")" href="@Url.Action("Index", "Published", pubRouteVals)">Published</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link @(ViewBag.Page == "Received" ? "active": "")" href="@Url.Action("Index", "Received")">Received</a>
+                        @{
+                            var recvRouteVals = new Dictionary<string, string>
+                            {
+                                ["beginTime"] = DateTimeOffset.Now.AddDays(-7).ToString("yyyy-MM-dd"),
+                                ["endTime"] = DateTimeOffset.Now.AddDays(1).ToString("yyyy-MM-dd")
+                            };
+                        }
+                        <a class="nav-link @(ViewBag.Page == "Received" ? "active": "")" href="@Url.Action("Index", "Received", recvRouteVals)">Received</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
     @RenderBody()
-    <script src="@ViewData["UrlPrefix"]/static/bootstrap.min.js"></script>
     <script src="@ViewData["UrlPrefix"]/static/bootstrap.bundle.min.js"></script>
-</div>
 </body>
 </html>

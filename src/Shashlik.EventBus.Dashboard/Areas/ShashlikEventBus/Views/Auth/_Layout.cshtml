@@ -1,16 +1,22 @@
 ﻿<!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@ViewBag.Title</title>
+    <title>@ViewBag.Title - EventBus Dashboard</title>
     <link rel="stylesheet" href="@ViewData["UrlPrefix"]/static/bootstrap.min.css"/>
+    <style>
+        body { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: #fff; border-radius: 1rem; box-shadow: 0 20px 60px rgba(0,0,0,.25); padding: 2.5rem; width: 100%; max-width: 420px; }
+        .login-card h2 { font-weight: 700; color: #1e1b4b; margin-bottom: .5rem; }
+        .login-card p { color: #6b7280; font-size: .9rem; margin-bottom: 1.5rem; }
+        .login-card .form-control { border-radius: .5rem; padding: .65rem 1rem; }
+        .login-card .btn-primary { background: #4f46e5; border-color: #4f46e5; border-radius: .5rem; padding: .55rem 1.5rem; font-weight: 600; }
+        .login-card .btn-primary:hover { background: #4338ca; border-color: #4338ca; }
+    </style>
 </head>
 <body>
-<div>
     @RenderBody()
-    <script src="@ViewData["UrlPrefix"]/static/bootstrap.min.js"></script>
     <script src="@ViewData["UrlPrefix"]/static/bootstrap.bundle.min.js"></script>
-</div>
 </body>
 </html>

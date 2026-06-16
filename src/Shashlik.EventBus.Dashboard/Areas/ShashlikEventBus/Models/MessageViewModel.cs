@@ -36,4 +36,19 @@ public class MessageViewModel
     /// 搜索条件
     /// </summary>
     public string? EventHandlerName { get; set; }
+
+    /// <summary>
+    /// 当前选中状态
+    /// </summary>
+    public string? Status { get; set; }
+
+    /// <summary>
+    /// 查询开始时间
+    /// </summary>
+    public DateTimeOffset BeginTime { get; set; }
+
+    /// <summary>
+    /// 查询结束时间
+    /// </summary>
+    public DateTimeOffset EndTime { get; set; }
 }

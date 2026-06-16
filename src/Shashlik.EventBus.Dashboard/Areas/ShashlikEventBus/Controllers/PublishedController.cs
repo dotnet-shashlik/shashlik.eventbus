@@ -17,27 +17,34 @@ public class PublishedController : BaseDashboardController
         _optionsMonitor = optionsMonitor;
     }
 
-
-    public async Task<IActionResult> Index(DateTimeOffset beginTime, DateTimeOffset endTime, string? eventName,
+    public async Task<IActionResult> Index(DateTimeOffset? beginTime, DateTimeOffset? endTime, string? eventName,
         string? status, int pageSize = 20, int pageIndex = 1)
     {
         ViewBag.Title = "Published";
         ViewBag.Page = "Published";
+
+        var now = DateTimeOffset.Now;
+        var bt = beginTime ?? now.AddDays(-7);
+        var et = endTime ?? now.AddDays(1);
+
         var model = new MessageViewModel();
+        model.BeginTime = bt;
+        model.EndTime = et;
         model.StatusCount =
             await _messageStorage.GetPublishedMessageStatusCountsAsync(_optionsMonitor.CurrentValue.Environment,
-                beginTime, endTime, CancellationToken.None);
+                bt, et, CancellationToken.None);
         if (string.IsNullOrEmpty(status) && model.StatusCount.Keys.Count > 0)
         {
             status = model.StatusCount.Keys.First();
         }
 
         model.Messages = await _messageStorage.SearchPublishedAsync(_optionsMonitor.CurrentValue.Environment,
-            beginTime, endTime, eventName, status, (pageIndex - 1) * pageSize,
+            bt, et, eventName, status, (pageIndex - 1) * pageSize,
             pageSize, CancellationToken.None);
         model.PageIndex = pageIndex;
         model.PageSize = pageSize;
         model.EventName = eventName;
+        model.Status = status;
         var total = 0M;
         if (!string.IsNullOrEmpty(status))
         {

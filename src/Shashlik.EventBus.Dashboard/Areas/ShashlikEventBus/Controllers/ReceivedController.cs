@@ -16,30 +16,37 @@ public class ReceivedController : BaseDashboardController
         _optionsMonitor = optionsMonitor;
     }
 
-
-    public async Task<IActionResult> Index(DateTimeOffset beginTime, DateTimeOffset endTime, 
+    public async Task<IActionResult> Index(DateTimeOffset? beginTime, DateTimeOffset? endTime,
         string? eventName, string? eventHandlerName, string? status,
         int pageSize = 20, int pageIndex = 1)
     {
         ViewBag.Title = "Received";
         ViewBag.Page = "Received";
+
+        var now = DateTimeOffset.Now;
+        var bt = beginTime ?? now.AddDays(-7);
+        var et = endTime ?? now.AddDays(1);
+
         var model = new MessageViewModel();
+        model.BeginTime = bt;
+        model.EndTime = et;
         model.StatusCount = await _messageStorage.GetReceivedMessageStatusCountAsync(
             _optionsMonitor.CurrentValue.Environment,
-            beginTime, endTime, CancellationToken.None);
+            bt, et, CancellationToken.None);
         if (string.IsNullOrEmpty(status) && model.StatusCount.Keys.Count > 0)
         {
             status = model.StatusCount.Keys.First();
         }
 
         model.Messages = await _messageStorage.SearchReceivedAsync(_optionsMonitor.CurrentValue.Environment,
-            beginTime, endTime, eventName, eventHandlerName, status,
+            bt, et, eventName, eventHandlerName, status,
             (pageIndex - 1) * pageSize,
             pageSize, CancellationToken.None);
         model.PageIndex = pageIndex;
         model.PageSize = pageSize;
         model.EventName = eventName;
         model.EventHandlerName = eventHandlerName;
+        model.Status = status;
         var total = 0M;
         if (!string.IsNullOrEmpty(status))
         {
