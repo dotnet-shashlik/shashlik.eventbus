@@ -24,19 +24,12 @@ public class PublishedController : BaseDashboardController
         ViewBag.Page = "Published";
 
         var now = DateTimeOffset.Now;
-        var bt = beginTime ?? now.AddDays(-7);
+        var bt = beginTime ?? now.AddDays(-1);
         var et = endTime ?? now.AddDays(1);
 
         var model = new MessageViewModel();
         model.BeginTime = bt;
         model.EndTime = et;
-        model.StatusCount =
-            await _messageStorage.GetPublishedMessageStatusCountsAsync(_optionsMonitor.CurrentValue.Environment,
-                bt, et, CancellationToken.None);
-        if (string.IsNullOrEmpty(status) && model.StatusCount.Keys.Count > 0)
-        {
-            status = model.StatusCount.Keys.First();
-        }
 
         model.Messages = await _messageStorage.SearchPublishedAsync(_optionsMonitor.CurrentValue.Environment,
             bt, et, eventName, status, (pageIndex - 1) * pageSize,
@@ -45,13 +38,11 @@ public class PublishedController : BaseDashboardController
         model.PageSize = pageSize;
         model.EventName = eventName;
         model.Status = status;
-        var total = 0M;
-        if (!string.IsNullOrEmpty(status))
-        {
-            total = model.StatusCount.ContainsKey(status) ? model.StatusCount[status] : total;
-        }
 
-        model.TotalPage = Convert.ToInt32(Math.Ceiling(total / pageSize));
+        var total = await _messageStorage.CountPublishedAsync(_optionsMonitor.CurrentValue.Environment,
+            bt, et, eventName, status, CancellationToken.None);
+
+        model.TotalPage = Convert.ToInt32(Math.Ceiling(total / (decimal)pageSize));
         return View("Messages", model);
     }
 

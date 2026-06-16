@@ -276,17 +276,5 @@ namespace Shashlik.EventBus.MongoDb.Tests
             clientSessionHandle.Dispose();
             mongoDbTransactionContext.IsDone().ShouldBeTrue();
         }
-
-        [Fact]
-        public async Task GetPublishedMessageStatusCountsTest()
-        {
-            await StorageTests.GetPublishedMessageStatusCountsTest();
-        }
-
-        [Fact]
-        public async Task GetReceivedMessageStatusCountsTest()
-        {
-            await StorageTests.GetReceivedMessageStatusCountsTest();
-        }
     }
 }

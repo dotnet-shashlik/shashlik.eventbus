@@ -293,42 +293,39 @@ namespace Shashlik.EventBus.MongoDb
             return count > 0 ? list.Take(count).ToList() : list;
         }
 
-        public async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(string environment,
-            DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
+        public async Task<int> CountPublishedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime, string? eventName, string? status, CancellationToken cancellationToken)
         {
             var mongoCollection = GetPublishedCollection();
-            var res = await mongoCollection.Aggregate(new AggregateOptions
-                {
-                    AllowDiskUse = true,
-                })
-                .Match(r => r.Environment == environment
-                            && r.CreateTime >= beginTime && r.CreateTime <= endTime)
-                .Group(r => r.Status, r => new
-                {
-                    r.Key,
-                    Count = r.Count()
-                }).ToListAsync(cancellationToken: cancellationToken);
-
-            return res.ToDictionary(r => r.Key, r => r.Count);
+            var builder = Builders<MessageStorageModel>.Filter;
+            var filter = builder.Empty;
+            filter = builder.And(filter, builder.Gte(r => r.CreateTime, beginTime));
+            filter = builder.And(filter, builder.Lte(r => r.CreateTime, endTime));
+            filter = builder.And(filter, builder.Eq(r => r.Environment, environment));
+            if (!eventName.IsNullOrWhiteSpace())
+                filter = builder.And(filter, builder.Eq(r => r.EventName, eventName));
+            if (!status.IsNullOrWhiteSpace())
+                filter = builder.And(filter, builder.Eq(r => r.Status, status));
+            return (int)await mongoCollection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
         }
 
-        public async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(string environment,
-            DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
+        public async Task<int> CountReceivedAsync(string environment, DateTimeOffset beginTime,
+            DateTimeOffset endTime, string? eventName, string? eventHandlerName, string? status,
+            CancellationToken cancellationToken)
         {
             var mongoCollection = GetReceivedCollection();
-            var res = await mongoCollection.Aggregate(new AggregateOptions
-                {
-                    AllowDiskUse = true,
-                })
-                .Match(r => r.Environment == environment
-                            && r.CreateTime >= beginTime && r.CreateTime <= endTime)
-                .Group(r => r.Status, r => new
-                {
-                    r.Key,
-                    Count = r.Count()
-                }).ToListAsync(cancellationToken: cancellationToken);
-
-            return res.ToDictionary(r => r.Key, r => r.Count);
+            var builder = Builders<MessageStorageModel>.Filter;
+            var filter = builder.Empty;
+            filter = builder.And(filter, builder.Gte(r => r.CreateTime, beginTime));
+            filter = builder.And(filter, builder.Lte(r => r.CreateTime, endTime));
+            filter = builder.And(filter, builder.Eq(r => r.Environment, environment));
+            if (!eventName.IsNullOrWhiteSpace())
+                filter = builder.And(filter, builder.Eq(r => r.EventName, eventName));
+            if (!eventHandlerName.IsNullOrWhiteSpace())
+                filter = builder.And(filter, builder.Eq(r => r.EventHandlerName, eventHandlerName));
+            if (!status.IsNullOrWhiteSpace())
+                filter = builder.And(filter, builder.Eq(r => r.Status, status));
+            return (int)await mongoCollection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
         }
     }
 }

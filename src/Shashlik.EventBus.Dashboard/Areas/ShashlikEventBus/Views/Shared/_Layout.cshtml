@@ -9,14 +9,11 @@
         body { background: #f5f6fa; }
         .navbar { box-shadow: 0 2px 8px rgba(0,0,0,.15); }
         .navbar-brand { font-weight: 700; letter-spacing: .5px; }
-        .sidebar { background: #fff; border-right: 1px solid #e3e6f0; min-height: calc(100vh - 56px); }
-        .sidebar .list-group-item { border: none; border-radius: .375rem; margin-bottom: 2px; padding: .55rem 1rem; font-size: .875rem; }
-        .sidebar .list-group-item a { text-decoration: none; color: #333; }
-        .sidebar .list-group-item:hover { background: #eef2ff; }
-        .sidebar .list-group-item.active-item { background: #4f46e5; }
-        .sidebar .list-group-item.active-item a { color: #fff; }
-        .sidebar .list-group-item.active-item .badge { background: rgba(255,255,255,.25) !important; color: #fff; }
+        .navbar .nav-link { color: rgba(255,255,255,.75); transition: all .2s ease; }
+        .navbar .nav-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+        .navbar .nav-link.active { color: #fff; background: rgba(255,255,255,.15); }
         .main-content { min-height: calc(100vh - 56px); }
+        .main-content-full { width: 100%; }
         .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.06); border-radius: .5rem; }
         .table th { font-size: .8rem; text-transform: uppercase; color: #6b7280; letter-spacing: .5px; border-bottom-width: 1px; }
         .table td { font-size: .85rem; vertical-align: middle; }
@@ -24,13 +21,26 @@
         .status-SCHEDULED { background: #fef3c7; color: #92400e; }
         .status-SUCCEEDED { background: #d1fae5; color: #065f46; }
         .status-FAILED { background: #fee2e2; color: #991b1b; }
-        .btn-retry { background: #4f46e5; border-color: #4f46e5; color: #fff; }
-        .btn-retry:hover { background: #4338ca; border-color: #4338ca; color: #fff; }
+        .btn-retry { background: #4f46e5; border-color: #4f46e5; color: #fff; transition: all .2s ease; }
+        .btn-retry:hover { background: #4338ca; border-color: #4338ca; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(67,56,202,.35); }
+        .btn-retry:active { background: #3730a3; border-color: #3730a3; transform: translateY(0); }
+        .btn-outline-secondary { border-color: #c7cad1; color: #4b5563; background: #fff; transition: all .2s ease; }
+        .btn-outline-secondary:hover, .btn-outline-secondary:focus { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+        .btn-outline-secondary.show, .btn-outline-secondary[aria-expanded="true"] { background: #4f46e5; border-color: #4f46e5; color: #fff; }
         .filter-card { background: #fff; border-radius: .5rem; padding: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 1rem; }
         .filter-card label { font-size: .8rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; }
-        .filter-card .form-control, .filter-card .form-select { font-size: .85rem; }
-        .page-link { color: #4f46e5; }
-        .page-item.active .page-link { background: #4f46e5; border-color: #4f46e5; }
+        .filter-card .form-control, .filter-card .form-select { font-size: .85rem; border-color: #d1d5db; transition: border-color .15s ease, box-shadow .15s ease; }
+        .filter-card .form-control:focus, .filter-card .form-select:focus { border-color: #818cf8; box-shadow: 0 0 0 .2rem rgba(79,70,229,.15); }
+        .dropdown-menu { border: none; box-shadow: 0 4px 16px rgba(0,0,0,.12); border-radius: .5rem; padding: .35rem; }
+        .dropdown-item { border-radius: .375rem; color: #374151; padding: .4rem .75rem; font-size: .85rem; transition: all .15s ease; }
+        .dropdown-item:hover, .dropdown-item:focus { background: #eef2ff; color: #4f46e5; }
+        .page-link { color: #4f46e5; border-color: #e5e7eb; background: #fff; transition: all .2s ease; }
+        .page-link:hover { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+        .page-item.active .page-link { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+        .page-item.disabled .page-link { background: #f9fafb; color: #9ca3af; }
+        .modal-content { border: none; border-radius: .75rem; box-shadow: 0 10px 40px rgba(0,0,0,.18); }
+        .form-check-input:checked { background-color: #4f46e5; border-color: #4f46e5; }
+        .form-check-input:focus { border-color: #818cf8; box-shadow: 0 0 0 .2rem rgba(79,70,229,.15); }
     </style>
 </head>
 <body>

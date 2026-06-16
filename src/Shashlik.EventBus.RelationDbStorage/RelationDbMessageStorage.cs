@@ -353,28 +353,31 @@ internal class RelationDbMessageStorage : IMessageStorage
             .ContinueWith(t => t.Result.Select(r => r.ToModel()).ToList(), cancellationToken);
     }
 
-    public virtual async Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(
-        string environment, DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
+    public virtual async Task<int> CountPublishedAsync(
+        string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
+        string? eventName, string? status, CancellationToken cancellationToken)
     {
         var begin = beginTime.UtcTicks;
         var end = endTime.UtcTicks;
-        var result = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+        return (int)await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.CreateTimeTicks >= begin && r.CreateTimeTicks <= end && r.Environment == environment)
-            .GroupBy(r => r.Status)
-            .ToListAsync(g => new { g.Key, Count = g.Count() }, cancellationToken);
-        return result.ToDictionary(r => r.Key ?? string.Empty, r => r.Count);
+            .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
+            .WhereIf(!string.IsNullOrEmpty(status), r => r.Status == status)
+            .CountAsync(cancellationToken);
     }
 
-    public virtual async Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(
+    public virtual async Task<int> CountReceivedAsync(
         string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
+        string? eventName, string? eventHandlerName, string? status,
         CancellationToken cancellationToken)
     {
         var begin = beginTime.UtcTicks;
         var end = endTime.UtcTicks;
-        var result = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
+        return (int)await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.CreateTimeTicks >= begin && r.CreateTimeTicks <= end && r.Environment == environment)
-            .GroupBy(r => r.Status)
-            .ToListAsync(g => new { g.Key, Count = g.Count() }, cancellationToken);
-        return result.ToDictionary(r => r.Key ?? string.Empty, r => r.Count);
+            .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
+            .WhereIf(!string.IsNullOrEmpty(eventHandlerName), r => r.EventHandlerName == eventHandlerName)
+            .WhereIf(!string.IsNullOrEmpty(status), r => r.Status == status)
+            .CountAsync(cancellationToken);
     }
 }

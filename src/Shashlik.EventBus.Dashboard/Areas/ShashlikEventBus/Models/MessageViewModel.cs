@@ -3,11 +3,6 @@
 public class MessageViewModel
 {
     /// <summary>
-    /// 消息状态计数
-    /// </summary>
-    public Dictionary<string, int> StatusCount { get; set; } = new();
-
-    /// <summary>
     /// 消息
     /// </summary>
     public List<MessageStorageModel> Messages { get; set; } = new();

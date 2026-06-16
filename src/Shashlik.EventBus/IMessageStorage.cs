@@ -177,25 +177,30 @@ namespace Shashlik.EventBus
             int maxFailedRetryCount, string environment, CancellationToken cancellationToken);
 
         /// <summary>
-        /// 获取已发布的消息各种状态的数量
+        /// 获取已发布消息的总数,用于分页
         /// </summary>
         /// <param name="environment"></param>
         /// <param name="beginTime"></param>
         /// <param name="endTime"></param>
+        /// <param name="eventName">事件名称</param>
+        /// <param name="status">状态</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(string environment, DateTimeOffset beginTime,
-            DateTimeOffset endTime, CancellationToken cancellationToken);
+        Task<int> CountPublishedAsync(string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
+            string? eventName, string? status, CancellationToken cancellationToken);
 
         /// <summary>
-        /// 获取已接收的消息各种状态的数量
+        /// 获取已接收消息的总数,用于分页
         /// </summary>
         /// <param name="environment"></param>
         /// <param name="beginTime"></param>
         /// <param name="endTime"></param>
+        /// <param name="eventName">事件名称</param>
+        /// <param name="eventHandlerName">事件处理类名称</param>
+        /// <param name="status">状态</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(string environment, DateTimeOffset beginTime,
-            DateTimeOffset endTime, CancellationToken cancellationToken);
+        Task<int> CountReceivedAsync(string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
+            string? eventName, string? eventHandlerName, string? status, CancellationToken cancellationToken);
     }
 }

@@ -87,14 +87,6 @@ namespace Shashlik.EventBus.MySql.Tests
             await Storage.QueryReceivedTests();
 
         [Fact]
-        public async Task GetPublishedMessageStatusCountsTest() =>
-            await Storage.GetPublishedMessageStatusCountsTest();
-
-        [Fact]
-        public async Task GetReceivedMessageStatusCountsTest() =>
-            await Storage.GetReceivedMessageStatusCountsTest();
-
-        [Fact]
         public void RelationDbStorageTransactionContextCommitTest() =>
             Storage.RelationDbStorageTransactionContextCommitTest();
 

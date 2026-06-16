@@ -274,23 +274,25 @@ namespace Shashlik.EventBus.MemoryStorage
                 GetReceivedMessagesOfNeedRetryAndLock(count, delayRetrySecond, maxFailedRetryCount, environment));
         }
 
-        public Task<Dictionary<string, int>> GetPublishedMessageStatusCountsAsync(string environment,
-            DateTimeOffset beginTime, DateTimeOffset endTime, CancellationToken cancellationToken)
+        public Task<int> CountPublishedAsync(string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
+            string? eventName, string? status, CancellationToken cancellationToken)
         {
             return Task.FromResult(_published.Values
                 .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.CreateTime <= endTime)
-                .GroupBy(x => x.Status)
-                .ToDictionary(x => x.Key, x => x.Count()));
+                .WhereIf(!eventName.IsNullOrWhiteSpace(), r => r.EventName == eventName)
+                .WhereIf(!status.IsNullOrWhiteSpace(), r => r.Status == status)
+                .Count());
         }
 
-        public Task<Dictionary<string, int>> GetReceivedMessageStatusCountAsync(string environment,
-            DateTimeOffset beginTime,
-            DateTimeOffset endTime, CancellationToken cancellationToken)
+        public Task<int> CountReceivedAsync(string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
+            string? eventName, string? eventHandlerName, string? status, CancellationToken cancellationToken)
         {
             return Task.FromResult(_received.Values
                 .Where(r => r.Environment == environment && r.CreateTime >= beginTime && r.CreateTime <= endTime)
-                .GroupBy(x => x.Status)
-                .ToDictionary(x => x.Key, x => x.Count()));
+                .WhereIf(!eventName.IsNullOrWhiteSpace(), r => r.EventName == eventName)
+                .WhereIf(!eventHandlerName.IsNullOrWhiteSpace(), r => r.EventHandlerName == eventHandlerName)
+                .WhereIf(!status.IsNullOrWhiteSpace(), r => r.Status == status)
+                .Count());
         }
 
         private List<MessageStorageModel> GetReceivedMessagesOfNeedRetryAndLock(int count, int delayRetrySecond,

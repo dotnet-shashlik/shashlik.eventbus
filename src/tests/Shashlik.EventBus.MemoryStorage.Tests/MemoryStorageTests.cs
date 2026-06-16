@@ -82,17 +82,5 @@ namespace Shashlik.EventBus.MemoryStorage.Tests
         {
             await StorageTests.QueryReceivedTests();
         }
-
-        [Fact]
-        public async Task GetPublishedMessageStatusCountsTest()
-        {
-            await StorageTests.GetPublishedMessageStatusCountsTest();
-        }
-
-        [Fact]
-        public async Task GetReceivedMessageStatusCountsTest()
-        {
-            await StorageTests.GetReceivedMessageStatusCountsTest();
-        }
     }
 }

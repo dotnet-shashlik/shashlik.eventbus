@@ -30,13 +30,6 @@ public class ReceivedController : BaseDashboardController
         var model = new MessageViewModel();
         model.BeginTime = bt;
         model.EndTime = et;
-        model.StatusCount = await _messageStorage.GetReceivedMessageStatusCountAsync(
-            _optionsMonitor.CurrentValue.Environment,
-            bt, et, CancellationToken.None);
-        if (string.IsNullOrEmpty(status) && model.StatusCount.Keys.Count > 0)
-        {
-            status = model.StatusCount.Keys.First();
-        }
 
         model.Messages = await _messageStorage.SearchReceivedAsync(_optionsMonitor.CurrentValue.Environment,
             bt, et, eventName, eventHandlerName, status,
@@ -47,13 +40,11 @@ public class ReceivedController : BaseDashboardController
         model.EventName = eventName;
         model.EventHandlerName = eventHandlerName;
         model.Status = status;
-        var total = 0M;
-        if (!string.IsNullOrEmpty(status))
-        {
-            total = model.StatusCount.ContainsKey(status) ? model.StatusCount[status] : total;
-        }
 
-        model.TotalPage = Convert.ToInt32(Math.Ceiling(total / pageSize));
+        var total = await _messageStorage.CountReceivedAsync(_optionsMonitor.CurrentValue.Environment,
+            bt, et, eventName, eventHandlerName, status, CancellationToken.None);
+
+        model.TotalPage = Convert.ToInt32(Math.Ceiling(total / (decimal)pageSize));
         return View("Messages", model);
     }
 

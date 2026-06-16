@@ -84,14 +84,6 @@ namespace Shashlik.EventBus.Sqlite.Tests
         public async Task QueryReceivedTests() =>
             await Storage.QueryReceivedTests();
 
-        [Fact]
-        public async Task GetPublishedMessageStatusCountsTest() =>
-            await Storage.GetPublishedMessageStatusCountsTest();
-
-        [Fact]
-        public async Task GetReceivedMessageStatusCountsTest() =>
-            await Storage.GetReceivedMessageStatusCountsTest();
-
         // 事务上下文 IsDone(跟存储实现无关)
         [Fact]
         public void XaTransactionContextCommitTest() =>
