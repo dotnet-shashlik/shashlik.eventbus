@@ -1,19 +1,19 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
-using Shashlik.EventBus.PostgreSQL;
 using Shashlik.EventBus.RabbitMQ;
 using Shashlik.Utils.Extensions;
+using DataType = FreeSql.DataType;
 
 namespace Sample.Rabbit.PostgreSQL
 {
@@ -51,7 +51,7 @@ namespace Sample.Rabbit.PostgreSQL
                     }, 5);
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitMySql"; })
-                        .AddNpgsql<DemoDbContext>()
+                        .AddRelationDb<DemoDbContext>(DataType.PostgreSQL)
                         .AddRabbitMQ(r =>
                         {
                             r.Host = "192.168.50.178";

@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using FreeSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
 using Shashlik.EventBus.Kafka;
-using Shashlik.EventBus.MySql;
 using Shashlik.Utils.Extensions;
 
 namespace Sample.Kafka.Mysql
@@ -53,7 +53,7 @@ namespace Sample.Kafka.Mysql
                     scope.ServiceProvider.GetRequiredService<DemoDbContext>().Database.Migrate();
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaMySql34"; })
-                        .AddMySql<DemoDbContext>()
+                        .AddRelationDb<DemoDbContext>(DataType.MySql)
                         .AddKafka(configuration.GetSection("EventBus:Kafka"));
 
                     services.AddHostedService<TestService>();

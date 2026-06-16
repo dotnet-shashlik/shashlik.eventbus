@@ -1,3 +1,4 @@
+using System;
 using FreeSql;
 using FreeSql.Internal;
 using Microsoft.Extensions.Logging;
@@ -13,12 +14,30 @@ internal class DefaultFreeSqlFactory : IFreeSqlFactory
 {
     public DefaultFreeSqlFactory(
         IOptions<EventBusRelationDbOptions> options,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        IServiceProvider serviceProvider)
     {
         var opts = options.Value;
         var logger = loggerFactory.CreateLogger("EventBus.RelationDb");
-        var freeSql = new FreeSqlBuilder()
-            .UseConnectionString(opts.DataType, opts.ConnectionString)
+        var freeSqlBuilder = new FreeSqlBuilder();
+        if (opts.ConnectionFactory is not null)
+        {
+            var connectionFactory = serviceProvider.GetService(opts.ConnectionFactory) as IConnectionFactory;
+            if (connectionFactory is null)
+                throw new OptionsValidationException("ConnectionFactory", opts.GetType(),
+                    ["Invalid connection factory"]);
+            freeSqlBuilder.UseConnectionString(connectionFactory.DataType, connectionFactory.ConnectionString);
+        }
+        else if (string.IsNullOrWhiteSpace(opts.ConnectionString) && opts.DataType.HasValue)
+        {
+            freeSqlBuilder.UseConnectionString(opts.DataType.Value, opts.ConnectionString);
+        }
+        else
+        {
+            throw new OptionsValidationException("ConnectionString", opts.GetType(), ["Invalid connection string"]);
+        }
+
+        var freeSql = freeSqlBuilder
             .UseMonitorCommand(cmd => logger.LogDebug($"Sql: {cmd.CommandText}"))
             .UseNameConvert(NameConvertType.PascalCaseToUnderscoreWithLower)
             .Build();

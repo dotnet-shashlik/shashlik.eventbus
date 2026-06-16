@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using FreeRedis;
+using FreeSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,8 +12,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
-using Shashlik.EventBus.MySql;
 using Shashlik.EventBus.Redis;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.Utils.Extensions;
 
 namespace Sample.Redis.Mysql
@@ -54,7 +55,7 @@ namespace Sample.Redis.Mysql
                     }, 5);
 
                     services.AddEventBus(r => { r.Environment = "DemoRedisMySql"; })
-                        .AddMySql<DemoDbContext>()
+                        .AddRelationDb<DemoDbContext>(DataType.MySql)
                         .AddRedisMQ(r =>
                         {
                             r.RedisClientFactory = s =>

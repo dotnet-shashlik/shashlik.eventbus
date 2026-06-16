@@ -3,15 +3,14 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using FreeSql;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
-using Shashlik.EventBus.MySql;
 using Shashlik.EventBus.RabbitMQ;
 using Shashlik.Utils.Extensions;
 
@@ -51,7 +50,7 @@ namespace Sample.Rabbit.Mysql
                     }, 5);
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitMySql"; })
-                        .AddMySql<DemoDbContext>()
+                        .AddRelationDb<DemoDbContext>(DataType.MySql)
                         .AddRabbitMQ(configuration.GetSection("EventBus:RabbitMQ"));
 
                     services.AddHostedService<TestService>();

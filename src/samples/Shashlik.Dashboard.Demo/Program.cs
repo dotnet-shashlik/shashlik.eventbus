@@ -1,3 +1,4 @@
+using FreeSql;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using Shashlik.Dashboard.Demo;
@@ -5,9 +6,7 @@ using Shashlik.EventBus;
 using Shashlik.EventBus.Dashboard;
 using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MongoDb;
-using Shashlik.EventBus.MySql;
-using Shashlik.EventBus.PostgreSQL;
-using Shashlik.EventBus.SqlServer;
+using ServerVersion = Microsoft.EntityFrameworkCore.ServerVersion;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,24 +44,23 @@ switch (type)
 
 if (type != "4")
 {
-    builder.Services.AddDbContext<DataContext>(
-        x =>
+    builder.Services.AddDbContext<DataContext>(x =>
+    {
+        switch (type)
         {
-            switch (type)
-            {
-                case "1":
-                    x.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-                    break;
-                case "2":
-                    x.UseNpgsql(connectionString);
-                    break;
-                case "3":
-                    x.UseSqlServer(connectionString);
-                    break;
-                default:
-                    break;
-            }
-        });
+            case "1":
+                x.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                break;
+            case "2":
+                x.UseNpgsql(connectionString);
+                break;
+            case "3":
+                x.UseSqlServer(connectionString);
+                break;
+            default:
+                break;
+        }
+    });
 }
 
 var eventBusBuilder = builder.Services.AddEventBus(r =>
@@ -88,13 +86,13 @@ var eventBusBuilder = builder.Services.AddEventBus(r =>
 switch (type)
 {
     case "1":
-        eventBusBuilder = eventBusBuilder.AddMySql<DataContext>();
+        eventBusBuilder = eventBusBuilder.AddRelationDb<DataContext>(DataType.MySql);
         break;
     case "2":
-        eventBusBuilder = eventBusBuilder.AddNpgsql<DataContext>();
+        eventBusBuilder = eventBusBuilder.AddRelationDb<DataContext>(DataType.PostgreSQL);
         break;
     case "3":
-        eventBusBuilder = eventBusBuilder.AddSqlServer<DataContext>();
+        eventBusBuilder = eventBusBuilder.AddRelationDb<DataContext>(DataType.SqlServer);
         break;
     case "4":
         eventBusBuilder = eventBusBuilder.AddMongoDb(connectionString);

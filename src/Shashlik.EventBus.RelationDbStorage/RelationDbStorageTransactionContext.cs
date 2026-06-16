@@ -1,4 +1,5 @@
 ﻿using System.Data;
+
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace Shashlik.EventBus.RelationDbStorage

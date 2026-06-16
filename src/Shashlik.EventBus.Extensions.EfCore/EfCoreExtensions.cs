@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+using FreeSql;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
+using Shashlik.EventBus.Extensions.EfCore;
 using Shashlik.EventBus.RelationDbStorage;
+using DbContext = Microsoft.EntityFrameworkCore.DbContext;
 
 // ReSharper disable CheckNamespace
 
@@ -13,6 +16,34 @@ namespace Shashlik.EventBus
 {
     public static class EfCoreExtensions
     {
+        /// <summary>
+        /// 使用 FreeSql 跨方言实现关系型数据库存储(MySQL/PG/SqlServer/Sqlite/...)。
+        /// 应用层 ORM 自由(EF Core / Dapper / NHibernate 都能用),
+        /// 只要能拿到 <see cref="System.Data.IDbTransaction"/> 即可包装成
+        /// <see cref="ITransactionContext"/> 参与 EventBus 事务。
+        /// </summary>
+        public static IEventBusBuilder AddRelationDb<T>(
+            this IEventBusBuilder eventBusBuilder, DataType dataType,
+            Action<EventBusRelationDbOptions>? optionsAction = null)
+            where T : DbContext
+        {
+            eventBusBuilder.Services.AddSingleton<EfCoreConnectionFactory>();
+            eventBusBuilder.Services.AddSingleton<IConnectionFactory, EfCoreConnectionFactory>();
+            eventBusBuilder.Services.AddOptions<EventBusEfCoreOptions>().Configure(r =>
+            {
+                r.DbContextType = typeof(T);
+                r.DataType = dataType;
+            });
+
+            eventBusBuilder.AddRelationDb(opts =>
+            {
+                optionsAction?.Invoke(opts);
+                opts.UseConnection(typeof(EfCoreConnectionFactory));
+            });
+            return eventBusBuilder;
+        }
+
+
         /// <summary>
         /// 通过DbContext发布事件，自动使用DbContext事务上下文和连接信息
         /// </summary>

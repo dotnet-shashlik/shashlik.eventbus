@@ -3,8 +3,8 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using FreeSql;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,7 +13,6 @@ using SampleBase;
 using Shashlik.EventBus;
 using Shashlik.EventBus.Kafka;
 using Shashlik.EventBus.MemoryStorage;
-using Shashlik.EventBus.PostgreSQL;
 using Shashlik.Utils.Extensions;
 
 namespace Sample.Kafka.PostgreSQL
@@ -52,8 +51,7 @@ namespace Sample.Kafka.PostgreSQL
                     });
 
                     services.AddEventBus(r => { r.Environment = "DemoKafkaPostgre3"; })
-                        //.AddNpgsql<DemoDbContext>()
-                        .AddMemoryStorage()
+                        .AddRelationDb<DemoDbContext>(DataType.PostgreSQL)
                         .AddKafka(configuration.GetSection("EventBus:Kafka"));
 
                     services.AddHostedService<TestService>();

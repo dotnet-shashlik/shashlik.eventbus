@@ -1,6 +1,6 @@
 using System;
+using System.Data;
 using Microsoft.Extensions.DependencyInjection;
-using Shashlik.EventBus.DefaultImpl;
 
 namespace Shashlik.EventBus.RelationDbStorage
 {
@@ -17,28 +17,27 @@ namespace Shashlik.EventBus.RelationDbStorage
             Action<EventBusRelationDbOptions> configure)
         {
             if (configure is null) throw new ArgumentNullException(nameof(configure));
-            var options = new EventBusRelationDbOptions();
-            configure(options);
-            // 注意:DataType.MySql == 0 == default(DataType),所以不能简单判 "== default",
-            // 否则 MySql 永远校验失败。改成:只要没显式调用 UseConnection,就报错。
-            if (!options.IsConfigured)
-                throw new InvalidOperationException(
-                    "[EventBus-RelationDb] must call UseConnection(dataType, connectionString) in configure");
-
             eventBusBuilder.Services.AddOptions<EventBusRelationDbOptions>()
-                .Configure(o =>
-                {
-                    o.UseConnection(options.DataType, options.ConnectionString);
-                    o.PublishedTableName = options.PublishedTableName;
-                    o.ReceivedTableName = options.ReceivedTableName;
-                });
+                .Configure(configure);
             eventBusBuilder.Services.AddSingleton<IFreeSqlFactory, DefaultFreeSqlFactory>();
             eventBusBuilder.Services.AddSingleton<IMessageStorage, RelationDbMessageStorage>();
             // 之前注册的是抽象基类 RelationDbMessageStorageInitializerBase,DI 容器无法
             // 解析抽象类型,导致启动时抛 ArgumentException。这里改成默认具体实现,
             // 应用方如果需要扩展 DDL,自己派生一个子类注册覆盖即可。
-            eventBusBuilder.Services.AddTransient<IMessageStorageInitializer, DefaultRelationDbMessageStorageInitializer>();
+            eventBusBuilder.Services
+                .AddTransient<IMessageStorageInitializer, DefaultRelationDbMessageStorageInitializer>();
             return eventBusBuilder;
+        }
+
+        /// <summary>
+        /// 转换为EventBus 事务上下文
+        /// </summary>
+        /// <param name="relationDbTransactionContext"></param>
+        /// <returns></returns>
+        public static RelationDbStorageTransactionContext ToTransactionContext(
+            this IDbTransaction relationDbTransactionContext)
+        {
+            return new RelationDbStorageTransactionContext(relationDbTransactionContext);
         }
     }
 }

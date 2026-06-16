@@ -2,9 +2,9 @@
 
 using System;
 using System.IO;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using FreeSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +13,6 @@ using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
 using Shashlik.EventBus.MemoryQueue;
-using Shashlik.EventBus.Sqlite;
 using Shashlik.Utils.Extensions;
 
 namespace Sample.Sqlite
@@ -53,7 +52,7 @@ namespace Sample.Sqlite
                     }, 5);
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitSqlite"; })
-                        .AddSqlite<DemoDbContext>()
+                        .AddRelationDb<DemoDbContext>(DataType.Sqlite)
                         .AddMemoryQueue();
 
                     services.AddHostedService<TestService>();

@@ -3,8 +3,8 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using FreeSql;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using SampleBase;
 using Shashlik.EventBus;
 using Shashlik.EventBus.RabbitMQ;
-using Shashlik.EventBus.SqlServer;
+using Shashlik.EventBus.RelationDbStorage;
 using Shashlik.Utils.Extensions;
 
 namespace Sample.Rabbit.SqlServer
@@ -51,7 +51,7 @@ namespace Sample.Rabbit.SqlServer
                     }, 5);
 
                     services.AddEventBus(r => { r.Environment = "DemoRabbitSqlServer"; })
-                        .AddSqlServer<DemoDbContext>()
+                        .AddRelationDb<DemoDbContext>(DataType.SqlServer)
                         .AddRabbitMQ(configuration.GetSection("EventBus:RabbitMQ"));
 
                     services.AddHostedService<TestService>();
