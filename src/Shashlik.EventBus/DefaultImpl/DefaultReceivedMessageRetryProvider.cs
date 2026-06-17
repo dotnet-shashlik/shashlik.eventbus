@@ -81,28 +81,34 @@ namespace Shashlik.EventBus.DefaultImpl
                 return;
 
             // 见 DefaultPublishedMessageRetryProvider: 用 SemaphoreSlim + Task.WhenAll
-            // 替换 Parallel.ForEach + GetAwaiter().GetResult,真正以异步方式并发。
-            using var semaphore = new SemaphoreSlim(
-                Math.Max(1, Options.Value.RetryMaxDegreeOfParallelism));
-            var tasks = new List<Task>(messages.Count);
-            foreach (var item in messages)
+            await Parallel.ForEachAsync(messages, new ParallelOptions
             {
-                await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-                tasks.Add(RunOneAsync(item, semaphore, cancellationToken));
-            }
-
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+                MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism,
+                CancellationToken = cancellationToken
+            }, async (item, cToken) =>
+            {
+                // 延迟消息, 还没到时间的, 交给TimerHelper
+                if (item.DelayAt.HasValue && item.DelayAt.Value > DateTimeOffset.Now &&
+                    (item.DelayAt.Value - DateTimeOffset.Now).TotalSeconds <=
+                    Options.Value.DelayedMessageToleranceSeconds)
+                {
+                    await RunDelayAsync(item, cToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await RunNowAsync(item, cToken);
+                }
+            }).ConfigureAwait(false);
         }
 
-        private async Task RunOneAsync(
+        private async Task RunNowAsync(
             MessageStorageModel item,
-            SemaphoreSlim semaphore,
             CancellationToken cancellationToken)
         {
             try
             {
                 await ReceivedHandler
-                    .LockingHandleAsync(item.Id!, cancellationToken)
+                    .LockAndHandleAsync(item.Id, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -110,9 +116,28 @@ namespace Shashlik.EventBus.DefaultImpl
                 Logger.LogError(ex,
                     $"[EventBus] retry received message \"{item.Id}\" failed");
             }
-            finally
+        }
+
+        private async Task RunDelayAsync(
+            MessageStorageModel item,
+            CancellationToken cancellationToken)
+        {
+            try
             {
-                semaphore.Release();
+                var lockEndAt = item.DelayAt!.Value.AddSeconds(Options.Value.LockTime);
+                var lockRes = await ReceivedHandler
+                    .LockAsync(item.Id, lockEndAt, cancellationToken)
+                    .ConfigureAwait(false);
+                if (lockRes)
+                {
+                    TimerHelper.SetTimeout(async () => await ReceivedHandler.HandleAsync(item.Id, cancellationToken),
+                        item.DelayAt.Value, cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex,
+                    $"[EventBus] retry received delay message \"{item.Id}\" failed");
             }
         }
     }

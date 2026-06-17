@@ -22,15 +22,8 @@ namespace Shashlik.EventBus.Utils
             if (expire <= TimeSpan.Zero)
                 throw new ArgumentException("invalid expire.", nameof(expire));
 
-            Task.Run(async () =>
-            {
-                using var timer = new PeriodicTimer(expire);
-                while (await timer.WaitForNextTickAsync(cancellationToken))
-                {
-                    action();
-                    return;
-                }
-            }, cancellationToken);
+            Task.Delay(expire, cancellationToken)
+                .ContinueWith(_ => action(), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -48,15 +41,8 @@ namespace Shashlik.EventBus.Utils
             if (expire <= TimeSpan.Zero)
                 throw new ArgumentException("invalid expire.", nameof(expire));
 
-            Task.Run(async () =>
-            {
-                using var timer = new PeriodicTimer(expire);
-                while (await timer.WaitForNextTickAsync(cancellationToken))
-                {
-                    await action();
-                    return;
-                }
-            }, cancellationToken);
+            Task.Delay(expire, cancellationToken)
+                .ContinueWith(async _ => await action(), cancellationToken);
         }
 
         /// <summary>

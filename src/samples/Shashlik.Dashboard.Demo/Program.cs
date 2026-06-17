@@ -75,7 +75,7 @@ var eventBusBuilder = builder.Services.AddEventBus(r =>
     // 单次重试消息数量限制，默认100
     r.RetryLimitCount = 100;
     // 成功的消息过期时间，默认3天，失败的消息永不过期，必须处理
-    r.SucceedExpireHour = 24 * 3;
+    r.MessageExpireHour = 24 * 3;
     // 消息处理失败后，重试器介入时间，默认5分钟后
     r.StartRetryAfter = 20;
     // 事务提交超时时间,单位秒,默认60秒

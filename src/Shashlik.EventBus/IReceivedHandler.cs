@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,13 +23,35 @@ namespace Shashlik.EventBus
             EventHandlerDescriptor descriptor,
             CancellationToken cancellationToken);
 
+
+        /// <summary>
+        /// 无锁事件处理执行
+        /// </summary>
+        /// <param name="storageId"></param>
+        /// <param name="cancellationToken">取消token</param>
+        /// <returns></returns>
+        public Task<HandleResult> HandleAsync(
+            long storageId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 锁定数据
+        /// </summary>
+        /// <param name="storageId"></param>
+        /// <param name="lockEndAt"></param>
+        /// <param name="cancellationToken">取消token</param>
+        /// <returns></returns>
+        public Task<bool> LockAsync(
+            long storageId, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken = default);
+
         /// <summary>
         /// 锁定数据并事件处理执行
         /// </summary>
         /// <param name="storageId"></param>
         /// <param name="cancellationToken">取消token</param>
         /// <returns></returns>
-        public Task<HandleResult> LockingHandleAsync(
+        public Task<HandleResult> LockAndHandleAsync(
             long storageId,
             CancellationToken cancellationToken = default);
     }

@@ -26,9 +26,9 @@ namespace Shashlik.EventBus
         public int StartRetryAfter { get; set; } = 60 * 5;
 
         /// <summary>
-        /// 重试器单次执行数量,默认100
+        /// 重试器单次执行数量,默认200
         /// </summary>
-        public int RetryLimitCount { get; set; } = 100;
+        public int RetryLimitCount { get; set; } = 200;
 
         /// <summary>
         /// 重试器并行执行数量,默认5
@@ -41,19 +41,24 @@ namespace Shashlik.EventBus
         public int RetryFailedMax { get; set; } = 60;
 
         /// <summary>
-        /// 失败重试间隔,单位秒,默认120s
+        /// 失败重试间隔,单位秒,默认5s
         /// </summary>
-        public int RetryInterval { get; set; } = 60 * 2;
+        public int RetryInterval { get; set; } = 5;
 
         /// <summary>
-        /// 执行重试操作时,锁定时长,秒,默认110s,需要小于<see cref="RetryInterval"/>
+        /// 执行重试操作时,锁定时长,秒,默认60s
         /// </summary>
-        public int LockTime { get; set; } = 60 * 2 - 10;
+        public int LockTime { get; set; } = 60;
 
         /// <summary>
         /// 成功的消息多久后删除,单位小时,默认3天
         /// </summary>
-        public int SucceedExpireHour { get; set; } = 3 * 24;
+        public int MessageExpireHour { get; set; } = 3 * 24;
+
+        /// <summary>
+        /// 定义延迟消息允许的时间容忍度 (秒)，默认3s, 延迟消息达到时, 还需要3秒内就要执行时, 变成立即执行
+        /// </summary>
+        public int DelayedMessageToleranceSeconds { get; set; } = 3;
 
         /// <summary>
         /// Service注册生命周期类型
@@ -73,7 +78,8 @@ namespace Shashlik.EventBus
             var errors = new List<string>();
 
             if (options.TransactionCommitTimeout <= 0)
-                errors.Add($"{nameof(options.TransactionCommitTimeout)} must be > 0, got {options.TransactionCommitTimeout}");
+                errors.Add(
+                    $"{nameof(options.TransactionCommitTimeout)} must be > 0, got {options.TransactionCommitTimeout}");
             if (options.StartRetryAfter <= 0)
                 errors.Add($"{nameof(options.StartRetryAfter)} must be > 0, got {options.StartRetryAfter}");
             if (options.TransactionCommitTimeout >= options.StartRetryAfter)
@@ -91,9 +97,10 @@ namespace Shashlik.EventBus
             if (options.RetryLimitCount <= 0)
                 errors.Add($"{nameof(options.RetryLimitCount)} must be > 0, got {options.RetryLimitCount}");
             if (options.RetryMaxDegreeOfParallelism <= 0)
-                errors.Add($"{nameof(options.RetryMaxDegreeOfParallelism)} must be > 0, got {options.RetryMaxDegreeOfParallelism}");
-            if (options.SucceedExpireHour <= 0)
-                errors.Add($"{nameof(options.SucceedExpireHour)} must be > 0, got {options.SucceedExpireHour}");
+                errors.Add(
+                    $"{nameof(options.RetryMaxDegreeOfParallelism)} must be > 0, got {options.RetryMaxDegreeOfParallelism}");
+            if (options.MessageExpireHour <= 0)
+                errors.Add($"{nameof(options.MessageExpireHour)} must be > 0, got {options.MessageExpireHour}");
             if (string.IsNullOrWhiteSpace(options.Environment))
                 errors.Add($"{nameof(options.Environment)} must not be empty");
 

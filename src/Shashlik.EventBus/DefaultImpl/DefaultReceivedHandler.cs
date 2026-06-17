@@ -39,7 +39,21 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task<HandleResult> LockingHandleAsync(long id, CancellationToken cancellationToken = default)
+        public async Task<HandleResult> HandleAsync(long storageId, CancellationToken cancellationToken = default)
+        {
+            return await HandleAsync(storageId, null, null, null, false,
+                cancellationToken);
+        }
+
+        public async Task<bool> LockAsync(long storageId, DateTimeOffset lockEndAt,
+            CancellationToken cancellationToken = default)
+        {
+            return await MessageStorage.TryLockReceivedAsync(
+                storageId, lockEndAt,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<HandleResult> LockAndHandleAsync(long id, CancellationToken cancellationToken = default)
         {
             return await HandleAsync(id, null, null, null, true, cancellationToken);
         }
@@ -86,7 +100,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             messageStorageModel.Id,
                             MessageStatus.Succeeded,
                             ++messageStorageModel.RetryCount,
-                            DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),
+                            DateTimeOffset.Now.AddHours(Options.Value.MessageExpireHour),
                             cancellationToken)
                         .ConfigureAwait(false);
                 }

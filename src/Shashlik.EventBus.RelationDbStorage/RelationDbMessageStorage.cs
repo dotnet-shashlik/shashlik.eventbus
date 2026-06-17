@@ -254,41 +254,17 @@ internal class RelationDbMessageStorage : IMessageStorage
     {
         var createTimeLimit = DateTimeOffset.UtcNow.AddSeconds(-delayRetrySecond).GetLongDate();
         var now = DateTimeOffset.UtcNow.GetLongDate();
-        // 内层每个分支必须 .Limit(count): 否则 FreeSql 生成
-        //   (SELECT ... ORDER BY) UNION ALL (SELECT ... ORDER BY) ORDER BY ... LIMIT N
-        // 在 MySQL 上会先 materialize 每个内层子查询的全部结果集 (可能千万行),
-        // 再由外层 ORDER BY + LIMIT 取 N — 外层 LIMIT 此时根本节省不了 IO。
-        // 加上内层 LIMIT 后, 每个分支只取本批最多 count 行, UNION 后总共 2*count 行,
-        // 外层再排序取 count, 整体复杂度 O(count*logN) 而非 O(N)。
-        // 普通消息
-        var normalQuery = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
+        return await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.Environment == environment &&
                         r.Status.In(MessageStatus.Scheduled, MessageStatus.Failed) &&
-                        r.IsDelay == false &&
                         r.CreateTimeTicks < createTimeLimit &&
                         r.RetryCount < maxFailedRetryCount &&
                         (!r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now))
             .OrderByDescending(r => r.CreateTimeTicks)
-            .Limit(count);
-
-        // 延迟消息
-        var delayQuery = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
-            .Where(r => r.Environment == environment &&
-                        r.Status.In(MessageStatus.Scheduled, MessageStatus.Failed) &&
-                        r.IsDelay == true &&
-                        r.DelayAtTicks <= now &&
-                        r.RetryCount < maxFailedRetryCount &&
-                        (!r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now))
-            .OrderByDescending(r => r.CreateTimeTicks)
-            .Limit(count);
-
-        // 合并并排序、限制数量
-        return await normalQuery
-            .UnionAll(delayQuery)
-            .OrderByDescending(r => r.CreateTimeTicks)
             .Limit(count)
             .ToListAsync(cancellationToken)
             .ContinueWith(t => t.Result.Select(r => r.ToModel()).ToList(), cancellationToken);
+        ;
     }
 
     public virtual async Task<List<MessageStorageModel>> GetReceivedMessagesOfNeedRetryAsync(
@@ -313,11 +289,12 @@ internal class RelationDbMessageStorage : IMessageStorage
             .Limit(count);
 
         // 延迟消息
+        var delayMax = now + delayRetrySecond + (int)(delayRetrySecond * 0.2);
         var delayQuery = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.Environment == environment &&
                         r.Status.In(MessageStatus.Scheduled, MessageStatus.Failed) &&
                         r.IsDelay == true &&
-                        r.DelayAtTicks <= now &&
+                        r.DelayAtTicks <= delayMax &&
                         r.RetryCount < maxFailedRetryCount &&
                         (!r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now))
             .OrderByDescending(r => r.CreateTimeTicks)
