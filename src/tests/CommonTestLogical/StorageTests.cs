@@ -33,6 +33,7 @@ namespace CommonTestLogical
         private EventBusOptions EventBusOptions { get; }
         private DemoDbContext DbContext { get; }
         private IMessageStorage MessageStorage { get; }
+        private IServiceProvider ServiceProvider { get; }
 
         // ---- helpers -------------------------------------------------------
 
@@ -52,6 +53,7 @@ namespace CommonTestLogical
         {
             return new MessageStorageModel
             {
+                Id = ServiceProvider.GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = EventBusOptions.Environment,
                 CreateTime = createTime ?? DateTimeOffset.Now,
@@ -246,17 +248,17 @@ namespace CommonTestLogical
             // - msg5(过期&失败达到 maxRetry) -> 删除
             // 已接收表 同理
             var now = DateTimeOffset.Now;
-            var past = now.AddHours(-EventBusOptions.SucceedExpireHour - 1);
+            var past = now.AddHours(-EventBusOptions.MessageExpireHour - 1);
             var future = now.AddHours(1);
 
-            string addPublished(DateTimeOffset expire, string status, int retry)
+            long addPublished(DateTimeOffset expire, string status, int retry)
             {
                 var m = NewMsg(expireTime: expire, status: status, retryCount: retry);
                 MessageStorage.SavePublishedAsync(m, null, default).GetAwaiter().GetResult();
                 return m.Id;
             }
 
-            string addReceived(DateTimeOffset expire, string status, int retry)
+            long addReceived(DateTimeOffset expire, string status, int retry)
             {
                 var m = NewMsg(expireTime: expire, status: status, retryCount: retry);
                 MessageStorage.SaveReceivedAsync(m, default).GetAwaiter().GetResult();

@@ -28,7 +28,7 @@ internal class DefaultFreeSqlFactory : IFreeSqlFactory, IDisposable
                     ["Invalid connection factory"]);
             freeSqlBuilder.UseConnectionString(connectionFactory.DataType, connectionFactory.ConnectionString);
         }
-        else if (string.IsNullOrWhiteSpace(opts.ConnectionString) && opts.DataType.HasValue)
+        else if (!string.IsNullOrWhiteSpace(opts.ConnectionString) && opts.DataType.HasValue)
         {
             freeSqlBuilder.UseConnectionString(opts.DataType.Value, opts.ConnectionString);
         }

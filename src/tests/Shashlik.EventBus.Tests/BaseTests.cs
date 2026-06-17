@@ -124,7 +124,7 @@ namespace Shashlik.EventBus.Tests
 
             // 1) EventBody 为 null 时抛 InvalidCastException
             Should.Throw<InvalidCastException>(async () => await invoker.InvokeAsync(new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -143,7 +143,7 @@ namespace Shashlik.EventBus.Tests
             // 2) EventBody 正常 - 应能成功调用并捕获 handler 的副作用
             TestEventHandler.Reset();
             await invoker.InvokeAsync(new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -176,6 +176,19 @@ namespace Shashlik.EventBus.Tests
             // 唯一性
             var ids = new ConcurrentBag<string>();
             Parallel.For(0, 10000, _ => ids.Add(msgIdGenerator.GenerateId()));
+            ids.Distinct().Count().ShouldBe(10000);
+        }
+        
+        [Fact]
+        public void IdGeneratorTests()
+        {
+            var msgIdGenerator = GetService<IIdGenerator>();
+            var id = msgIdGenerator.NextId();
+            id.ShouldBeGreaterThan(0);
+
+            // 唯一性
+            var ids = new ConcurrentBag<long>();
+            Parallel.For(0, 10000, _ => ids.Add(msgIdGenerator.NextId()));
             ids.Distinct().Count().ShouldBe(10000);
         }
 
@@ -361,7 +374,7 @@ namespace Shashlik.EventBus.Tests
             var eventHandlerNameRuler = GetService<IEventHandlerNameRuler>();
             var before = TestEventHandler.Counter;
             var id = await messageStorage.SaveReceivedAsync(new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString(),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -395,7 +408,7 @@ namespace Shashlik.EventBus.Tests
             var eventHandlerNameRuler = GetService<IEventHandlerNameRuler>();
             var before = TestExceptionEventHandler.Counter;
             var id = await messageStorage.SaveReceivedAsync(new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString(),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -428,7 +441,7 @@ namespace Shashlik.EventBus.Tests
             var messageStorage = GetService<IMessageStorage>();
             var eventNameRuler = GetService<IEventNameRuler>();
             var id = await messageStorage.SavePublishedAsync(new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString(),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -451,17 +464,6 @@ namespace Shashlik.EventBus.Tests
             dbMsg.Status.ShouldBe(MessageStatus.Succeeded);
         }
 
-        [Fact]
-        public async Task RetryProviderMaxSuccessTest()
-        {
-            // IRetryProvider.Retry 接收一个 action,DefaultRetryProvider 直接执行一次。
-            var retryProvider = GetService<IRetryProvider>();
-            var counter = 0;
-            await retryProvider.Retry("1",
-                () => Task.FromResult(new HandleResult(true)));
-            counter.ShouldBe(0); // 不会调 counter++(action 没有副作用)
-        }
-
         // ---- StartupAsync 触发重试器立即扫描 ---------------------------
 
         [Fact]
@@ -472,8 +474,10 @@ namespace Shashlik.EventBus.Tests
             var retryProvider = GetService<IPublishedMessageRetryProvider>();
             var messageStorage = GetService<IMessageStorage>();
             var eventNameRuler = GetService<IEventNameRuler>();
+            var idGenerator = GetService<IIdGenerator>();
             var id = await messageStorage.SavePublishedAsync(new MessageStorageModel
             {
+                Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString(),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now.AddSeconds(-Options.StartRetryAfter - 10),
@@ -513,7 +517,7 @@ namespace Shashlik.EventBus.Tests
             var eventNameRuler = GetService<IEventNameRuler>();
             var eventHandlerNameRuler = GetService<IEventHandlerNameRuler>();
             var id = await messageStorage.SaveReceivedAsync(new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString(),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now.AddSeconds(-Options.StartRetryAfter - 10),

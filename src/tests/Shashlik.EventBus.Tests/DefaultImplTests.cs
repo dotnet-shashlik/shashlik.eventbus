@@ -96,6 +96,7 @@ namespace Shashlik.EventBus.Tests
             var invoker = GetService<IEventHandlerInvoker>();
             var msg = new MessageStorageModel
             {
+                Id = GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -134,11 +135,12 @@ namespace Shashlik.EventBus.Tests
             // 准备 1 条已过期且 status=Succeeded 的 published
             var m1 = new MessageStorageModel
             {
+                Id = GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
                 DelayAt = null,
-                ExpireTime = DateTimeOffset.Now.AddHours(-Options.SucceedExpireHour - 1),
+                ExpireTime = DateTimeOffset.Now.AddHours(-Options.MessageExpireHour - 1),
                 EventHandlerName = null,
                 EventName = eventNameRuler.GetName(typeof(TestEvent)),
                 EventBody = "{\"Name\":\"expire-test-1\"}",
@@ -153,6 +155,7 @@ namespace Shashlik.EventBus.Tests
             // 1 条未过期 status=Succeeded 的
             var m2 = new MessageStorageModel
             {
+                Id = GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -190,6 +193,7 @@ namespace Shashlik.EventBus.Tests
             var handler = GetService<IPublishHandler>();
             var m = new MessageStorageModel
             {
+                Id = GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -225,6 +229,7 @@ namespace Shashlik.EventBus.Tests
             var handler = GetService<IReceivedHandler>();
             var m = new MessageStorageModel
             {
+                Id = GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = Options.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -242,7 +247,7 @@ namespace Shashlik.EventBus.Tests
             var id = await storage.SaveReceivedAsync(m, default);
 
             (await storage.TryLockReceivedAsync(id, DateTimeOffset.Now.AddSeconds(10), default)).ShouldBeTrue();
-            var r1 = await handler.LockingHandleAsync(id, default);
+            var r1 = await handler.LockAndHandleAsync(id, default);
             r1.Success.ShouldBeTrue();
         }
 
@@ -288,9 +293,9 @@ namespace Shashlik.EventBus.Tests
                 Environment = "",
                 RetryFailedMax = 3, // < 5
                 RetryInterval = 10,
-                LockTime = 20,  // >= RetryInterval
+                LockTime = 20, // >= RetryInterval
                 StartRetryAfter = 5,
-                TransactionCommitTimeout = 10  // >= StartRetryAfter
+                TransactionCommitTimeout = 10 // >= StartRetryAfter
             };
             var validator = new EventBusOptionsValidation();
             var r = validator.Validate(null, invalid);
@@ -324,7 +329,7 @@ namespace Shashlik.EventBus.Tests
                 Environment = "test",
                 RetryFailedMax = 10,
                 RetryInterval = 10,
-                LockTime = 10,  // == RetryInterval
+                LockTime = 10, // == RetryInterval
                 StartRetryAfter = 30,
                 TransactionCommitTimeout = 10
             };
@@ -341,7 +346,7 @@ namespace Shashlik.EventBus.Tests
                 RetryInterval = 10,
                 LockTime = 5,
                 StartRetryAfter = 10,
-                TransactionCommitTimeout = 10  // == StartRetryAfter
+                TransactionCommitTimeout = 10 // == StartRetryAfter
             };
             new EventBusOptionsValidation().Validate(null, invalid).Failed.ShouldBeTrue();
         }

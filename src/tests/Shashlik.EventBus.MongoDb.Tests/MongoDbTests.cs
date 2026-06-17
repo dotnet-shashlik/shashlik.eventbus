@@ -51,6 +51,7 @@ namespace Shashlik.EventBus.MongoDb.Tests
             var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
             {
+                Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = EventBusOptions.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -102,7 +103,7 @@ namespace Shashlik.EventBus.MongoDb.Tests
 
             var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = EventBusOptions.Environment,
                 CreateTime = DateTimeOffset.Now,
@@ -151,7 +152,7 @@ namespace Shashlik.EventBus.MongoDb.Tests
 
             var @event = new TestEvent { Name = "张三" };
             var msg = new MessageStorageModel
-            {
+            {Id =  GetService<IIdGenerator>().NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = EventBusOptions.Environment,
                 CreateTime = DateTimeOffset.Now,
