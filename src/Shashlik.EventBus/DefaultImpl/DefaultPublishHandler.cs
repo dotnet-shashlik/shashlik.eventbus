@@ -111,7 +111,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (Exception exInner)
+                catch (Exception exInner)when (exInner is not OperationCanceledException)
                 {
                     Logger.LogError(exInner, $"[EventBus] update published message occur error");
                 }

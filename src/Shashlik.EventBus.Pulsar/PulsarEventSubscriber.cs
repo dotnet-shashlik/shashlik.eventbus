@@ -37,24 +37,30 @@ namespace Shashlik.EventBus.Pulsar
         {
             var eventName = eventHandlerDescriptor.EventName;
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
-            var consumer = Connection.GetConsumer(eventName, eventHandlerName);
-            _ = Task.Run(async () =>
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await Consume(consumer, eventName, eventHandlerName, cancellationToken);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.LogError(e, $"[EventBus-Kafka] consume message occur error");
-                    }
 
-                    // ReSharper disable once MethodSupportsCancellation
-                    await Task.Delay(10).ConfigureAwait(false);
-                }
-            }, cancellationToken);
+            for (int i = 0; i < Options.CurrentValue.ConsumerPoolSize; i++)
+            {
+                var consumer = Connection.GetConsumer(eventName, eventHandlerName);
+                _ = Task.Run(async () =>
+                {
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            await Consume(consumer, eventName, eventHandlerName, cancellationToken)
+                                .ConfigureAwait(false);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e, $"[EventBus-Kafka] consume message occur error");
+                        }
+
+                        // ReSharper disable once MethodSupportsCancellation
+                        await Task.Delay(10).ConfigureAwait(false);
+                    }
+                }, cancellationToken);
+            }
+
             return Task.CompletedTask;
         }
 
@@ -99,7 +105,7 @@ namespace Shashlik.EventBus.Pulsar
                 // 一定要在消息接收处理完成后才确认ack
                 await consumer.AcknowledgeAsync(messageRes.MessageId);
             else
-                await consumer!.NegativeAcknowledge(messageRes.MessageId);
+                await consumer.NegativeAcknowledge(messageRes.MessageId);
         }
     }
 }

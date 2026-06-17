@@ -111,7 +111,7 @@ namespace Shashlik.EventBus.DefaultImpl
                             cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (Exception ex1)
+                catch (Exception ex1)when (ex1 is not OperationCanceledException)
                 {
                     Logger.LogError(ex1, "[EventBus] update received message error");
                 }

@@ -19,13 +19,13 @@ namespace Shashlik.EventBus.Pulsar
             Options = options;
             _serviceProvider = serviceProvider;
             _connection = new Lazy<PulsarClient>(Get, true);
-            _consumers = new ConcurrentDictionary<string, IConsumer<byte[]>>();
+            _consumers = [];
             _poolProvider = poolProvider;
         }
 
         private readonly IServiceProvider _serviceProvider;
         private readonly Lazy<PulsarClient> _connection;
-        private readonly ConcurrentDictionary<string, IConsumer<byte[]>> _consumers;
+        private readonly ConcurrentBag<IConsumer<byte[]>> _consumers;
         private readonly IObjectPoolProvider _poolProvider;
         private readonly ConcurrentDictionary<string, IObjectPool<IProducer<byte[]>>> _pools = new();
         private IOptionsMonitor<EventBusPulsarOptions> Options { get; }
@@ -41,7 +41,7 @@ namespace Shashlik.EventBus.Pulsar
 
         public async ValueTask<IPoolLease<IProducer<byte[]>>> GetProducer(string topic)
         {
-            return await _pools.GetOrAdd(topic, t => CreatePoolFor(t))
+            return await _pools.GetOrAdd(topic, CreatePoolFor)
                 .RentAsync().ConfigureAwait(false);
         }
 
@@ -55,17 +55,18 @@ namespace Shashlik.EventBus.Pulsar
 
         public IConsumer<byte[]> GetConsumer(string topic, string group)
         {
-            return _consumers.GetOrAdd($"{topic}-{group}", _ =>
-                Connection.NewConsumer().Topic(topic).SubscriptionName(group).ConsumerName(group)
-                    .SubscriptionType(SubscriptionType.Shared).SubscribeAsync().ConfigureAwait(false).GetAwaiter()
-                    .GetResult());
+            var consumer = Connection.NewConsumer().Topic(topic).SubscriptionName(group).ConsumerName(group)
+                .SubscriptionType(SubscriptionType.Shared).SubscribeAsync().ConfigureAwait(false).GetAwaiter()
+                .GetResult();
+            _consumers.Add(consumer);
+            return consumer;
         }
 
         public async ValueTask DisposeAsync()
         {
             try
             {
-                foreach (var item in _consumers.Values)
+                foreach (var item in _consumers)
                 {
                     await item.DisposeAsync();
                 }

@@ -18,6 +18,7 @@ using Shashlik.EventBus.MemoryStorage;
 using Shashlik.EventBus.RabbitMQ;
 using Shashlik.EventBus.Redis;
 using FreeRedis;
+using Shashlik.EventBus.Pulsar;
 
 namespace Sample.Performance
 {
@@ -29,9 +30,9 @@ namespace Sample.Performance
 
         private static async Task<int> Main(string[] args)
         {
-            Console.WriteLine($"请输入存储类型（Storage），可选项：memory、mysql、postgresql，默认：memory");
+            Console.WriteLine($"请输入存储类型（Storage），可选项：memory、mysql、postgresql、sqlserver、oracle，默认：memory");
             Storage = Console.ReadLine()?.Trim().ToLowerInvariant() ?? "memory";
-            Console.WriteLine($"请输入消息队列类型（MQ），可选项：memory、kafka、rabbitmq、redis，默认：memory");
+            Console.WriteLine($"请输入消息队列类型（MQ），可选项：memory、kafka、rabbitmq、redis、pulsar，默认：memory");
             MQ = Console.ReadLine()?.Trim().ToLowerInvariant() ?? "memory";
 
 
@@ -166,6 +167,9 @@ namespace Sample.Performance
                     break;
                 case "redis":
                     builder.AddRedisMQ();
+                    break;
+                case "pulsar":
+                    builder.AddPulsar(configuration.GetSection("EventBus:Pulsar"));
                     break;
                 default:
                     throw new InvalidOperationException(

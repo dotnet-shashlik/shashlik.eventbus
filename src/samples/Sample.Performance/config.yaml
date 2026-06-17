@@ -25,6 +25,8 @@ EventBus:
     Port: 55672
   Redis:
     Connection: 127.0.0.1:6379,defaultDatabase=1
+  Pulsar:
+    ServiceUrl: "pulsar://localhost"
 
 Logging:
   LogLevel:
