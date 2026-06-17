@@ -17,7 +17,9 @@ namespace Shashlik.EventBus.Utils;
 public class DefaultObjectPool<T> : IObjectPool<T> where T : class
 {
     private readonly IObjectPoolPolicy<T> _policy;
+
     private readonly ConcurrentBag<T> _idle = new();
+
     // 剩余可用配额,含"已借出 + 空闲"的总数控制。Wait 成功 = 拿到一次租借权。
     private readonly SemaphoreSlim _slots;
     private int _totalCount;
@@ -44,9 +46,8 @@ public class DefaultObjectPool<T> : IObjectPool<T> where T : class
         // 拿配额(可能因满载阻塞)
         await _slots.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-        T? item = null;
         // 尝试从空闲队列取
-        if (!_idle.TryTake(out item))
+        if (!_idle.TryTake(out var item))
         {
             // 空闲队列空:申请一个新的槽位
             Interlocked.Increment(ref _totalCount);
@@ -93,7 +94,10 @@ public class DefaultObjectPool<T> : IObjectPool<T> where T : class
         }
 
         // 释放配额,让其他等待者可以借出
-        try { _slots.Release(); }
+        try
+        {
+            _slots.Release();
+        }
         catch (SemaphoreFullException)
         {
             // 极端 race:Return 被调用了超过 Rent 的次数,记日志不抛。

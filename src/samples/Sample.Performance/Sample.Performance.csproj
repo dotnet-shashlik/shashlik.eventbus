@@ -18,6 +18,7 @@
         <ProjectReference Include="..\..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.Kafka\Shashlik.EventBus.Kafka.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.RabbitMQ\Shashlik.EventBus.RabbitMQ.csproj" />
     </ItemGroup>
 
     <ItemGroup>

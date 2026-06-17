@@ -18,6 +18,6 @@ namespace Shashlik.EventBus.RabbitMQ
         /// <summary>
         /// 创建一个异步消息消费者,长期持有(不参与池租借)。
         /// </summary>
-        AsyncEventingBasicConsumer CreateConsumer(string eventHandlerName, IChannel channel);
+        AsyncEventingBasicConsumer CreateConsumer(string eventHandlerName);
     }
 }

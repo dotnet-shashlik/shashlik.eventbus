@@ -40,6 +40,9 @@ namespace Shashlik.EventBus.RabbitMQ
         /// </summary>
         public int ConfirmTimeout { get; set; } = 5;
 
+        //消费者池大小,默认4
+        public int ConsumerPoolSize { get; set; } = 4;
+
         /// <summary>
         /// 自定义连接创建,优先使用此属性
         /// </summary>

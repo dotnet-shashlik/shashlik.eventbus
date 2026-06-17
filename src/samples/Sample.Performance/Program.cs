@@ -13,6 +13,7 @@ using Shashlik.EventBus;
 using Shashlik.EventBus.Kafka;
 using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MemoryStorage;
+using Shashlik.EventBus.RabbitMQ;
 
 namespace Sample.Performance
 {
@@ -131,9 +132,12 @@ namespace Sample.Performance
                 case "kafka":
                     builder.AddKafka(configuration.GetSection("EventBus:Kafka"));
                     break;
+                case "rabbitmq":
+                    builder.AddRabbitMQ(configuration.GetSection("EventBus:RabbitMQ"));
+                    break;
                 default:
                     throw new InvalidOperationException(
-                        $"Unsupported Benchmark:MQ='{options.MQ}'. Supported: memory, kafka");
+                        $"Unsupported Benchmark:MQ='{options.MQ}'. Supported: memory, kafka, rabbitmq");
             }
         }
 

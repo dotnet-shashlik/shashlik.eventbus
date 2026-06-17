@@ -20,7 +20,7 @@ namespace Shashlik.EventBus.RabbitMQ
             Options = options;
             _logger = logger;
             _connection = new Lazy<IConnection>(Get, true);
-            _consumers = new ConcurrentDictionary<string, AsyncEventingBasicConsumer>();
+            _consumers = [];
 
             // channel 池: 软上限 = 16。够应付一般应用并发,不至于撑爆 broker fd。
             // 真正高并发场景由用户通过 EventBusRabbitMQOptions 调整。
@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.RabbitMQ
 
         private readonly Lazy<IConnection> _connection;
         private readonly IObjectPool<IChannel> _channelPool;
-        private readonly ConcurrentDictionary<string, AsyncEventingBasicConsumer> _consumers;
+        private readonly ConcurrentBag<IChannel> _consumers;
         private readonly ILogger<RabbitMQMessageSender> _logger;
 
         private IOptionsMonitor<EventBusRabbitMQOptions> Options { get; }
@@ -42,9 +42,16 @@ namespace Shashlik.EventBus.RabbitMQ
             return await _channelPool.RentAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public AsyncEventingBasicConsumer CreateConsumer(string eventHandlerName, IChannel channel)
+        public AsyncEventingBasicConsumer CreateConsumer(string eventHandlerName)
         {
-            return _consumers.GetOrAdd(eventHandlerName, _ => new AsyncEventingBasicConsumer(channel));
+            var channel = _connection.Value
+                .CreateChannelAsync()
+                .ConfigureAwait(false)
+                .GetAwaiter().GetResult();
+            _consumers.Add(channel);
+            // 每个 channel 需要独立的 consumer 实例。
+            // delivery tag 是 per-channel 的,不能用同一个 consumer 跨 channel 共享。
+            return new AsyncEventingBasicConsumer(channel);
         }
 
         private IConnection Get()
@@ -66,15 +73,25 @@ namespace Shashlik.EventBus.RabbitMQ
 
         public async ValueTask DisposeAsync()
         {
-            try
-            {
-                if (_connection.IsValueCreated)
+            if (_connection.IsValueCreated)
+                try
+                {
                     await _connection.Value.DisposeAsync();
-            }
-            catch
-            {
-                // ignore
-            }
+                }
+                catch
+                {
+                    // ignore
+                }
+
+            foreach (var consumer in _consumers)
+                try
+                {
+                    await consumer.DisposeAsync();
+                }
+                catch
+                {
+                    // ignore
+                }
         }
     }
 }

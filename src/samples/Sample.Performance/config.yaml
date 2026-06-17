@@ -1,6 +1,6 @@
 Benchmark:
   Storage: postgresql
-  MQ: kafka
+  MQ: rabbitmq
   Total: 5000000
   Concurrency: 0
   PayloadSize: 128
@@ -22,6 +22,11 @@ EventBus:
       "linger.ms": "5"
       "batch.size": "65536"
       "compression.type": "lz4"
+  RabbitMQ:
+    Host: localhost
+    UserName: rabbit
+    Password: "123123"
+    Port: 55672
 
 Logging:
   LogLevel:
