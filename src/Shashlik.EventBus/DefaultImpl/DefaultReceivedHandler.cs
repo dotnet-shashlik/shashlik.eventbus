@@ -93,7 +93,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 return new HandleResult(true);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 if (messageStorageModel is null || descriptor is null)
                 {

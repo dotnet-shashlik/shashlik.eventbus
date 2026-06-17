@@ -1,4 +1,6 @@
+#nullable disable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 using FreeSql;
@@ -14,13 +16,25 @@ using Shashlik.EventBus.Kafka;
 using Shashlik.EventBus.MemoryQueue;
 using Shashlik.EventBus.MemoryStorage;
 using Shashlik.EventBus.RabbitMQ;
+using Shashlik.EventBus.Redis;
+using FreeRedis;
 
 namespace Sample.Performance
 {
     public class Program
     {
+        public static string Storage = "memory";
+        public static string MQ = "memory";
+        public static string ResolvedEnvironment = "eventbus";
+
         private static async Task<int> Main(string[] args)
         {
+            Console.WriteLine($"请输入存储类型（Storage），可选项：memory、mysql、postgresql，默认：memory");
+            Storage = Console.ReadLine()?.Trim().ToLowerInvariant() ?? "memory";
+            Console.WriteLine($"请输入消息队列类型（MQ），可选项：memory、kafka、rabbitmq、redis，默认：memory");
+            MQ = Console.ReadLine()?.Trim().ToLowerInvariant() ?? "memory";
+
+
             var benchmarkOptions = new BenchmarkOptions();
 
             var configFile = Path.Combine(AppContext.BaseDirectory, "config.yaml");
@@ -40,7 +54,7 @@ namespace Sample.Performance
                     services.AddOptions<BenchmarkOptions>()
                         .Bind(configuration.GetSection("Benchmark"));
                     configuration.GetSection("Benchmark").Bind(benchmarkOptions);
-
+                    ResolvedEnvironment = $"{benchmarkOptions.EnvironmentSuffix}_{Storage}_{MQ}";
                     services.AddLogging(logging =>
                     {
                         logging.AddConfiguration(configuration.GetSection("Logging"));
@@ -62,7 +76,7 @@ namespace Sample.Performance
 
             try
             {
-                await EnsureDatabaseAsync(benchmarkOptions, host.Services).ConfigureAwait(false);
+                await EnsureDatabaseAsync(benchmarkOptions, host.Services, Storage).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -79,36 +93,45 @@ namespace Sample.Performance
             BenchmarkOptions options,
             IConfiguration configuration)
         {
-            var storage = (options.Storage ?? "memory").Trim().ToLowerInvariant();
-            var mq = (options.MQ ?? "memory").Trim().ToLowerInvariant();
-
-            if (storage == "mysql" || storage == "postgresql")
+            if (Storage == "mysql" || Storage == "postgresql")
             {
-                var connectionString = configuration.GetConnectionString("Default")
-                    ?? throw new InvalidOperationException($"ConnectionStrings:Default is required when Storage={storage}");
+                var connectionString = configuration.GetConnectionString(Storage)
+                                       ?? throw new InvalidOperationException(
+                                           $"ConnectionStrings:Default is required when Storage={Storage}");
 
-                if (storage == "mysql")
+                if (Storage == "mysql")
                 {
-                    services.AddDbContextPool<PerfDbContext>(opt =>
-                    {
-                        opt.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-                    }, poolSize: 256);
+                    services.AddDbContextPool<PerfDbContext>(
+                        opt => { opt.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)); },
+                        poolSize: 256);
                 }
-                else
+                else if (Storage == "postgresql")
                 {
-                    services.AddDbContextPool<PerfDbContext>(opt =>
-                    {
-                        opt.UseNpgsql(connectionString);
-                    }, poolSize: 256);
+                    services.AddDbContextPool<PerfDbContext>(opt => { opt.UseNpgsql(connectionString); },
+                        poolSize: 256);
+                }
+                else if (Storage == "sqlserver")
+                {
+                    services.AddDbContextPool<PerfDbContext>(opt => { opt.UseNpgsql(connectionString); },
+                        poolSize: 256);
+                }
+                else if (Storage == "oracle")
+                {
+                    services.AddDbContextPool<PerfDbContext>(opt => { opt.UseNpgsql(connectionString); },
+                        poolSize: 256);
                 }
             }
 
-            var builder = services.AddEventBus(r =>
+            if (MQ == "redis")
             {
-                r.Environment = options.ResolvedEnvironment;
-            });
+                var redisConn = configuration.GetValue<string>("EventBus:Redis:Connection") ??
+                                "127.0.0.1:6379,defaultDatabase=1";
+                services.AddSingleton(new RedisClient(redisConn));
+            }
 
-            switch (storage)
+            var builder = services.AddEventBus(r => { r.Environment = ResolvedEnvironment; });
+
+            switch (Storage)
             {
                 case "memory":
                     builder.AddMemoryStorage();
@@ -119,12 +142,18 @@ namespace Sample.Performance
                 case "postgresql":
                     builder.AddRelationDb<PerfDbContext>(DataType.PostgreSQL);
                     break;
+                case "sqlserver":
+                    builder.AddRelationDb<PerfDbContext>(DataType.SqlServer);
+                    break;
+                case "oracle":
+                    builder.AddRelationDb<PerfDbContext>(DataType.Oracle);
+                    break;
                 default:
                     throw new InvalidOperationException(
-                        $"Unsupported Benchmark:Storage='{options.Storage}'. Supported: memory, mysql, postgresql");
+                        $"Unsupported Benchmark:Storage='{Storage}'. Supported: memory, mysql, postgresql");
             }
 
-            switch (mq)
+            switch (MQ)
             {
                 case "memory":
                     builder.AddMemoryQueue();
@@ -135,22 +164,25 @@ namespace Sample.Performance
                 case "rabbitmq":
                     builder.AddRabbitMQ(configuration.GetSection("EventBus:RabbitMQ"));
                     break;
+                case "redis":
+                    builder.AddRedisMQ();
+                    break;
                 default:
                     throw new InvalidOperationException(
-                        $"Unsupported Benchmark:MQ='{options.MQ}'. Supported: memory, kafka, rabbitmq");
+                        $"Unsupported Benchmark:MQ='{MQ}'. Supported: memory, kafka, rabbitmq");
             }
         }
 
         private static async Task EnsureDatabaseAsync(
             BenchmarkOptions options,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            string storage)
         {
-            var storage = options.Storage?.Trim().ToLowerInvariant();
             if (storage != "mysql" && storage != "postgresql")
                 return;
 
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            var connectionString = configuration.GetConnectionString("Default");
+            var connectionString = configuration.GetConnectionString(storage);
             if (string.IsNullOrWhiteSpace(connectionString)) return;
 
             if (storage == "mysql")
@@ -190,6 +222,7 @@ namespace Sample.Performance
                     cmd2.CommandText = $"CREATE DATABASE \"{dbName.Replace("\"", "\"\"")}\"";
                     await cmd2.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
+
                 Console.WriteLine($"[INFO] PostgreSQL database '{dbName}' ensured.");
             }
         }

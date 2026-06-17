@@ -40,6 +40,8 @@ namespace Shashlik.EventBus.Redis
 
             var eventName = eventHandlerDescriptor.EventName;
             var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
+            var poolSize = Math.Max(1, Options.CurrentValue.ConsumerPoolSize);
+
             try
             {
                 await redisClient.XGroupCreateAsync(eventName, eventHandlerName, MkStream: true);
@@ -50,79 +52,91 @@ namespace Shashlik.EventBus.Redis
                     throw;
             }
 
-            _ = Task.Run(async () =>
+            // 启动 poolSize 个 consumer task，同一个 consumer group 内多消费者
+            // Redis Streams 会自动将消息分发给组内不同的消费者
+            for (var i = 0; i < poolSize; i++)
             {
-                while (!cancellationToken.IsCancellationRequested)
+                var consumerIndex = i;
+                _ = Task.Run(async () =>
                 {
-                    StreamsEntry? readResult;
-                    try
+                    while (!cancellationToken.IsCancellationRequested)
                     {
-                        readResult =
-                            await redisClient.XReadGroupAsync(eventHandlerName, eventHandlerName, 5000, eventName, ">");
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.LogError(e,
-                            $"[EventBus-Redis] consume message occur error, event: {eventName}, handler: {eventHandlerName}");
-                        continue;
-                    }
-
-                    if (readResult is null)
-                        continue;
-                    if (readResult.fieldValues.Length >= 2 &&
-                        readResult.fieldValues[0].ToString() == RedisConstants.StreamBodyFieldName)
-                    {
-                        var messageBody = readResult.fieldValues[1].ToString();
-                        if (messageBody.IsNullOrWhiteSpace())
-                        {
-                            Logger.LogWarning(
-                                $"[EventBus-Redis] received empty message, event: {eventName}, handler: {eventHandlerName}");
-                            continue;
-                        }
-
-                        MessageTransferModel? message;
-
+                        StreamsEntry? readResult;
                         try
                         {
-                            message = MessageSerializer.Deserialize<MessageTransferModel>(messageBody!);
+                            // 每个 consumer 用独立的 consumer name (handler#index)
+                            readResult =
+                                await redisClient.XReadGroupAsync(eventHandlerName, $"{eventHandlerName}#{consumerIndex}", 5000, eventName, ">")
+                                    .ConfigureAwait(false);
                         }
                         catch (Exception e)
                         {
                             Logger.LogError(e,
-                                $"[EventBus-Redis] deserialize message from redis error, event: {eventName}, handler: {eventHandlerName}, body: {messageBody}");
+                                $"[EventBus-Redis] consume message occur error, event: {eventName}, handler: {eventHandlerName}#{consumerIndex}");
+                            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
                             continue;
                         }
 
-                        if (message is null)
+                        if (readResult is null)
                         {
-                            Logger.LogError("[EventBus-Redis] deserialize message from redis error");
+                            await Task.Delay(10, cancellationToken).ConfigureAwait(false);
                             continue;
                         }
-
-                        if (message.EventName != eventName)
+                        if (readResult.fieldValues.Length >= 2 &&
+                            readResult.fieldValues[0].ToString() == RedisConstants.StreamBodyFieldName)
                         {
-                            Logger.LogError(
-                                $"[EventBus-Redis] received invalid event name \"{message.EventName}\", expect \"{eventName}\"");
-                            continue;
+                            var messageBody = readResult.fieldValues[1].ToString();
+                            if (messageBody.IsNullOrWhiteSpace())
+                            {
+                                Logger.LogWarning(
+                                    $"[EventBus-Redis] received empty message, event: {eventName}, handler: {eventHandlerName}#{consumerIndex}");
+                                continue;
+                            }
+
+                            MessageTransferModel? message;
+
+                            try
+                            {
+                                message = MessageSerializer.Deserialize<MessageTransferModel>(messageBody!);
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.LogError(e,
+                                    $"[EventBus-Redis] deserialize message from redis error, event: {eventName}, handler: {eventHandlerName}#{consumerIndex}, body: {messageBody}");
+                                continue;
+                            }
+
+                            if (message is null)
+                            {
+                                Logger.LogError("[EventBus-Redis] deserialize message from redis error");
+                                continue;
+                            }
+
+                            if (message.EventName != eventName)
+                            {
+                                Logger.LogError(
+                                    $"[EventBus-Redis] received invalid event name \"{message.EventName}\", expect \"{eventName}\"");
+                                continue;
+                            }
+
+                            Logger.LogDebug(
+                                $"[EventBus-Redis] received msg: {message}");
+
+                            // 处理消息
+                            var res = await MessageListener
+                                .OnReceiveAsync(eventHandlerName, message, cancellationToken)
+                                .ConfigureAwait(false);
+                            if (res == MessageReceiveResult.Success)
+                            {
+                                await redisClient.XAckAsync(eventName, eventHandlerName, readResult.id);
+                            }
+
+                            // ReSharper disable once MethodSupportsCancellation
+                            await Task.Delay(10).ConfigureAwait(false);
                         }
-
-                        Logger.LogDebug(
-                            $"[EventBus-Redis] received msg: {message}");
-
-                        // 处理消息
-                        var res = await MessageListener
-                            .OnReceiveAsync(eventHandlerName, message, cancellationToken)
-                            .ConfigureAwait(false);
-                        if (res == MessageReceiveResult.Success)
-                        {
-                            await redisClient.XAckAsync(eventName, eventHandlerName, readResult.id);
-                        }
-
-                        // ReSharper disable once MethodSupportsCancellation
-                        await Task.Delay(10).ConfigureAwait(false);
                     }
-                }
-            }, cancellationToken);
+                }, cancellationToken);
+            }
         }
     }
 }

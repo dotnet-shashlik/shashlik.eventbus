@@ -19,9 +19,11 @@
         <ProjectReference Include="..\..\Shashlik.EventBus.MemoryQueue\Shashlik.EventBus.MemoryQueue.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.Kafka\Shashlik.EventBus.Kafka.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.RabbitMQ\Shashlik.EventBus.RabbitMQ.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.Redis\Shashlik.EventBus.Redis.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
         <PackageReference Include="Microsoft.Extensions.Hosting" />
         <PackageReference Include="Microsoft.Extensions.Logging.Console" />
         <PackageReference Include="Microsoft.Extensions.Configuration" />

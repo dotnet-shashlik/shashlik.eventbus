@@ -1,6 +1,4 @@
 Benchmark:
-  Storage: postgresql
-  MQ: rabbitmq
   Total: 5000000
   Concurrency: 0
   PayloadSize: 128
@@ -9,10 +7,8 @@ Benchmark:
   EnvironmentSuffix: Perf
 
 ConnectionStrings:
-  # mysql
-  #Default: server=localhost;database=eventbus_perf;user id=root;password=123123;Pooling=True;Minimum Pool Size=20;Maximum Pool Size=100;AllowUserVariables=true;UseAffectedRows=false
-  # pg
-  Default: Host=localhost;Port=5433;Database=eventbus_perf_pg2;Username=pguser;Password=123123;Pooling=true;Maximum Pool Size=100
+  mysql: server=localhost;database=eventbus_perf;user id=root;password=123123;Pooling=True;Minimum Pool Size=20;Maximum Pool Size=100;AllowUserVariables=true;UseAffectedRows=false
+  postgresql: Host=localhost;Port=5433;Database=eventbus_perf_pg2;Username=pguser;Password=123123;Pooling=true;Maximum Pool Size=100
 
 EventBus:
   Kafka:
@@ -27,6 +23,8 @@ EventBus:
     UserName: rabbit
     Password: "123123"
     Port: 55672
+  Redis:
+    Connection: 127.0.0.1:6379,defaultDatabase=1
 
 Logging:
   LogLevel:

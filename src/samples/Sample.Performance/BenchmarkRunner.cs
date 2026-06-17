@@ -175,9 +175,9 @@ namespace Sample.Performance
             var sb = new StringBuilder();
             sb.AppendLine();
             sb.AppendLine("============== EventBus Performance Benchmark ==============");
-            sb.AppendLine($"  Storage         : {_options.Storage}");
-            sb.AppendLine($"  MQ              : {_options.MQ}");
-            sb.AppendLine($"  Environment     : {_options.ResolvedEnvironment}");
+            sb.AppendLine($"  Storage         : {Program.Storage}");
+            sb.AppendLine($"  MQ              : {Program.MQ}");
+            sb.AppendLine($"  Environment     : {Program.ResolvedEnvironment}");
             sb.AppendLine($"  Total messages  : {total:N0}");
             sb.AppendLine($"  Concurrency     : {concurrency}");
             sb.AppendLine($"  Payload size    : {payloadSize} B");
@@ -203,8 +203,8 @@ namespace Sample.Performance
             var sb = new StringBuilder();
             sb.AppendLine();
             sb.AppendLine("================ Benchmark Result ================");
-            sb.AppendLine($"  Storage          : {_options.Storage}");
-            sb.AppendLine($"  MQ               : {_options.MQ}");
+            sb.AppendLine($"  Storage          : {Program.Storage}");
+            sb.AppendLine($"  MQ               : {Program.MQ}");
             sb.AppendLine($"  Total            : {total:N0}");
             sb.AppendLine($"  Concurrency      : {concurrency}");
             sb.AppendLine($"  Payload size     : {payloadSize} B");

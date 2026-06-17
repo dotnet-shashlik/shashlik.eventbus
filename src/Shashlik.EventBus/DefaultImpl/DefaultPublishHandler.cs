@@ -81,7 +81,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                     // 消息发送没问题就更新数据库状态
                     await MessageStorage.UpdatePublishedAsync(
-                            messageStorageModel.Id!,
+                            messageStorageModel.Id,
                             MessageStatus.Succeeded,
                             ++messageStorageModel.RetryCount,
                             DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),
@@ -92,7 +92,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 return new HandleResult(true);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 if (messageStorageModel is null)
                 {
@@ -104,7 +104,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 try
                 {
                     await MessageStorage.UpdatePublishedAsync(
-                            messageStorageModel.Id!,
+                            messageStorageModel.Id,
                             MessageStatus.Failed,
                             ++messageStorageModel.RetryCount,
                             null,

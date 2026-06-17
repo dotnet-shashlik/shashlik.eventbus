@@ -2,10 +2,6 @@ namespace Sample.Performance
 {
     public class BenchmarkOptions
     {
-        public string Storage { get; set; } = "mysql";
-
-        public string MQ { get; set; } = "kafka";
-
         public int Total { get; set; } = 5_000_000;
 
         public int Concurrency { get; set; }
@@ -20,8 +16,5 @@ namespace Sample.Performance
 
         public int ResolvedConcurrency =>
             Concurrency > 0 ? Concurrency : System.Environment.ProcessorCount;
-
-        public string ResolvedEnvironment =>
-            $"{EnvironmentSuffix}_{Storage}_{MQ}";
     }
 }
