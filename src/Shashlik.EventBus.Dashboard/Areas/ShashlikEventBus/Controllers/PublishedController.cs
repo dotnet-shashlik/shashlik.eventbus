@@ -46,12 +46,10 @@ public class PublishedController : BaseDashboardController
         return View("Messages", model);
     }
 
-    public async Task Retry(string[]? ids, [FromServices] IPublishedMessageRetryProvider publishedMessageRetryProvider)
+    public async Task Retry(long[]? ids, [FromServices] IPublishedMessageRetryProvider publishedMessageRetryProvider)
     {
         if (ids == null)
-        {
             return;
-        }
 
         foreach (var id in ids)
         {

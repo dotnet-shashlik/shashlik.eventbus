@@ -32,7 +32,7 @@ internal static class MessageStorageModelMapping
     {
         return new MessageStorageModel
         {
-            Id = entity.Id.ToString(),
+            Id = entity.Id,
             MsgId = entity.MsgId,
             Environment = entity.Environment,
             EventName = entity.EventName,
@@ -52,7 +52,7 @@ internal static class MessageStorageModelMapping
     {
         return new MessageStorageModel
         {
-            Id = entity.Id.ToString(),
+            Id = entity.Id,
             MsgId = entity.MsgId,
             Environment = entity.Environment,
             EventName = entity.EventName,

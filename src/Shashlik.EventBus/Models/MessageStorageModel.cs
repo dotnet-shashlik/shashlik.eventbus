@@ -15,7 +15,7 @@ namespace Shashlik.EventBus
         /// <summary>
         /// 存储的消息 id,由存储中间件自动生成,Insert 后回填
         /// </summary>
-        public string? Id { get; set; }
+        public long Id { get; set; }
 
         /// <summary>
         /// 业务消息 id(全局唯一)

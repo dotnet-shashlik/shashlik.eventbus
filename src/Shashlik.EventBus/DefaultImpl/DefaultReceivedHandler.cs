@@ -39,13 +39,13 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task<HandleResult> LockingHandleAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<HandleResult> LockingHandleAsync(long id, CancellationToken cancellationToken = default)
         {
             return await HandleAsync(id, null, null, null, true, cancellationToken);
         }
 
         private async Task<HandleResult> HandleAsync(
-            string id,
+            long id,
             MessageStorageModel? messageStorageModel,
             IDictionary<string, string>? items,
             EventHandlerDescriptor? descriptor,
@@ -75,14 +75,15 @@ namespace Shashlik.EventBus.DefaultImpl
                         return new HandleResult(true);
                     }
 
-                    items ??= MessageSerializer.Deserialize<IDictionary<string, string>>(messageStorageModel.EventItems!)
+                    items ??= MessageSerializer.Deserialize<IDictionary<string, string>>(
+                                  messageStorageModel.EventItems!)
                               ?? new Dictionary<string, string>();
 
                     // 执行事件消费
                     await EventHandlerInvoker.InvokeAsync(messageStorageModel, items, descriptor).ConfigureAwait(false);
                     // 消息处理没问题就更新数据库状态
                     await MessageStorage.UpdateReceivedAsync(
-                            messageStorageModel.Id!,
+                            messageStorageModel.Id,
                             MessageStatus.Succeeded,
                             ++messageStorageModel.RetryCount,
                             DateTimeOffset.Now.AddHours(Options.Value.SucceedExpireHour),

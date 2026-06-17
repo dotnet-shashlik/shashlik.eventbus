@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Shashlik.EventBus.Utils;
@@ -37,13 +36,13 @@ namespace Shashlik.EventBus.DefaultImpl
                 cancellationToken);
         }
 
-        public async Task<HandleResult> LockingHandleAsync(string id, CancellationToken cancellationToken = default)
+        public async Task<HandleResult> LockingHandleAsync(long id, CancellationToken cancellationToken = default)
         {
             return await HandleAsync(id, null, null, true, cancellationToken);
         }
 
         private async Task<HandleResult> HandleAsync(
-            string id,
+            long id,
             MessageTransferModel? messageTransferModel,
             MessageStorageModel? messageStorageModel,
             bool requireLock,

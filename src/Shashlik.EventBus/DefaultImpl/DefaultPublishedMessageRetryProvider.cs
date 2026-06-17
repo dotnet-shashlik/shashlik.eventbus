@@ -33,16 +33,13 @@ namespace Shashlik.EventBus.DefaultImpl
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
-            // 之前 async void Action() 是 TimerHelper 唯一接受的 Action 形态,所以被迫
-            // 退化为 async void(异常无人观察)。这里改成同步 Action,在 Retry 内部
-            // 用 SemaphoreSlim 控并发;Retry 内部 try/catch 兜底,不会拖垮整个循环。
             TimerHelper.SetInterval(
-                () => Retry(cancellationToken).GetAwaiter().GetResult(),
+                () => Retry(cancellationToken),
                 TimeSpan.FromSeconds(Options.Value.RetryInterval),
                 cancellationToken);
         }
 
-        public async Task<HandleResult> RetryAsync(string id, CancellationToken cancellationToken)
+        public async Task<HandleResult> RetryAsync(long id, CancellationToken cancellationToken)
         {
             var messageStorageModel =
                 await MessageStorage.FindPublishedByIdAsync(id, cancellationToken).ConfigureAwait(false);
@@ -98,7 +95,7 @@ namespace Shashlik.EventBus.DefaultImpl
             try
             {
                 await PublishHandler
-                    .LockingHandleAsync(item.Id!, cancellationToken)
+                    .LockingHandleAsync(item.Id, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (Exception ex)

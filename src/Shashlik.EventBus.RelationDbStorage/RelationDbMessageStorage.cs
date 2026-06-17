@@ -39,7 +39,7 @@ internal class RelationDbMessageStorage : IMessageStorage
         return entity?.ToModel();
     }
 
-    public virtual async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId,
+    public virtual async Task<MessageStorageModel?> FindPublishedByIdAsync(long storageId,
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
@@ -58,7 +58,7 @@ internal class RelationDbMessageStorage : IMessageStorage
         return entity?.ToModel();
     }
 
-    public virtual async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId,
+    public virtual async Task<MessageStorageModel?> FindReceivedByIdAsync(long storageId,
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
@@ -109,17 +109,15 @@ internal class RelationDbMessageStorage : IMessageStorage
         return result.Select(r => r.ToModel()).ToList();
     }
 
-    public virtual async Task<string> SavePublishedAsync(MessageStorageModel message,
+    public virtual async Task<long> SavePublishedAsync(MessageStorageModel message,
         ITransactionContext? transactionContext,
         CancellationToken cancellationToken = default)
     {
         var entity = message.ToPublishedSaveObject();
-        var insert = FreeSql.Insert<RelationDbMessageStoragePublishedModel>()
-            .AppendData(entity);
+        var insert = FreeSql.InsertOrUpdate<RelationDbMessageStoragePublishedModel>();
 
         var dbTransaction = (transactionContext as RelationDbStorageTransactionContext)?.DbTransaction;
         var dbConnection = dbTransaction?.Connection;
-
         // 新增连接和事务判断，复用已有数据库连接
         if (dbConnection != null)
         {
@@ -128,56 +126,27 @@ internal class RelationDbMessageStorage : IMessageStorage
                 insert = insert.WithTransaction(dbTransaction as DbTransaction);
         }
 
-        var id = await insert.ExecuteIdentityAsync(cancellationToken);
-        message.Id = id.ToString();
+        await insert
+            .SetSource(entity, r => r.MsgId)
+            .IfExistsDoNothing()
+            .ExecuteAffrowsAsync(cancellationToken);
         return message.Id;
     }
 
-    public virtual async Task<string> SaveReceivedAsync(MessageStorageModel message,
+    public virtual async Task<long> SaveReceivedAsync(MessageStorageModel message,
         CancellationToken cancellationToken = default)
     {
         var entity = message.ToReceivedSaveObject();
 
-        // 用 InsertOrUpdate 走 INSERT ... ON CONFLICT DO UPDATE 一条 SQL,复合唯一键
-        // (MsgId, EventHandlerName) 保证并发不会插入重复行。
-        // 不同方言下 InsertOrUpdate 的副作用不一样:
-        // - SqlServer/PostgreSQL/MySQL: 主键是 IsIdentity 自增,upsert 后能立刻查出 Id;
-        // - Sqlite: 自增主键是 ROWID,upsert 后 FreeSql 不能保证回填到实体;
-        // 因此统一用"先 select 看是否已存在,再 insert 或 update"的两步走,
-        // 显式控制 Id 字段写库。这样在所有方言上行为一致。
-        var existed = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
-            .Where(r => r.MsgId == message.MsgId && r.EventHandlerName == message.EventHandlerName)
-            .FirstAsync(cancellationToken);
-        if (existed is null)
-        {
-            // 插入新行,FreeSql 拿不到 InsertIdentity(部分方言);改用手动累加或 GUID。
-            // 这里采用"查 max id + 1"的简单方案(测试场景并发可控,生产场景需要更严谨)。
-            // 注意:为了和 SavePublishedAsync 的 IsIdentity 行为保持一致,我们还是
-            // 让 FreeSql 来执行插入,只是不依赖它的返回。
-            entity.Id = 0;  // IsIdentity 列,让库自己生成
-            await FreeSql.Insert(entity).ExecuteAffrowsAsync(cancellationToken);
-            var newId = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
-                .Where(r => r.MsgId == message.MsgId && r.EventHandlerName == message.EventHandlerName)
-                .FirstAsync(r => r.Id, cancellationToken);
-            if (newId == 0)
-                throw new InvalidOperationException(
-                    $"[EventBus] SaveReceivedAsync: failed to obtain id for msgId={message.MsgId}, handler={message.EventHandlerName}");
-            message.Id = newId.ToString();
-        }
-        else
-        {
-            // 已存在 -> 更新可变字段,保留 Id
-            entity.Id = existed.Id;
-            await FreeSql.Update<RelationDbMessageStorageReceivedModel>()
-                .SetSource(entity)
-                .ExecuteAffrowsAsync(cancellationToken);
-            message.Id = existed.Id.ToString();
-        }
+        await FreeSql.InsertOrUpdate<RelationDbMessageStorageReceivedModel>()
+            .SetSource(entity, r => new { r.MsgId, r.EventHandlerName })
+            .IfExistsDoNothing()
+            .ExecuteAffrowsAsync(cancellationToken);
 
         return message.Id;
     }
 
-    public virtual async Task UpdatePublishedAsync(string storageId, string status, int retryCount,
+    public virtual async Task UpdatePublishedAsync(long storageId, string status, int retryCount,
         DateTimeOffset? expireTime, CancellationToken cancellationToken = default)
     {
         var id = storageId.ParseTo<long>();
@@ -188,7 +157,7 @@ internal class RelationDbMessageStorage : IMessageStorage
             .ExecuteAffrowsAsync(cancellationToken);
     }
 
-    public virtual async Task UpdateReceivedAsync(string storageId, string status, int retryCount,
+    public virtual async Task UpdateReceivedAsync(long storageId, string status, int retryCount,
         DateTimeOffset? expireTime,
         CancellationToken cancellationToken = default)
     {
@@ -200,7 +169,7 @@ internal class RelationDbMessageStorage : IMessageStorage
             .ExecuteAffrowsAsync(cancellationToken);
     }
 
-    public virtual async Task<bool> TryLockPublishedAsync(string storageId, DateTimeOffset lockEndAt,
+    public virtual async Task<bool> TryLockPublishedAsync(long storageId, DateTimeOffset lockEndAt,
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
@@ -212,7 +181,7 @@ internal class RelationDbMessageStorage : IMessageStorage
             .ExecuteAffrowsAsync(cancellationToken) == 1;
     }
 
-    public virtual async Task<bool> TryLockReceivedAsync(string storageId, DateTimeOffset lockEndAt,
+    public virtual async Task<bool> TryLockReceivedAsync(long storageId, DateTimeOffset lockEndAt,
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
@@ -286,6 +255,12 @@ internal class RelationDbMessageStorage : IMessageStorage
     {
         var createTimeLimit = DateTimeOffset.UtcNow.AddSeconds(-delayRetrySecond).UtcTicks;
         var now = DateTimeOffset.UtcNow.UtcTicks;
+        // 内层每个分支必须 .Limit(count): 否则 FreeSql 生成
+        //   (SELECT ... ORDER BY) UNION ALL (SELECT ... ORDER BY) ORDER BY ... LIMIT N
+        // 在 MySQL 上会先 materialize 每个内层子查询的全部结果集 (可能千万行),
+        // 再由外层 ORDER BY + LIMIT 取 N — 外层 LIMIT 此时根本节省不了 IO。
+        // 加上内层 LIMIT 后, 每个分支只取本批最多 count 行, UNION 后总共 2*count 行,
+        // 外层再排序取 count, 整体复杂度 O(count*logN) 而非 O(N)。
         // 普通消息
         var normalQuery = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.Environment == environment &&
@@ -294,7 +269,8 @@ internal class RelationDbMessageStorage : IMessageStorage
                         r.CreateTimeTicks < createTimeLimit &&
                         r.RetryCount < maxFailedRetryCount &&
                         (!r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now))
-            .OrderByDescending(r => r.CreateTimeTicks);
+            .OrderByDescending(r => r.CreateTimeTicks)
+            .Limit(count);
 
         // 延迟消息
         var delayQuery = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
@@ -304,7 +280,8 @@ internal class RelationDbMessageStorage : IMessageStorage
                         r.DelayAtTicks <= now &&
                         r.RetryCount < maxFailedRetryCount &&
                         (!r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now))
-            .OrderByDescending(r => r.CreateTimeTicks);
+            .OrderByDescending(r => r.CreateTimeTicks)
+            .Limit(count);
 
         // 合并并排序、限制数量
         return await normalQuery
@@ -324,6 +301,7 @@ internal class RelationDbMessageStorage : IMessageStorage
     {
         var createTimeLimit = DateTimeOffset.UtcNow.AddSeconds(-delayRetrySecond).UtcTicks;
         var now = DateTimeOffset.UtcNow.UtcTicks;
+        // 见 GetPublishedMessagesOfNeedRetryAsync 注释:内层 UNION ALL 子查询必须各自 Limit
         // 普通消息
         var normalQuery = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.Environment == environment &&
@@ -332,7 +310,8 @@ internal class RelationDbMessageStorage : IMessageStorage
                         r.CreateTimeTicks < createTimeLimit &&
                         r.RetryCount < maxFailedRetryCount &&
                         (!r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now))
-            .OrderByDescending(r => r.CreateTimeTicks);
+            .OrderByDescending(r => r.CreateTimeTicks)
+            .Limit(count);
 
         // 延迟消息
         var delayQuery = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
@@ -342,7 +321,8 @@ internal class RelationDbMessageStorage : IMessageStorage
                         r.DelayAtTicks <= now &&
                         r.RetryCount < maxFailedRetryCount &&
                         (!r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now))
-            .OrderByDescending(r => r.CreateTimeTicks);
+            .OrderByDescending(r => r.CreateTimeTicks)
+            .Limit(count);
 
         // 合并并排序、限制数量
         return await normalQuery

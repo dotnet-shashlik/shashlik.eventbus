@@ -21,7 +21,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IMsgIdGenerator msgIdGenerator,
             IPublishHandler publishHandler,
             IHostedStopToken hostedStopToken,
-            ILogger<DefaultEventPublisher> logger)
+            ILogger<DefaultEventPublisher> logger, IIdGenerator idGenerator)
         {
             MessageStorage = messageStorage;
             MessageSerializer = messageSerializer;
@@ -31,6 +31,7 @@ namespace Shashlik.EventBus.DefaultImpl
             PublishHandler = publishHandler;
             HostedStopToken = hostedStopToken;
             Logger = logger;
+            IdGenerator = idGenerator;
         }
 
         private IMessageStorage MessageStorage { get; }
@@ -41,6 +42,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IPublishHandler PublishHandler { get; }
         private IHostedStopToken HostedStopToken { get; }
         private ILogger<DefaultEventPublisher> Logger { get; }
+        private IIdGenerator IdGenerator { get; }
 
         public async Task PublishAsync<TEvent>(
             TEvent @event,
@@ -96,6 +98,7 @@ namespace Shashlik.EventBus.DefaultImpl
 
             MessageStorageModel messageStorageModel = new()
             {
+                Id = IdGenerator.NextId(),
                 MsgId = msgId,
                 Environment = Options.Value.Environment,
                 CreateTime = now,

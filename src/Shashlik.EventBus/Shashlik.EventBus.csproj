@@ -6,12 +6,14 @@
  </PropertyGroup>
 
  <ItemGroup>
+ <PackageReference Include="FreeRedis" />
  <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
  <PackageReference Include="Microsoft.Extensions.DependencyModel" />
  <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
  <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
  <PackageReference Include="Newtonsoft.Json" />
+ <PackageReference Include="Yitter.IdGenerator" />
  <ProjectReference Include="..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
  </ItemGroup>
 </Project>

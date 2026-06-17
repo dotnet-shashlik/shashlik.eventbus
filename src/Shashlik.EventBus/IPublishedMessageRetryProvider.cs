@@ -21,6 +21,6 @@ namespace Shashlik.EventBus
         /// <param name="storageId">存储id</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<HandleResult> RetryAsync(string storageId, CancellationToken cancellationToken);
+        Task<HandleResult> RetryAsync(long storageId, CancellationToken cancellationToken);
     }
 }

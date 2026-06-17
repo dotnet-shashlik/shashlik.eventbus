@@ -27,7 +27,7 @@ namespace Shashlik.EventBus
         /// <param name="cancellationToken">取消token</param>
         /// <returns></returns>
         public Task<HandleResult> LockingHandleAsync(
-            string storageId,
+            long storageId,
             CancellationToken cancellationToken = default);
     }
 }

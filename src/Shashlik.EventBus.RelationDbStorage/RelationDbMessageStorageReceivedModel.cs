@@ -1,6 +1,5 @@
 #nullable disable
-using System;
-using Column = FreeSql.DataAnnotations.ColumnAttribute;
+using System.ComponentModel.DataAnnotations;
 using FreeSqlIndex = FreeSql.DataAnnotations.IndexAttribute;
 using Table = FreeSql.DataAnnotations.TableAttribute;
 
@@ -13,15 +12,16 @@ namespace Shashlik.EventBus
     /// </summary>
     [Table]
     [FreeSqlIndex("ix_eventbus_received_msg_id_handler", "MsgId,EventHandlerName", IsUnique = true)]
-    [FreeSqlIndex("ix_eventbus_received_create_time", "CreateTimeTicks DESC,Status,EventName")]
-    [FreeSqlIndex("ix_eventbus_received_expire_time", "Status,RetryCount,ExpireTimeTicks")]
-    [FreeSqlIndex("ix_eventbus_received_retry", "IsDelay,Status,IsLocking,DelayAtTicks,RetryCount,CreateTimeTicks DESC")]
+    // 见 RelationDbMessageStoragePublishedModel 注释,这里对称设计
+    [FreeSqlIndex("ix_eventbus_received_create_time", "CreateTimeTicks DESC,Status,IsDelay")]
+    [FreeSqlIndex("ix_eventbus_received_expire_time", "Status,ExpireTimeTicks")]
+    [FreeSqlIndex("ix_eventbus_received_delay", "IsDelay,DelayAtTicks")]
     public class RelationDbMessageStorageReceivedModel
     {
         /// <summary>
         /// 存储的消息id,由存储中间件自动生成
         /// </summary>
-        [Column(IsIdentity = true)]
+        [Key]
         public long Id { get; set; }
 
         /// <summary>

@@ -8,18 +8,13 @@ namespace Shashlik.EventBus.Utils
     public static class TimerHelper
     {
         /// <summary>
-        /// 在指定时间过后执行指定的表达式
+        ///     在指定时间过后执行指定的表达式
         /// </summary>
         /// <param name="action">要执行的表达式</param>
         /// <param name="expire">过期时间</param>
         /// <param name="cancellationToken">撤销</param>
-        /// <param name="onError">action 抛异常时的回调,默认 Console.WriteLine</param>
         /// <return></return>
-        public static void SetTimeout(
-            Action action,
-            TimeSpan expire,
-            CancellationToken cancellationToken = default,
-            Action<Exception>? onError = null)
+        public static void SetTimeout(Action action, TimeSpan expire, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
@@ -30,75 +25,106 @@ namespace Shashlik.EventBus.Utils
             Task.Run(async () =>
             {
                 using var timer = new PeriodicTimer(expire);
-                try
+                while (await timer.WaitForNextTickAsync(cancellationToken))
                 {
-                    if (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        SafeInvoke(action, onError);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // 正常取消
-                }
-                catch (Exception ex)
-                {
-                    SafeReport(ex, onError);
+                    action();
+                    return;
                 }
             }, cancellationToken);
         }
 
         /// <summary>
-        /// 在指定时间执行指定的表达式
+        ///     在指定时间过后执行指定的表达式
         /// </summary>
-        public static void SetTimeout(
-            Action action,
-            DateTimeOffset runAt,
-            CancellationToken cancellationToken = default,
-            Action<Exception>? onError = null)
+        /// <param name="action">要执行的表达式</param>
+        /// <param name="expire">过期时间</param>
+        /// <param name="cancellationToken">撤销</param>
+        /// <return></return>
+        public static void SetTimeout(Func<Task> action, TimeSpan expire, CancellationToken cancellationToken = default)
         {
-            SetTimeout(action, (runAt - DateTimeOffset.Now), cancellationToken, onError);
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            if (expire <= TimeSpan.Zero)
+                throw new ArgumentException("invalid expire.", nameof(expire));
+
+            Task.Run(async () =>
+            {
+                using var timer = new PeriodicTimer(expire);
+                while (await timer.WaitForNextTickAsync(cancellationToken))
+                {
+                    await action();
+                    return;
+                }
+            }, cancellationToken);
         }
 
         /// <summary>
-        /// 定时执行任务,不会立即执行
+        ///     在指定时间执行指定的表达式
+        /// </summary>
+        /// <param name="action">要执行的表达式</param>
+        /// <param name="runAt">过期时间</param>
+        /// <param name="cancellationToken">撤销</param>
+        /// <return></return>
+        public static void SetTimeout(Action action, DateTimeOffset runAt,
+            CancellationToken cancellationToken = default)
+        {
+            SetTimeout(action, runAt - DateTimeOffset.Now, cancellationToken);
+        }
+
+        /// <summary>
+        ///     在指定时间执行指定的表达式
+        /// </summary>
+        /// <param name="action">要执行的表达式</param>
+        /// <param name="runAt">过期时间</param>
+        /// <param name="cancellationToken">撤销</param>
+        /// <return></return>
+        public static void SetTimeout(Func<Task> action, DateTimeOffset runAt,
+            CancellationToken cancellationToken = default)
+        {
+            SetTimeout(action, runAt - DateTimeOffset.Now, cancellationToken);
+        }
+
+        /// <summary>
+        ///     定时执行任务,不会立即执行
         /// </summary>
         /// <param name="action">要执行的表达式</param>
         /// <param name="interval">间隔时间</param>
         /// <param name="cancellationToken">撤销</param>
-        /// <param name="onError">action 抛异常时的回调,默认 Console.WriteLine</param>
-        public static void SetInterval(
-            Action action,
-            TimeSpan interval,
-            CancellationToken cancellationToken = default,
-            Action<Exception>? onError = null)
+        /// <return></return>
+        public static void SetInterval(Action action, TimeSpan interval, CancellationToken cancellationToken = default)
         {
             if (cancellationToken.IsCancellationRequested)
                 return;
             if (interval <= TimeSpan.Zero)
                 throw new ArgumentException("invalid interval.", nameof(interval));
-
             Task.Run(async () =>
             {
                 using var timer = new PeriodicTimer(interval);
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    try
-                    {
-                        if (!await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
-                            break;
-                        SafeInvoke(action, onError);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        // 单次失败不应停止整个定时循环;打 error 然后继续下一 tick。
-                        SafeReport(ex, onError);
-                    }
-                }
+                while (await timer.WaitForNextTickAsync(cancellationToken))
+                    action();
+            }, cancellationToken);
+        }
+
+        /// <summary>
+        ///     定时执行任务,不会立即执行
+        /// </summary>
+        /// <param name="action">要执行的表达式</param>
+        /// <param name="interval">间隔时间</param>
+        /// <param name="cancellationToken">撤销</param>
+        /// <return></return>
+        public static void SetInterval(Func<Task> action, TimeSpan interval,
+            CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return;
+            if (interval <= TimeSpan.Zero)
+                throw new ArgumentException("invalid interval.", nameof(interval));
+            Task.Run(async () =>
+            {
+                using var timer = new PeriodicTimer(interval);
+                while (await timer.WaitForNextTickAsync(cancellationToken))
+                    await action();
             }, cancellationToken);
         }
 
@@ -118,8 +144,14 @@ namespace Shashlik.EventBus.Utils
         {
             if (onError is not null)
             {
-                try { onError(ex); }
-                catch { /* 吞掉 callback 自身的异常 */ }
+                try
+                {
+                    onError(ex);
+                }
+                catch
+                {
+                    /* 吞掉 callback 自身的异常 */
+                }
             }
             else
             {

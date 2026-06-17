@@ -1,0 +1,28 @@
+Benchmark:
+  Storage: mysql
+  MQ: kafka
+  Total: 5000000
+  Concurrency: 0
+  PayloadSize: 128
+  ConsumeTimeoutSeconds: 900
+  ProgressIntervalSeconds: 5
+  EnvironmentSuffix: Perf
+
+ConnectionStrings:
+  Default: server=localhost;database=eventbus_perf;user id=root;password=123123;Pooling=True;Minimum Pool Size=20;Maximum Pool Size=100;AllowUserVariables=true;UseAffectedRows=false
+
+EventBus:
+  Kafka:
+    Properties:
+      "bootstrap.servers": "localhost"
+      "allow.auto.create.topics": "true"
+      "linger.ms": "5"
+      "batch.size": "65536"
+      "compression.type": "lz4"
+
+Logging:
+  LogLevel:
+    Default: Warning
+    Microsoft: Warning
+    Shashlik.EventBus: Warning
+    Sample.Performance: Information

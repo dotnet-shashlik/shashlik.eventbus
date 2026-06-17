@@ -14,25 +14,11 @@ namespace Shashlik.EventBus.MemoryStorage
 {
     public class MemoryMessageStorage : IMessageStorage
     {
-        private readonly ConcurrentDictionary<string, MessageStorageModel> _published = new();
+        private readonly ConcurrentDictionary<long, MessageStorageModel> _published = new();
 
-        private readonly ConcurrentDictionary<string, MessageStorageModel> _received = new();
+        private readonly ConcurrentDictionary<long, MessageStorageModel> _received = new();
 
-        // 实例级状态。之前是 static,导致多个 MemoryMessageStorage 实例共享 id 序列
-        // 和删除锁,集成测试里多 WebApplicationFactory 并行跑会相互干扰。
-        private int _lastId;
-        private readonly object _idLock = new();
         private readonly object _deleteLock = new();
-
-        private string AutoIncrementId()
-        {
-            lock (_idLock)
-            {
-                _lastId++;
-            }
-
-            return _lastId.ToString();
-        }
 
         public ValueTask<bool> IsCommittedAsync(string msgId, CancellationToken cancellationToken)
         {
@@ -48,7 +34,7 @@ namespace Shashlik.EventBus.MemoryStorage
             return await Task.FromResult(res);
         }
 
-        public Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId, CancellationToken cancellationToken)
+        public Task<MessageStorageModel?> FindPublishedByIdAsync(long storageId, CancellationToken cancellationToken)
         {
             return Task.FromResult(_published.GetOrDefault(storageId));
         }
@@ -61,7 +47,7 @@ namespace Shashlik.EventBus.MemoryStorage
                 r.MsgId == msgId && r.EventHandlerName == eventHandlerDescriptor.EventHandlerName));
         }
 
-        public Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId, CancellationToken cancellationToken)
+        public Task<MessageStorageModel?> FindReceivedByIdAsync(long storageId, CancellationToken cancellationToken)
         {
             return Task.FromResult(_received.GetOrDefault(storageId));
         }
@@ -97,24 +83,22 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.FromResult(list);
         }
 
-        public Task<string> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
+        public Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken)
         {
-            message.Id = AutoIncrementId();
             if (_published.TryAdd(message.Id, message))
                 return Task.FromResult(message.Id);
             throw new Exception($"save published message error, msgId: {message.MsgId}");
         }
 
-        public Task<string> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken)
+        public Task<long> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken)
         {
-            message.Id = AutoIncrementId();
             if (_received.TryAdd(message.Id, message))
                 return Task.FromResult(message.Id);
             throw new Exception($"save received message error, msgId: {message.MsgId}");
         }
 
-        public Task UpdatePublishedAsync(string storageId, string status, int retryCount, DateTimeOffset? expireTime,
+        public Task UpdatePublishedAsync(long storageId, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken)
         {
             if (_published.TryGetValue(storageId, out var model))
@@ -129,7 +113,7 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.CompletedTask;
         }
 
-        public Task UpdateReceivedAsync(string storageId, string status, int retryCount,
+        public Task UpdateReceivedAsync(long storageId, string status, int retryCount,
             DateTimeOffset? expireTime, CancellationToken cancellationToken)
         {
             if (_received.TryGetValue(storageId, out var model))
@@ -144,12 +128,12 @@ namespace Shashlik.EventBus.MemoryStorage
             return Task.CompletedTask;
         }
 
-        public Task<bool> TryLockPublishedAsync(string id, DateTimeOffset lockEndAt,
+        public Task<bool> TryLockPublishedAsync(long storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
                 throw new ArgumentOutOfRangeException(nameof(lockEndAt));
-            if (_published.TryGetValue(id, out var model))
+            if (_published.TryGetValue(storageId, out var model))
             {
                 if (!model.IsLocking || DateTimeOffset.Now > model.LockEnd)
                 {
@@ -167,7 +151,7 @@ namespace Shashlik.EventBus.MemoryStorage
                 return Task.FromResult(false);
         }
 
-        public Task<bool> TryLockReceivedAsync(string storageId, DateTimeOffset lockEndAt,
+        public Task<bool> TryLockReceivedAsync(long storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -191,6 +175,7 @@ namespace Shashlik.EventBus.MemoryStorage
         }
 
         private static readonly object ModelUpdateLock = new();
+
         private void LockAndUpdate(MessageStorageModel model, Action<MessageStorageModel> update)
         {
             // 之前是 lock(this),会序列化所有 TryLock* 调用,且警告"不要 lock(this)"。

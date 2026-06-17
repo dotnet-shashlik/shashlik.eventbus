@@ -52,7 +52,7 @@ namespace Shashlik.EventBus.MongoDb
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId,
+        public async Task<MessageStorageModel?> FindPublishedByIdAsync(long storageId,
             CancellationToken cancellationToken)
         {
             var mongoCollection = GetPublishedCollection();
@@ -71,7 +71,7 @@ namespace Shashlik.EventBus.MongoDb
             return await msg.SingleOrDefaultAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId,
+        public async Task<MessageStorageModel?> FindReceivedByIdAsync(long storageId,
             CancellationToken cancellationToken)
         {
             var mongoCollection = GetReceivedCollection();
@@ -121,7 +121,7 @@ namespace Shashlik.EventBus.MongoDb
                 .ToListAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<string> SavePublishedAsync(MessageStorageModel message,
+        public async Task<long> SavePublishedAsync(MessageStorageModel message,
             ITransactionContext? transactionContext,
             CancellationToken cancellationToken = default)
         {
@@ -144,8 +144,6 @@ namespace Shashlik.EventBus.MongoDb
                     $"[EventBus-MongoDb] Storage only supports transaction context of {typeof(MongoDbTransactionContext)}, got {transactionContext.GetType()}");
             }
 
-            message.Id = ObjectId.GenerateNewId().ToString();
-
             if (mongoTx is null)
                 await mongoCollection.InsertOneAsync(message, new InsertOneOptions { }, cancellationToken);
             else
@@ -154,16 +152,15 @@ namespace Shashlik.EventBus.MongoDb
             return message.Id;
         }
 
-        public async Task<string> SaveReceivedAsync(MessageStorageModel message,
+        public async Task<long> SaveReceivedAsync(MessageStorageModel message,
             CancellationToken cancellationToken = default)
         {
             var mongoCollection = GetReceivedCollection();
-            message.Id = ObjectId.GenerateNewId().ToString();
             await mongoCollection.InsertOneAsync(message, new InsertOneOptions { }, cancellationToken);
             return message.Id;
         }
 
-        public async Task UpdatePublishedAsync(string storageId, string status, int retryCount,
+        public async Task UpdatePublishedAsync(long storageId, string status, int retryCount,
             DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
@@ -177,7 +174,7 @@ namespace Shashlik.EventBus.MongoDb
                 cancellationToken: cancellationToken);
         }
 
-        public async Task UpdateReceivedAsync(string storageId, string status, int retryCount,
+        public async Task UpdateReceivedAsync(long storageId, string status, int retryCount,
             DateTimeOffset? expireTime,
             CancellationToken cancellationToken = default)
         {
@@ -191,7 +188,7 @@ namespace Shashlik.EventBus.MongoDb
                 cancellationToken: cancellationToken);
         }
 
-        public async Task<bool> TryLockPublishedAsync(string storageId, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockPublishedAsync(long storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)
@@ -207,7 +204,7 @@ namespace Shashlik.EventBus.MongoDb
             return res is not null;
         }
 
-        public async Task<bool> TryLockReceivedAsync(string storageId, DateTimeOffset lockEndAt,
+        public async Task<bool> TryLockReceivedAsync(long storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken)
         {
             if (lockEndAt <= DateTimeOffset.Now)

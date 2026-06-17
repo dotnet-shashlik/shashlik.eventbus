@@ -1,6 +1,5 @@
 #nullable disable
-using System;
-using Column = FreeSql.DataAnnotations.ColumnAttribute;
+using System.ComponentModel.DataAnnotations;
 using FreeSqlIndex = FreeSql.DataAnnotations.IndexAttribute;
 using Table = FreeSql.DataAnnotations.TableAttribute;
 
@@ -13,15 +12,24 @@ namespace Shashlik.EventBus
     /// </summary>
     [Table]
     [FreeSqlIndex("ix_eventbus_published_msg_id", nameof(MsgId), IsUnique = true)]
-    [FreeSqlIndex("ix_eventbus_published_create_time", "CreateTimeTicks DESC,Status,EventName")]
-    [FreeSqlIndex("ix_eventbus_published_expire_time", "Status,RetryCount,ExpireTimeTicks")]
-    [FreeSqlIndex("ix_eventbus_published_retry", "IsDelay,Status,IsLocking,DelayAtTicks,RetryCount,CreateTimeTicks DESC")]
+    // (CreateTimeTicks DESC, Status, IsDelay): retry 查询主索引
+    //   - 第 1 列对应 ORDER BY create_time_ticks DESC, 避免 filesort
+    //   - 第 2 列 status 是 IN 范围条件, 作为 backward scan 时的早停 filter
+    //   - 第 3 列 is_delay 让两个分支共用此索引, 同时让 normal 分支 (is_delay=0) 在
+    //     扫描时即可过滤掉延迟消息行 (替代旧的 event_name, 后者在 retry 路径完全不参与)
+    [FreeSqlIndex("ix_eventbus_published_create_time", "CreateTimeTicks DESC,Status,IsDelay")]
+    // (Status, ExpireTimeTicks): DeleteExpired 用; 删除原索引中间无关的 RetryCount 列
+    // 让 (status='SUCCEEDED', expire_time_ticks < now) 形成连续 range, 避免 skip scan
+    [FreeSqlIndex("ix_eventbus_published_expire_time", "Status,ExpireTimeTicks")]
+    // (IsDelay, DelayAtTicks): 专给 retry 查询的 delay 分支 (is_delay=1 AND delay_at_ticks <= now)
+    // 否则该分支会回退到 ix_create_time 全索引扫描, 在没有延迟消息时也要扫整表
+    [FreeSqlIndex("ix_eventbus_published_delay", "IsDelay,DelayAtTicks")]
     public class RelationDbMessageStoragePublishedModel
     {
         /// <summary>
         /// 存储的消息id,由存储中间件自动生成
         /// </summary>
-        [Column(IsIdentity = true)]
+        [Key]
         public long Id { get; set; }
 
         /// <summary>

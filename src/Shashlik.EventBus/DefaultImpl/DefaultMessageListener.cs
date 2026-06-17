@@ -18,7 +18,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IEventHandlerFindProvider eventHandlerFindProvider,
             ILogger<DefaultMessageListener> logger,
             IOptions<EventBusOptions> options,
-            IReceivedHandler receivedHandler)
+            IReceivedHandler receivedHandler, IIdGenerator idGenerator)
         {
             MessageSerializer = messageSerializer;
             MessageStorage = messageStorage;
@@ -26,6 +26,7 @@ namespace Shashlik.EventBus.DefaultImpl
             Logger = logger;
             Options = options;
             ReceivedHandler = receivedHandler;
+            IdGenerator = idGenerator;
         }
 
         private IMessageSerializer MessageSerializer { get; }
@@ -34,6 +35,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private ILogger<DefaultMessageListener> Logger { get; }
         private IOptions<EventBusOptions> Options { get; }
         private IReceivedHandler ReceivedHandler { get; }
+        private IIdGenerator IdGenerator { get; }
 
         public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel message,
             CancellationToken cancellationToken)
@@ -51,6 +53,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 message.Items ??= new Dictionary<string, string>();
                 var receiveMessageStorageModel = new MessageStorageModel
                 {
+                    Id = IdGenerator.NextId(),
                     MsgId = message.MsgId,
                     Environment = message.Environment ?? Options.Value.Environment,
                     CreateTime = now,
@@ -67,7 +70,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 };
 
 
-                receiveMessageStorageModel.Id = await MessageStorage
+                await MessageStorage
                     .SaveReceivedAsync(receiveMessageStorageModel, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -78,9 +81,9 @@ namespace Shashlik.EventBus.DefaultImpl
                 // 延迟事件进入延迟执行队列
                 else
                 {
-                    async void Action() =>
-                        await Start(receiveMessageStorageModel, message.Items, descriptor, cancellationToken)
-                            .ConfigureAwait(false);
+                    void Action() =>
+                        Start(receiveMessageStorageModel, message.Items, descriptor, cancellationToken)
+                            .ConfigureAwait(false).GetAwaiter().GetResult();
 
                     TimerHelper.SetTimeout(
                         Action,

@@ -32,7 +32,7 @@ namespace Shashlik.EventBus
         /// <param name="storageId">消息存储id</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<MessageStorageModel?> FindPublishedByIdAsync(string storageId, CancellationToken cancellationToken);
+        Task<MessageStorageModel?> FindPublishedByIdAsync(long storageId, CancellationToken cancellationToken);
 
         /// <summary>
         /// 根据msgId查找接收的消息
@@ -50,7 +50,7 @@ namespace Shashlik.EventBus
         /// <param name="storageId">消息存储id</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<MessageStorageModel?> FindReceivedByIdAsync(string storageId, CancellationToken cancellationToken);
+        Task<MessageStorageModel?> FindReceivedByIdAsync(long storageId, CancellationToken cancellationToken);
 
         /// <summary>
         /// 查询已发布的消息数据
@@ -94,7 +94,7 @@ namespace Shashlik.EventBus
         /// <param name="transactionContext">事务上下文</param>
         /// <param name="cancellationToken"></param>
         /// <returns>存储消息id</returns>
-        Task<string> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
+        Task<long> SavePublishedAsync(MessageStorageModel message, ITransactionContext? transactionContext,
             CancellationToken cancellationToken);
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace Shashlik.EventBus
         /// <param name="message">消息存储模型</param>
         /// <param name="cancellationToken"></param>
         /// <returns>存储消息id</returns>
-        Task<string> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken);
+        Task<long> SaveReceivedAsync(MessageStorageModel message, CancellationToken cancellationToken);
 
         /// <summary>
         /// 更新已发布消息数据
@@ -113,7 +113,7 @@ namespace Shashlik.EventBus
         /// <param name="retryCount">已重试次数</param>
         /// <param name="expireTime">过期时间</param>
         /// <param name="cancellationToken"></param>
-        Task UpdatePublishedAsync(string storageId, string status, int retryCount, DateTimeOffset? expireTime,
+        Task UpdatePublishedAsync(long storageId, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken);
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace Shashlik.EventBus
         /// <param name="retryCount">已重试次数</param>
         /// <param name="expireTime">过期时间</param>
         /// <param name="cancellationToken"></param>
-        Task UpdateReceivedAsync(string storageId, string status, int retryCount, DateTimeOffset? expireTime,
+        Task UpdateReceivedAsync(long storageId, string status, int retryCount, DateTimeOffset? expireTime,
             CancellationToken cancellationToken);
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace Shashlik.EventBus
         /// <param name="lockEndAt">锁定结束时间</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> TryLockPublishedAsync(string storageId, DateTimeOffset lockEndAt,
+        Task<bool> TryLockPublishedAsync(long storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken);
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace Shashlik.EventBus
         /// <param name="lockEndAt">锁定结束时间</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<bool> TryLockReceivedAsync(string storageId, DateTimeOffset lockEndAt,
+        Task<bool> TryLockReceivedAsync(long storageId, DateTimeOffset lockEndAt,
             CancellationToken cancellationToken);
 
         /// <summary>
