@@ -23,17 +23,18 @@ namespace CommonTestLogical
     public class StorageTests
     {
         public StorageTests(IMessageStorage messageStorage, IOptions<EventBusOptions> eventBusOptions,
-            IServiceProvider serviceProvider)
+            IIdGenerator idGenerator, IServiceProvider serviceProvider)
         {
             MessageStorage = messageStorage;
             EventBusOptions = eventBusOptions.Value;
+            IdGenerator = idGenerator;
             DbContext = serviceProvider.GetService<DemoDbContext>();
         }
 
         private EventBusOptions EventBusOptions { get; }
+        private IIdGenerator IdGenerator { get; }
         private DemoDbContext DbContext { get; }
         private IMessageStorage MessageStorage { get; }
-        private IServiceProvider ServiceProvider { get; }
 
         // ---- helpers -------------------------------------------------------
 
@@ -53,7 +54,7 @@ namespace CommonTestLogical
         {
             return new MessageStorageModel
             {
-                Id = ServiceProvider.GetService<IIdGenerator>().NextId(),
+                Id = IdGenerator.NextId(),
                 MsgId = Guid.NewGuid().ToString("n"),
                 Environment = EventBusOptions.Environment,
                 CreateTime = createTime ?? DateTimeOffset.Now,

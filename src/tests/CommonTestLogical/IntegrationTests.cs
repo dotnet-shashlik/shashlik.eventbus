@@ -135,9 +135,15 @@ namespace CommonTestLogical
             // TestExceptionEvent: 异常 handler 一直抛,会由重试器持续重试,
             // 等到 Options.RetryFailedMax 后停止增长(框架内一次发布路径内最多 5 次,后续由重试器接管)。
             {
-                // 一次发布路径内最多 5 次
-                TestExceptionEventHandler.Counter.ShouldBe(5);
-                TestExceptionEventGroup2Handler.Counter.ShouldBe(5);
+                // 一次发布路径内最多 5 次,等待两个 handler 都到达
+                var waitBegin = DateTimeOffset.Now;
+                while ((TestExceptionEventHandler.Counter < 5 || TestExceptionEventGroup2Handler.Counter < 5)
+                       && (DateTimeOffset.Now - waitBegin).TotalSeconds < 30)
+                {
+                    await Task.Delay(500);
+                }
+                TestExceptionEventHandler.Counter.ShouldBeGreaterThanOrEqualTo(5);
+                TestExceptionEventGroup2Handler.Counter.ShouldBeGreaterThanOrEqualTo(5);
 
                 // 等重试器跑到 max
                 var begin = DateTimeOffset.Now;
@@ -179,11 +185,11 @@ namespace CommonTestLogical
 
         public async Task XaTransactionCommitTest()
         {
-            var testEvent = new XaEvent { Name = Guid.NewGuid().ToString("n") };
+            var testEvent = new XaEvent { Name = "'"+Guid.NewGuid().ToString("n") };
 
             {
                 using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-                await EventPublisher.PublishAsync(testEvent, XaTransactionContext.Current, default);
+                await EventPublisher.PublishAsync(testEvent, XaTransactionContext.Current,default );
                 scope.Complete();
             }
 

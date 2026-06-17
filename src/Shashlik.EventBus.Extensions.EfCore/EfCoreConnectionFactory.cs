@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Data.Common;
 using FreeSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using MySqlConnector;
 using Shashlik.EventBus.RelationDbStorage;
 using DbContext = Microsoft.EntityFrameworkCore.DbContext;
 

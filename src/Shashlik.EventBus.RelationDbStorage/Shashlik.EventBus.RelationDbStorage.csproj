@@ -9,10 +9,6 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="FreeSql"/>
-        <PackageReference Include="FreeSql.Provider.MySqlConnector"/>
-        <PackageReference Include="FreeSql.Provider.PostgreSQL"/>
-        <PackageReference Include="FreeSql.Provider.SqlServer"/>
-        <PackageReference Include="FreeSql.Provider.Sqlite"/>
         <PackageReference Include="FreeSql.Repository" />
     </ItemGroup>
 </Project>

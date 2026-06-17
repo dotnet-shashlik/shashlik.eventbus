@@ -9,4 +9,8 @@
  <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
  </ItemGroup>
 
+ <ItemGroup>
+   <PackageReference Include="MessagePipe" />
+ </ItemGroup>
+
 </Project>

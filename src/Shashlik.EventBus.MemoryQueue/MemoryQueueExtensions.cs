@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using MessagePipe;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Shashlik.EventBus.MemoryQueue
 {
@@ -6,6 +7,7 @@ namespace Shashlik.EventBus.MemoryQueue
     {
         public static IEventBusBuilder AddMemoryQueue(this IEventBusBuilder eventBusBuilder)
         {
+            eventBusBuilder.Services.AddMessagePipe();
             eventBusBuilder.Services.AddSingleton<IMessageSender, MemoryMessageSender>();
             eventBusBuilder.Services.AddSingleton<IEventSubscriber, MemoryEventSubscriber>();
             return eventBusBuilder;

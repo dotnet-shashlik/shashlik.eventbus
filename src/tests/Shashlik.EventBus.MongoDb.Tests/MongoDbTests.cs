@@ -37,6 +37,7 @@ namespace Shashlik.EventBus.MongoDb.Tests
         [Fact]
         public async Task SavePublishedWithTransactionCommitTest()
         {
+            if (!await IsReplicaSetAsync()) return;
             var mongoDatabase = MongoClient.GetDatabase(MongoOptions.DataBase);
             if ((await mongoDatabase.ListCollectionNamesAsync())
                 .ToList()
@@ -90,6 +91,7 @@ namespace Shashlik.EventBus.MongoDb.Tests
         [Fact]
         public async Task SavePublishedWithTransactionRollBackTest()
         {
+            if (!await IsReplicaSetAsync()) return;
             var mongoDatabase = MongoClient.GetDatabase(MongoOptions.DataBase);
             if ((await mongoDatabase.ListCollectionNamesAsync())
                 .ToList()
@@ -139,6 +141,7 @@ namespace Shashlik.EventBus.MongoDb.Tests
         [Fact]
         public async Task SavePublishedWithTransactionDisposeTest()
         {
+            if (!await IsReplicaSetAsync()) return;
             var mongoDatabase = MongoClient.GetDatabase(MongoOptions.DataBase);
             if ((await mongoDatabase.ListCollectionNamesAsync())
                 .ToList()
@@ -246,8 +249,9 @@ namespace Shashlik.EventBus.MongoDb.Tests
         }
 
         [Fact]
-        public void DbStorageTransactionContextCommitTest()
+        public async Task DbStorageTransactionContextCommitTest()
         {
+            if (!await IsReplicaSetAsync()) return;
             using var clientSessionHandle = MongoClient.StartSession();
             var mongoDbTransactionContext = new MongoDbTransactionContext(clientSessionHandle);
             clientSessionHandle.StartTransaction();
@@ -257,8 +261,9 @@ namespace Shashlik.EventBus.MongoDb.Tests
         }
 
         [Fact]
-        public void DbStorageTransactionContextRollbackTest()
+        public async Task DbStorageTransactionContextRollbackTest()
         {
+            if (!await IsReplicaSetAsync()) return;
             using var clientSessionHandle = MongoClient.StartSession();
             var mongoDbTransactionContext = new MongoDbTransactionContext(clientSessionHandle);
             clientSessionHandle.StartTransaction();
@@ -268,14 +273,29 @@ namespace Shashlik.EventBus.MongoDb.Tests
         }
 
         [Fact]
-        public void DbStorageTransactionContextDisposeTest()
+        public async Task DbStorageTransactionContextDisposeTest()
         {
+            if (!await IsReplicaSetAsync()) return;
             var clientSessionHandle = MongoClient.StartSession();
             var mongoDbTransactionContext = new MongoDbTransactionContext(clientSessionHandle);
             clientSessionHandle.StartTransaction();
             mongoDbTransactionContext.IsDone().ShouldBeFalse();
             clientSessionHandle.Dispose();
             mongoDbTransactionContext.IsDone().ShouldBeTrue();
+        }
+
+        private async Task<bool> IsReplicaSetAsync()
+        {
+            try
+            {
+                var command = new JsonCommand<MongoDB.Bson.BsonDocument>("{ isMaster: 1 }");
+                var result = await MongoClient.GetDatabase("admin").RunCommandAsync(command);
+                return result.Contains("setName");
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

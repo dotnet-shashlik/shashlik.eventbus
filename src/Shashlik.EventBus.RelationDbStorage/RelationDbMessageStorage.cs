@@ -120,11 +120,12 @@ internal class RelationDbMessageStorage : IMessageStorage
 
         var dbTransaction = (transactionContext as RelationDbStorageTransactionContext)?.DbTransaction as DbTransaction;
         var dbConnection = dbTransaction?.Connection;
-        // 新增连接和事务判断，复用已有数据库连接
         if (dbConnection is not null && dbTransaction is not null)
         {
-            await FreeSql.Ado.ExecuteNonQueryAsync(dbConnection, dbTransaction, sql,
-                cancellationToken: cancellationToken);
+            await using var cmd = dbConnection.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.Transaction = dbTransaction;
+            await cmd.ExecuteNonQueryAsync(cancellationToken);
         }
         else
         {
@@ -153,7 +154,7 @@ internal class RelationDbMessageStorage : IMessageStorage
         var id = storageId.ParseTo<long>();
         await FreeSql.Update<RelationDbMessageStoragePublishedModel>(id)
             .Set(r => r.Status, status)
-            .Set(r => r.RetryCount, retryCount)
+            .Set(r => r.RetryCount + 1)
             .Set(r => r.ExpireTimeTicks, expireTime?.GetLongDate())
             .ExecuteAffrowsAsync(cancellationToken);
     }
@@ -165,7 +166,7 @@ internal class RelationDbMessageStorage : IMessageStorage
         var id = storageId.ParseTo<long>();
         await FreeSql.Update<RelationDbMessageStorageReceivedModel>(id)
             .Set(r => r.Status, status)
-            .Set(r => r.RetryCount, retryCount)
+            .Set(r => r.RetryCount + 1)
             .Set(r => r.ExpireTimeTicks, expireTime?.GetLongDate())
             .ExecuteAffrowsAsync(cancellationToken);
     }

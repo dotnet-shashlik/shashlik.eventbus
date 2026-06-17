@@ -37,7 +37,7 @@ namespace Shashlik.EventBus.SqlSugar.Tests
             var sugar = new SqlSugarClient(new ConnectionConfig
             {
                 ConnectionString = mySqlConn,
-                DbType = DbType.MySql,
+                DbType = DbType.MySqlConnector,
                 IsAutoCloseConnection = true,
                 InitKeyType = InitKeyType.Attribute
             });
