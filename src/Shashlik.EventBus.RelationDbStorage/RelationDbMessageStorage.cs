@@ -113,22 +113,24 @@ internal class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken = default)
     {
         var entity = message.ToPublishedSaveObject();
-        var insert = FreeSql.InsertOrUpdate<RelationDbMessageStoragePublishedModel>();
-
-        var dbTransaction = (transactionContext as RelationDbStorageTransactionContext)?.DbTransaction;
-        var dbConnection = dbTransaction?.Connection;
-        // 新增连接和事务判断，复用已有数据库连接
-        if (dbConnection != null)
-        {
-            insert = insert.WithConnection(dbConnection as DbConnection);
-            if (dbTransaction != null)
-                insert = insert.WithTransaction(dbTransaction as DbTransaction);
-        }
-
-        await insert
+        var sql = FreeSql.InsertOrUpdate<RelationDbMessageStoragePublishedModel>()
             .SetSource(entity, r => r.MsgId)
             .IfExistsDoNothing()
-            .ExecuteAffrowsAsync(cancellationToken);
+            .ToSql();
+
+        var dbTransaction = (transactionContext as RelationDbStorageTransactionContext)?.DbTransaction as DbTransaction;
+        var dbConnection = dbTransaction?.Connection;
+        // 新增连接和事务判断，复用已有数据库连接
+        if (dbConnection is not null && dbTransaction is not null)
+        {
+            await FreeSql.Ado.ExecuteNonQueryAsync(dbConnection, dbTransaction, sql,
+                cancellationToken: cancellationToken);
+        }
+        else
+        {
+            await FreeSql.Ado.ExecuteNonQueryAsync(sql, cancellationToken: cancellationToken);
+        }
+
         return message.Id;
     }
 
