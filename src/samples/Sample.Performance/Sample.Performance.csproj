@@ -12,6 +12,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
+        <ProjectReference Include="..\..\Shashlik.EventBus.MongoDb\Shashlik.EventBus.MongoDb.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.Pulsar\Shashlik.EventBus.Pulsar.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
         <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />

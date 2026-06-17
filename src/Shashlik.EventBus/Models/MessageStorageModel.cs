@@ -13,7 +13,7 @@ namespace Shashlik.EventBus
     public class MessageStorageModel
     {
         /// <summary>
-        /// 存储的消息 id,由存储中间件自动生成,Insert 后回填
+        /// 存储的消息 id
         /// </summary>
         public long Id { get; set; }
 

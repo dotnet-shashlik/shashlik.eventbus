@@ -1,6 +1,5 @@
 #nullable disable
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 using FreeSql;
@@ -18,7 +17,9 @@ using Shashlik.EventBus.MemoryStorage;
 using Shashlik.EventBus.RabbitMQ;
 using Shashlik.EventBus.Redis;
 using FreeRedis;
+using Shashlik.EventBus.MongoDb;
 using Shashlik.EventBus.Pulsar;
+using ServerVersion = Microsoft.EntityFrameworkCore.ServerVersion;
 
 namespace Sample.Performance
 {
@@ -94,7 +95,8 @@ namespace Sample.Performance
             BenchmarkOptions options,
             IConfiguration configuration)
         {
-            if (Storage == "mysql" || Storage == "postgresql")
+            var builder = services.AddEventBus(r => { r.Environment = ResolvedEnvironment; });
+            if (Storage != "memory")
             {
                 var connectionString = configuration.GetConnectionString(Storage)
                                        ?? throw new InvalidOperationException(
@@ -113,13 +115,18 @@ namespace Sample.Performance
                 }
                 else if (Storage == "sqlserver")
                 {
-                    services.AddDbContextPool<PerfDbContext>(opt => { opt.UseNpgsql(connectionString); },
+                    services.AddDbContextPool<PerfDbContext>(opt => { opt.UseSqlServer(connectionString); },
                         poolSize: 256);
                 }
                 else if (Storage == "oracle")
                 {
+                    //TODO: oracle
                     services.AddDbContextPool<PerfDbContext>(opt => { opt.UseNpgsql(connectionString); },
                         poolSize: 256);
+                }
+                else if (Storage == "mongodb")
+                {
+                    builder.AddMongoDb(connectionString);
                 }
             }
 
@@ -129,8 +136,6 @@ namespace Sample.Performance
                                 "127.0.0.1:6379,defaultDatabase=1";
                 services.AddSingleton(new RedisClient(redisConn));
             }
-
-            var builder = services.AddEventBus(r => { r.Environment = ResolvedEnvironment; });
 
             switch (Storage)
             {
@@ -148,6 +153,9 @@ namespace Sample.Performance
                     break;
                 case "oracle":
                     builder.AddRelationDb<PerfDbContext>(DataType.Oracle);
+                    break;
+                case "mongodb":
+                    builder.AddMongoDb();
                     break;
                 default:
                     throw new InvalidOperationException(

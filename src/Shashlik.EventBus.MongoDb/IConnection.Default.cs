@@ -17,7 +17,7 @@ namespace Shashlik.EventBus.MongoDb
         private EventBusMongoDbOptions Options { get; }
         public IMongoClient Client => _connectionString.Value;
 
-        public IMongoClient Get()
+        private IMongoClient Get()
         {
             return new MongoClient(Options.ConnectionString);
         }

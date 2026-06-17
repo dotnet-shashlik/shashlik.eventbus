@@ -29,8 +29,7 @@ namespace Shashlik.EventBus.MongoDb
                     cancellationToken: cancellationToken);
                 var mongoCollection =
                     mongoDatabase.GetCollection<MessageStorageModel>(Options.CurrentValue.PublishedCollectionName);
-                await mongoCollection.Indexes.CreateManyAsync(new CreateIndexModel<MessageStorageModel>[]
-                    {
+                await mongoCollection.Indexes.CreateManyAsync([
                         new CreateIndexModel<MessageStorageModel>(
                             Builders<MessageStorageModel>.IndexKeys
                                 .Descending(nameof(MessageStorageModel.MsgId))
@@ -79,8 +78,8 @@ namespace Shashlik.EventBus.MongoDb
                             {
                                 Name = nameof(MessageStorageModel.LockEnd),
                                 Background = true
-                            }),
-                    },
+                            })
+                    ],
                     cancellationToken);
             }
 
@@ -90,8 +89,7 @@ namespace Shashlik.EventBus.MongoDb
                     cancellationToken: cancellationToken);
                 var mongoCollection =
                     mongoDatabase.GetCollection<MessageStorageModel>(Options.CurrentValue.ReceivedCollectionName);
-                await mongoCollection.Indexes.CreateManyAsync(new CreateIndexModel<MessageStorageModel>[]
-                    {
+                await mongoCollection.Indexes.CreateManyAsync([
                         new CreateIndexModel<MessageStorageModel>(
                             Builders<MessageStorageModel>.IndexKeys
                                 .Descending(nameof(MessageStorageModel.MsgId))
@@ -156,8 +154,8 @@ namespace Shashlik.EventBus.MongoDb
                             {
                                 Name = nameof(MessageStorageModel.LockEnd),
                                 Background = true
-                            }),
-                    },
+                            })
+                    ],
                     cancellationToken);
             }
         }
