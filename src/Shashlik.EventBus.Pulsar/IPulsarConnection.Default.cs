@@ -7,77 +7,83 @@ using Pulsar.Client.Api;
 using Pulsar.Client.Common;
 using Shashlik.EventBus.Utils;
 
-namespace Shashlik.EventBus.Pulsar
+namespace Shashlik.EventBus.Pulsar;
+
+public class DefaultPulsarConnection : IPulsarConnection, IAsyncDisposable
 {
-    public class DefaultPulsarConnection : IPulsarConnection, IAsyncDisposable
+    public DefaultPulsarConnection(
+        IOptionsMonitor<EventBusPulsarOptions> options,
+        IServiceProvider serviceProvider,
+        IObjectPoolProvider poolProvider)
     {
-        public DefaultPulsarConnection(
-            IOptionsMonitor<EventBusPulsarOptions> options,
-            IServiceProvider serviceProvider,
-            IObjectPoolProvider poolProvider)
-        {
-            Options = options;
-            _serviceProvider = serviceProvider;
-            _connection = new Lazy<PulsarClient>(Get, true);
-            _consumers = [];
-            _poolProvider = poolProvider;
-        }
+        Options = options;
+        _serviceProvider = serviceProvider;
+        _connection = new Lazy<PulsarClient>(Get, true);
+        _consumers = [];
+        _poolProvider = poolProvider;
+    }
 
-        private readonly IServiceProvider _serviceProvider;
-        private readonly Lazy<PulsarClient> _connection;
-        private readonly ConcurrentBag<IConsumer<byte[]>> _consumers;
-        private readonly IObjectPoolProvider _poolProvider;
-        private readonly ConcurrentDictionary<string, IObjectPool<IProducer<byte[]>>> _pools = new();
-        private IOptionsMonitor<EventBusPulsarOptions> Options { get; }
-        private PulsarClient Connection => _connection.Value;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly Lazy<PulsarClient> _connection;
+    private readonly ConcurrentBag<IConsumer<byte[]>> _consumers;
+    private readonly IObjectPoolProvider _poolProvider;
+    private readonly ConcurrentDictionary<string, IObjectPool<IProducer<byte[]>>> _pools = new();
+    private IOptionsMonitor<EventBusPulsarOptions> Options { get; }
+    private PulsarClient Connection => _connection.Value;
 
-        private PulsarClient Get()
-        {
-            if (Options.CurrentValue.PulsarClientFactory is not null)
-                return Options.CurrentValue.PulsarClientFactory(_serviceProvider);
-            return new PulsarClientBuilder().ServiceUrl(Options.CurrentValue.ServiceUrl)
-                .BuildAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-        }
+    private PulsarClient Get()
+    {
+        if (Options.CurrentValue.PulsarClientFactory is not null)
+            return Options.CurrentValue.PulsarClientFactory(_serviceProvider);
+        return new PulsarClientBuilder().ServiceUrl(Options.CurrentValue.ServiceUrl)
+            .BuildAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+    }
 
-        public async ValueTask<IPoolLease<IProducer<byte[]>>> GetProducer(string topic)
-        {
-            return await _pools.GetOrAdd(topic, CreatePoolFor)
-                .RentAsync().ConfigureAwait(false);
-        }
+    public async ValueTask<IPoolLease<IProducer<byte[]>>> GetProducer(string topic)
+    {
+        return await _pools.GetOrAdd(topic, CreatePoolFor)
+            .RentAsync().ConfigureAwait(false);
+    }
 
-        private IObjectPool<IProducer<byte[]>> CreatePoolFor(string topic)
-        {
-            return _poolProvider.Create<IProducer<byte[]>>(
-                $"pulsar.producer.{topic}",
-                new PulsarProducerPoolPolicy(Connection, topic),
-                Math.Max(1, Environment.ProcessorCount));
-        }
+    private IObjectPool<IProducer<byte[]>> CreatePoolFor(string topic)
+    {
+        return _poolProvider.Create<IProducer<byte[]>>(
+            $"pulsar.producer.{topic}",
+            new PulsarProducerPoolPolicy(Connection, topic),
+            Math.Max(1, Environment.ProcessorCount));
+    }
 
-        public IConsumer<byte[]> GetConsumer(string topic, string group)
-        {
-            var consumer = Connection.NewConsumer().Topic(topic).SubscriptionName(group).ConsumerName(group)
-                .SubscriptionType(SubscriptionType.Shared).SubscribeAsync().ConfigureAwait(false).GetAwaiter()
-                .GetResult();
-            _consumers.Add(consumer);
-            return consumer;
-        }
+    public IConsumer<byte[]> GetConsumer(string topic, string group)
+    {
+        var consumer = Connection.NewConsumer().Topic(topic).SubscriptionName(group).ConsumerName(group)
+            .SubscriptionType(SubscriptionType.Shared).SubscribeAsync().ConfigureAwait(false).GetAwaiter()
+            .GetResult();
+        _consumers.Add(consumer);
+        return consumer;
+    }
 
-        public async ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var item in _consumers)
         {
             try
             {
-                foreach (var item in _consumers)
-                {
-                    await item.DisposeAsync();
-                }
-
-                await Connection.CloseAsync();
-                _consumers.Clear();
+                await item.DisposeAsync();
             }
             catch
             {
                 // ignore
             }
+        }
+
+        try
+        {
+            await Connection.CloseAsync();
+            _consumers.Clear();
+        }
+        catch
+        {
+            // ignore
         }
     }
 
