@@ -17,17 +17,6 @@ namespace Shashlik.EventBus.RelationDbStorage;
 /// </summary>
 internal static class MessageStorageModelMapping
 {
-    private static DateTimeOffset TicksToDto(long ticks) => new DateTimeOffset(ticks, TimeSpan.Zero).ToLocalTime();
-
-    private static DateTimeOffset? TicksToDto(long? ticks) =>
-        ticks.HasValue ? TicksToDto(ticks.Value) : null;
-
-    private static long TicksToDb(DateTimeOffset dt) =>
-        dt.UtcTicks;
-
-    private static long? TicksToDb(DateTimeOffset? dt) =>
-        dt?.UtcTicks;
-
     public static MessageStorageModel ToModel(this RelationDbMessageStoragePublishedModel entity)
     {
         return new MessageStorageModel
@@ -37,14 +26,14 @@ internal static class MessageStorageModelMapping
             Environment = entity.Environment,
             EventName = entity.EventName,
             EventBody = entity.EventBody,
-            CreateTime = TicksToDto(entity.CreateTimeTicks),
-            DelayAt = TicksToDto(entity.DelayAtTicks),
-            ExpireTime = TicksToDto(entity.ExpireTimeTicks),
+            CreateTime = entity.CreateTimeTicks.LongToDateTimeOffset()!.Value,
+            DelayAt = entity.DelayAtTicks.LongToDateTimeOffset(),
+            ExpireTime = entity.ExpireTimeTicks.LongToDateTimeOffset(),
             EventItems = entity.EventItems,
             RetryCount = entity.RetryCount,
             Status = entity.Status,
             IsLocking = entity.IsLocking,
-            LockEnd = TicksToDto(entity.LockEndTicks)
+            LockEnd = entity.LockEndTicks.LongToDateTimeOffset()
         };
     }
 
@@ -58,14 +47,14 @@ internal static class MessageStorageModelMapping
             EventName = entity.EventName,
             EventHandlerName = entity.EventHandlerName,
             EventBody = entity.EventBody,
-            CreateTime = TicksToDto(entity.CreateTimeTicks),
-            DelayAt = TicksToDto(entity.DelayAtTicks),
-            ExpireTime = TicksToDto(entity.ExpireTimeTicks),
+            CreateTime = entity.CreateTimeTicks.LongToDateTimeOffset()!.Value,
+            DelayAt = entity.DelayAtTicks.LongToDateTimeOffset(),
+            ExpireTime = entity.ExpireTimeTicks.LongToDateTimeOffset(),
             EventItems = entity.EventItems,
             RetryCount = entity.RetryCount,
             Status = entity.Status,
             IsLocking = entity.IsLocking,
-            LockEnd = TicksToDto(entity.LockEndTicks)
+            LockEnd = entity.LockEndTicks.LongToDateTimeOffset()
         };
     }
 
@@ -73,19 +62,20 @@ internal static class MessageStorageModelMapping
     {
         return new RelationDbMessageStoragePublishedModel
         {
+            Id = model.Id,
             MsgId = model.MsgId,
             Environment = model.Environment,
             EventName = model.EventName,
             EventBody = model.EventBody,
-            CreateTimeTicks = TicksToDb(model.CreateTime),
+            CreateTimeTicks = model.CreateTime.GetLongDate(),
             IsDelay = model.DelayAt.HasValue,
-            DelayAtTicks = TicksToDb(model.DelayAt),
-            ExpireTimeTicks = TicksToDb(model.ExpireTime),
+            DelayAtTicks = model.DelayAt.GetLongDate(),
+            ExpireTimeTicks = model.ExpireTime.GetLongDate(),
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEndTicks = TicksToDb(model.LockEnd)
+            LockEndTicks = model.LockEnd.GetLongDate()
         };
     }
 
@@ -93,20 +83,21 @@ internal static class MessageStorageModelMapping
     {
         return new RelationDbMessageStorageReceivedModel
         {
+            Id = model.Id,
             MsgId = model.MsgId,
             Environment = model.Environment,
             EventName = model.EventName,
             EventHandlerName = model.EventHandlerName,
             EventBody = model.EventBody,
-            CreateTimeTicks = TicksToDb(model.CreateTime),
+            CreateTimeTicks = model.CreateTime.GetLongDate(),
             IsDelay = model.DelayAt.HasValue,
-            DelayAtTicks = TicksToDb(model.DelayAt),
-            ExpireTimeTicks = TicksToDb(model.ExpireTime),
+            DelayAtTicks = model.DelayAt.GetLongDate(),
+            ExpireTimeTicks = model.ExpireTime.GetLongDate(),
             EventItems = model.EventItems,
             RetryCount = model.RetryCount,
             Status = model.Status,
             IsLocking = model.IsLocking,
-            LockEndTicks = TicksToDb(model.LockEnd)
+            LockEndTicks = model.LockEnd.GetLongDate()
         };
     }
 }

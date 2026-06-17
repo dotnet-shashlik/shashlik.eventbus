@@ -269,6 +269,18 @@ public static class InnerExtensions
         return datetime.ToUnixTimeSeconds();
     }
 
+    /// <summary>
+    /// 获取1970-1-1 到现在的秒数 使用UTC标准
+    /// </summary>
+    /// <param name="datetime"></param>
+    /// <returns></returns>
+    public static long? GetLongDate(this DateTimeOffset? datetime)
+    {
+        if (!datetime.HasValue)
+            return null;
+        return datetime.Value.ToUnixTimeSeconds();
+    }
+
     private static readonly DateTimeOffset StartTimeOffset = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     /// <summary>
@@ -281,6 +293,18 @@ public static class InnerExtensions
         if (value is 0L)
             return null;
         return StartTimeOffset.AddSeconds(value).ToLocalTime();
+    }
+
+    /// <summary>
+    /// long转换为DateTimeOffset,本地时间,0转换为null
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static DateTimeOffset? LongToDateTimeOffset(this long? value)
+    {
+        if (value is 0L or null)
+            return null;
+        return StartTimeOffset.AddSeconds(value.Value).ToLocalTime();
     }
 
     /// <summary>

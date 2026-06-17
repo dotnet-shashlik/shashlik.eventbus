@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
 
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
@@ -11,21 +13,28 @@ using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.Kafka
 {
-    public class KafkaEventSubscriber : IEventSubscriber
+    public class KafkaEventSubscriber : IEventSubscriber, IDisposable
     {
         public KafkaEventSubscriber(IKafkaConnection connection, IMessageSerializer messageSerializer,
-            ILogger<KafkaEventSubscriber> logger, IMessageListener messageListener)
+            ILogger<KafkaEventSubscriber> logger, IMessageListener messageListener,
+            IOptions<EventBusKafkaOptions> options)
         {
             Connection = connection;
             MessageSerializer = messageSerializer;
             Logger = logger;
             MessageListener = messageListener;
+            Options = options;
         }
 
         private IKafkaConnection Connection { get; }
         private IMessageSerializer MessageSerializer { get; }
         private ILogger<KafkaEventSubscriber> Logger { get; }
         private IMessageListener MessageListener { get; }
+
+        private IOptions<EventBusKafkaOptions> Options { get; }
+
+        // 消费者示例,没有租借
+        private readonly ConcurrentBag<IConsumer<string, byte[]>> _consumerList = [];
 
         public async Task SubscribeAsync(EventHandlerDescriptor eventHandlerDescriptor,
             CancellationToken cancellationToken)
@@ -34,33 +43,37 @@ namespace Shashlik.EventBus.Kafka
             if (cancellationToken.IsCancellationRequested)
                 return;
 
-            var consumer = Connection.CreateConsumer(eventHandlerDescriptor.EventHandlerName,
-                eventHandlerDescriptor.EventName);
-            consumer.Subscribe(eventHandlerDescriptor.EventName);
-            var eventName = eventHandlerDescriptor.EventName;
-            var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
-
-            _ = Task.Run(async () =>
+            for (var i = 0; i < Options.Value.ConsumerPoolSize; i++)
             {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await Consume(consumer, eventName, eventHandlerName, cancellationToken);
-                    }
-                    catch (AccessViolationException)
-                    {
-                        // ignore
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.LogError(e, $"[EventBus-Kafka] consume message occur error");
-                    }
+                var consumer = Connection.CreateConsumer(eventHandlerDescriptor.EventHandlerName,
+                    eventHandlerDescriptor.EventName);
+                _consumerList.Add(consumer);
+                consumer.Subscribe(eventHandlerDescriptor.EventName);
+                var eventName = eventHandlerDescriptor.EventName;
+                var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
 
-                    // ReSharper disable once MethodSupportsCancellation
-                    await Task.Delay(10).ConfigureAwait(false);
-                }
-            }, cancellationToken);
+                _ = Task.Run(async () =>
+                {
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            await Consume(consumer, eventName, eventHandlerName, cancellationToken);
+                        }
+                        catch (AccessViolationException)
+                        {
+                            // ignore
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.LogError(e, $"[EventBus-Kafka] consume message occur error");
+                        }
+
+                        // ReSharper disable once MethodSupportsCancellation
+                        await Task.Delay(10).ConfigureAwait(false);
+                    }
+                }, cancellationToken);
+            }
         }
 
         private async Task Consume(IConsumer<string, byte[]> consumer, string eventName, string eventHandlerName,
@@ -124,6 +137,21 @@ namespace Shashlik.EventBus.Kafka
             if (res == MessageReceiveResult.Success)
                 // 只有监听处理成功才提交偏移量,否则不处理即可
                 consumer.StoreOffset(consumerResult);
+        }
+
+        public void Dispose()
+        {
+            foreach (var consumer in _consumerList)
+            {
+                try
+                {
+                    consumer.Dispose();
+                }
+                catch
+                {
+                    //ignore
+                }
+            }
         }
     }
 }

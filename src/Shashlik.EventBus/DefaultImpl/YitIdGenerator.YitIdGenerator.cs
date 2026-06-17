@@ -13,12 +13,22 @@ public class YitIdGenerator : IIdGenerator
     {
         var workerIdStr = Environment.GetEnvironmentVariable("WORKER_ID");
         if (ushort.TryParse(workerIdStr, out var workerId))
-            YitIdHelper.SetIdGenerator(new IdGeneratorOptions(workerId)
+        {
+            if (workerId >= 1024)
+                throw new ArgumentOutOfRangeException(nameof(workerId));
+
+            YitIdHelper.SetIdGenerator(new IdGeneratorOptions
             {
+                WorkerId = workerId,
                 WorkerIdBitLength = 10
             });
+        }
         else
-            YitIdHelper.SetIdGenerator(new IdGeneratorOptions((ushort)RandomNumberGenerator.GetInt32(0, 1023)));
+            YitIdHelper.SetIdGenerator(new IdGeneratorOptions
+            {
+                WorkerId = (ushort)RandomNumberGenerator.GetInt32(0, 1024),
+                WorkerIdBitLength = 10
+            });
     }
 
     public long NextId()

@@ -33,6 +33,11 @@ namespace Shashlik.EventBus.Kafka
          */
         public short TopicReplicationFactor { get; set; } = -1;
 
+        /// <summary>
+        /// 消费池大小,默认4
+        /// </summary>
+        public int ConsumerPoolSize { get; set; } = 4;
+
         /**
          * 自定义配置topic创建,优先级高于<see cref="TopicNumPartitions"/>和<see cref="TopicReplicationFactor"/>
          */

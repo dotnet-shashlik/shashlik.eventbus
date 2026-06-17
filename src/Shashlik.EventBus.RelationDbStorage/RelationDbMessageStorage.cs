@@ -4,7 +4,6 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -72,8 +71,8 @@ internal class RelationDbMessageStorage : IMessageStorage
         DateTimeOffset endTime, string? eventName, string? status,
         int skip, int take, CancellationToken cancellationToken)
     {
-        var begin = beginTime.UtcTicks;
-        var end = endTime.UtcTicks;
+        var begin = beginTime.GetLongDate();
+        var end = endTime.GetLongDate();
         var query = FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.CreateTimeTicks >= begin && r.CreateTimeTicks <= end && r.Environment == environment)
             .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
@@ -94,8 +93,8 @@ internal class RelationDbMessageStorage : IMessageStorage
         int take,
         CancellationToken cancellationToken)
     {
-        var begin = beginTime.UtcTicks;
-        var end = endTime.UtcTicks;
+        var begin = beginTime.GetLongDate();
+        var end = endTime.GetLongDate();
         var query = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.CreateTimeTicks >= begin && r.CreateTimeTicks <= end && r.Environment == environment)
             .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
@@ -153,7 +152,7 @@ internal class RelationDbMessageStorage : IMessageStorage
         await FreeSql.Update<RelationDbMessageStoragePublishedModel>(id)
             .Set(r => r.Status, status)
             .Set(r => r.RetryCount, retryCount)
-            .Set(r => r.ExpireTimeTicks, expireTime?.UtcTicks)
+            .Set(r => r.ExpireTimeTicks, expireTime?.GetLongDate())
             .ExecuteAffrowsAsync(cancellationToken);
     }
 
@@ -165,7 +164,7 @@ internal class RelationDbMessageStorage : IMessageStorage
         await FreeSql.Update<RelationDbMessageStorageReceivedModel>(id)
             .Set(r => r.Status, status)
             .Set(r => r.RetryCount, retryCount)
-            .Set(r => r.ExpireTimeTicks, expireTime?.UtcTicks)
+            .Set(r => r.ExpireTimeTicks, expireTime?.GetLongDate())
             .ExecuteAffrowsAsync(cancellationToken);
     }
 
@@ -173,11 +172,11 @@ internal class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
-        var now = DateTimeOffset.UtcNow.UtcTicks;
+        var now = DateTimeOffset.UtcNow.GetLongDate();
         return await FreeSql.Update<RelationDbMessageStoragePublishedModel>(id)
             .Where(r => !r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now)
             .Set(r => r.IsLocking, true)
-            .Set(r => r.LockEndTicks, lockEndAt.UtcTicks)
+            .Set(r => r.LockEndTicks, lockEndAt.GetLongDate())
             .ExecuteAffrowsAsync(cancellationToken) == 1;
     }
 
@@ -185,11 +184,11 @@ internal class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken)
     {
         var id = storageId.ParseTo<long>();
-        var now = DateTimeOffset.UtcNow.UtcTicks;
+        var now = DateTimeOffset.UtcNow.GetLongDate();
         return await FreeSql.Update<RelationDbMessageStorageReceivedModel>(id)
             .Where(r => !r.IsLocking || r.LockEndTicks == null || r.LockEndTicks < now)
             .Set(r => r.IsLocking, true)
-            .Set(r => r.LockEndTicks, lockEndAt.UtcTicks)
+            .Set(r => r.LockEndTicks, lockEndAt.GetLongDate())
             .ExecuteAffrowsAsync(cancellationToken) == 1;
     }
 
@@ -200,7 +199,7 @@ internal class RelationDbMessageStorage : IMessageStorage
         // FreeSql 的 IDelete<T> 没有稳定的 Limit 支持,所以用"先 select id 列表,再
         // 按 id 删"两步走。
         const int batchSize = 1000;
-        var now = DateTimeOffset.UtcNow.UtcTicks;
+        var now = DateTimeOffset.UtcNow.GetLongDate();
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -253,8 +252,8 @@ internal class RelationDbMessageStorage : IMessageStorage
         string environment,
         CancellationToken cancellationToken = default)
     {
-        var createTimeLimit = DateTimeOffset.UtcNow.AddSeconds(-delayRetrySecond).UtcTicks;
-        var now = DateTimeOffset.UtcNow.UtcTicks;
+        var createTimeLimit = DateTimeOffset.UtcNow.AddSeconds(-delayRetrySecond).GetLongDate();
+        var now = DateTimeOffset.UtcNow.GetLongDate();
         // 内层每个分支必须 .Limit(count): 否则 FreeSql 生成
         //   (SELECT ... ORDER BY) UNION ALL (SELECT ... ORDER BY) ORDER BY ... LIMIT N
         // 在 MySQL 上会先 materialize 每个内层子查询的全部结果集 (可能千万行),
@@ -299,8 +298,8 @@ internal class RelationDbMessageStorage : IMessageStorage
         string environment,
         CancellationToken cancellationToken = default)
     {
-        var createTimeLimit = DateTimeOffset.UtcNow.AddSeconds(-delayRetrySecond).UtcTicks;
-        var now = DateTimeOffset.UtcNow.UtcTicks;
+        var createTimeLimit = DateTimeOffset.UtcNow.AddSeconds(-delayRetrySecond).GetLongDate();
+        var now = DateTimeOffset.UtcNow.GetLongDate();
         // 见 GetPublishedMessagesOfNeedRetryAsync 注释:内层 UNION ALL 子查询必须各自 Limit
         // 普通消息
         var normalQuery = FreeSql.Select<RelationDbMessageStorageReceivedModel>()
@@ -337,8 +336,8 @@ internal class RelationDbMessageStorage : IMessageStorage
         string environment, DateTimeOffset beginTime, DateTimeOffset endTime,
         string? eventName, string? status, CancellationToken cancellationToken)
     {
-        var begin = beginTime.UtcTicks;
-        var end = endTime.UtcTicks;
+        var begin = beginTime.GetLongDate();
+        var end = endTime.GetLongDate();
         return (int)await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
             .Where(r => r.CreateTimeTicks >= begin && r.CreateTimeTicks <= end && r.Environment == environment)
             .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
@@ -351,8 +350,8 @@ internal class RelationDbMessageStorage : IMessageStorage
         string? eventName, string? eventHandlerName, string? status,
         CancellationToken cancellationToken)
     {
-        var begin = beginTime.UtcTicks;
-        var end = endTime.UtcTicks;
+        var begin = beginTime.GetLongDate();
+        var end = endTime.GetLongDate();
         return (int)await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
             .Where(r => r.CreateTimeTicks >= begin && r.CreateTimeTicks <= end && r.Environment == environment)
             .WhereIf(!string.IsNullOrEmpty(eventName), r => r.EventName == eventName)
