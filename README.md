@@ -18,7 +18,7 @@
 
 ## 设计原理
 
-![eventbus](https://raw.githubusercontent.com/dotnet-shashlik/shashlik.eventbus/main/pictures/eventbus.png)
+![eventbus](https://raw.githubusercontent.com/dotnet-shashlik/shashlik.eventbus/main/pictures/eventbus.jpg)
 
 消息数据与业务数据在同一事务中提交或回滚，EventBus 确认消息已提交后才真正发送。事务隔离级别最低要求 **读已提交 (RC)**。
 
