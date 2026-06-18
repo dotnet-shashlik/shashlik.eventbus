@@ -62,10 +62,7 @@ namespace Shashlik.EventBus.SqlSugar.Tests
             sugar.Ado.RollbackTran();
 
             await Task.Delay(3000);
-            // SqlSugar and FreeSql use independent connection pools, so
-            // FreeSql storage cannot participate in SqlSugar's rollback.
-            // The message is persisted and sent regardless of SqlSugar rollback.
-            TestEventHandler.LastInstance.ShouldNotBeNull();
+            TestEventHandler.LastInstance.ShouldBeNull();
 
             sugar.Queryable<SsTestUser>().Where(u => u.Name == userName).Any().ShouldBeFalse();
         }
@@ -114,9 +111,7 @@ namespace Shashlik.EventBus.SqlSugar.Tests
             sugar.Ado.RollbackTran();
 
             await Task.Delay(3000);
-            // SqlSugar and FreeSql use independent connection pools, so
-            // FreeSql storage cannot participate in SqlSugar's rollback.
-            TestEventHandler.LastInstance.ShouldNotBeNull();
+            TestEventHandler.LastInstance.ShouldBeNull();
 
             sugar.Queryable<SsTestUser>().Where(u => u.Name == userName).Any().ShouldBeFalse();
         }
@@ -169,9 +164,7 @@ namespace Shashlik.EventBus.SqlSugar.Tests
             }
 
             await Task.Delay(3000);
-            // SqlSugar and FreeSql use independent connection pools, so
-            // FreeSql storage cannot participate in SqlSugar's rollback.
-            TestEventHandler.LastInstance.ShouldNotBeNull();
+            TestEventHandler.LastInstance.ShouldBeNull();
 
             sugar.Queryable<SsTestUser>().Where(u => u.Name == userName).Any().ShouldBeFalse();
         }
@@ -224,9 +217,7 @@ namespace Shashlik.EventBus.SqlSugar.Tests
             }
 
             await Task.Delay(3000);
-            // SqlSugar and FreeSql use independent connection pools, so
-            // FreeSql storage cannot participate in SqlSugar's rollback.
-            TestEventHandler.LastInstance.ShouldNotBeNull();
+            TestEventHandler.LastInstance.ShouldBeNull();
 
             sugar.Queryable<SsTestUser>().Where(u => u.Name == userName).Any().ShouldBeFalse();
         }
