@@ -87,16 +87,18 @@ namespace Shashlik.EventBus.DefaultImpl
                 CancellationToken = cancellationToken
             }, async (item, cToken) =>
             {
-                // 延迟消息, 还没到时间的, 交给TimerHelper
-                if (item.DelayAt.HasValue && item.DelayAt.Value > DateTimeOffset.Now &&
-                    (item.DelayAt.Value - DateTimeOffset.Now).TotalSeconds <=
-                    Options.Value.DelayedMessageToleranceSeconds)
+                if (!item.DelayAt.HasValue
+                    || item.DelayAt.Value <= DateTimeOffset.Now
+                    // 在容忍延迟范围内
+                    || (item.DelayAt.Value - DateTimeOffset.Now).TotalSeconds <=
+                    Options.Value.DelayedMessageToleranceSeconds
+                   )
                 {
-                    await RunDelayAsync(item, cToken).ConfigureAwait(false);
+                    await RunNowAsync(item, cToken).ConfigureAwait(false);
                 }
                 else
                 {
-                    await RunNowAsync(item, cToken);
+                    await RunDelayAsync(item, cToken).ConfigureAwait(false);
                 }
             }).ConfigureAwait(false);
         }

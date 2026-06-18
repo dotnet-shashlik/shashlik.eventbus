@@ -74,17 +74,26 @@ namespace Shashlik.EventBus.DefaultImpl
                     .ConfigureAwait(false);
 
                 // 非延迟事件直接进入执行队列
-                if (!message.DelayAt.HasValue || message.DelayAt.Value <= DateTimeOffset.Now)
-                    Start(receiveMessageStorageModel, message.Items, descriptor, cancellationToken);
+                if (!message.DelayAt.HasValue
+                    || message.DelayAt.Value <= DateTimeOffset.Now
+                    // 在容忍延迟范围内
+                    || (message.DelayAt.Value - DateTimeOffset.Now).TotalSeconds <=
+                    Options.Value.DelayedMessageToleranceSeconds
+                   )
+                    _ = Task.Run(async () =>
+                        await Start(receiveMessageStorageModel, message.Items, descriptor, cancellationToken));
                 // 延迟事件进入延迟执行队列
-                else if (message.DelayAt.HasValue && (message.DelayAt.Value - DateTimeOffset.Now).TotalSeconds <=
-                         Options.Value.StartRetryAfter + Options.Value.StartRetryAfter * 0.2)
+                else if (message.DelayAt.HasValue)
                 {
-                    void Action() => Start(receiveMessageStorageModel, message.Items, descriptor, cancellationToken);
                     TimerHelper.SetTimeout(
-                        Action,
+                        async () => await Start(receiveMessageStorageModel, message.Items, descriptor,
+                            cancellationToken),
                         message.DelayAt.Value,
                         cancellationToken);
+                }
+                else
+                {
+                    throw new EventBusException($"[EventBus] message listener handle message occur error");
                 }
 
                 return MessageReceiveResult.Success;
@@ -98,37 +107,34 @@ namespace Shashlik.EventBus.DefaultImpl
             }
         }
 
-        private void Start(
+        private async Task Start(
             MessageStorageModel messageStorageModel,
             IDictionary<string, string> items,
             EventHandlerDescriptor descriptor,
             CancellationToken cancellationToken)
         {
-            _ = Task.Run(async () =>
+            // 执行失败的次数
+            var failCount = 1;
+            while (!cancellationToken.IsCancellationRequested)
             {
-                // 执行失败的次数
-                var failCount = 1;
-                while (!cancellationToken.IsCancellationRequested)
+                var handleResult = await ReceivedHandler
+                    .HandleAsync(messageStorageModel, items, descriptor, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!handleResult.Success)
+                    failCount++;
+                else
+                    return;
+
+                if (failCount > 5)
                 {
-                    var handleResult = await ReceivedHandler
-                        .HandleAsync(messageStorageModel, items, descriptor, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (!handleResult.Success)
-                        failCount++;
-                    else
-                        return;
-
-                    if (failCount > 5)
-                    {
-                        // 5次都失败了,交给重试器去执行了,这里就不管了
-                        return;
-                    }
-
-                    // ReSharper disable once MethodSupportsCancellation
-                    await Task.Delay(10).ConfigureAwait(false);
+                    // 5次都失败了,交给重试器去执行了,这里就不管了
+                    return;
                 }
-            }, cancellationToken);
+
+                // ReSharper disable once MethodSupportsCancellation
+                await Task.Delay(10).ConfigureAwait(false);
+            }
         }
     }
 }

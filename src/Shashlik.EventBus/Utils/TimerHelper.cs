@@ -22,7 +22,7 @@ namespace Shashlik.EventBus.Utils
             if (expire <= TimeSpan.Zero)
                 throw new ArgumentException("invalid expire.", nameof(expire));
 
-            Task.Delay(expire, cancellationToken)
+            _ = Task.Delay(expire, cancellationToken)
                 .ContinueWith(_ => action(), cancellationToken).ConfigureAwait(false);
         }
 
@@ -41,7 +41,7 @@ namespace Shashlik.EventBus.Utils
             if (expire <= TimeSpan.Zero)
                 throw new ArgumentException("invalid expire.", nameof(expire));
 
-            Task.Delay(expire, cancellationToken)
+            _ = Task.Delay(expire, cancellationToken)
                 .ContinueWith(async _ => await action(), cancellationToken);
         }
 
@@ -84,7 +84,7 @@ namespace Shashlik.EventBus.Utils
                 return;
             if (interval <= TimeSpan.Zero)
                 throw new ArgumentException("invalid interval.", nameof(interval));
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
                 using var timer = new PeriodicTimer(interval);
                 while (await timer.WaitForNextTickAsync(cancellationToken))
@@ -106,43 +106,12 @@ namespace Shashlik.EventBus.Utils
                 return;
             if (interval <= TimeSpan.Zero)
                 throw new ArgumentException("invalid interval.", nameof(interval));
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
                 using var timer = new PeriodicTimer(interval);
                 while (await timer.WaitForNextTickAsync(cancellationToken))
                     await action();
             }, cancellationToken);
-        }
-
-        private static void SafeInvoke(Action action, Action<Exception>? onError)
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                SafeReport(ex, onError);
-            }
-        }
-
-        private static void SafeReport(Exception ex, Action<Exception>? onError)
-        {
-            if (onError is not null)
-            {
-                try
-                {
-                    onError(ex);
-                }
-                catch
-                {
-                    /* 吞掉 callback 自身的异常 */
-                }
-            }
-            else
-            {
-                Console.WriteLine($"[EventBus] TimerHelper action threw: {ex}");
-            }
         }
     }
 }
