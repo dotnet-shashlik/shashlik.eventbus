@@ -32,7 +32,11 @@ namespace CommonTestLogical
                 })
                 .ConfigureAppConfiguration((host, config) =>
                 {
-                    config.AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), "config.test.yaml"));
+                    var envName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "";
+                    var configFile = envName.Equals("GitHub", StringComparison.OrdinalIgnoreCase)
+                        ? "config.test-github.yaml"
+                        : "config.test.yaml";
+                    config.AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), configFile));
                     config.AddEnvironmentVariables();
                 })
                 .ConfigureWebHostDefaults(x =>

@@ -55,6 +55,8 @@ jobs:
         run: dotnet restore ./src/Shashlik.EventBus.sln
       - name: Test
         run: dotnet test ./src/Shashlik.EventBus.sln
+        env:
+          DOTNET_ENVIRONMENT: GitHub
       - name: Build
         run: dotnet build ./src/Shashlik.EventBus.sln --configuration Release --no-restore
       - name: Pack

@@ -34,6 +34,10 @@
       <Link>config.test.yaml</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\config.test-github.yaml">
+      <Link>config.test-github.yaml</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

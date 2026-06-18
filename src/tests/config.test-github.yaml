@@ -1,0 +1,27 @@
+ConnectionStrings:
+  MySql: server=localhost;port=3306;database=eventbustest;user id=root;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
+  PostgreSql: server=localhost;port=5432;database=eventbustest;user id=postgres;password=postgres;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
+  SqlServer: server=localhost;database=eventbustest;user id=sa;password=Shashlik123123;Encrypt=True;TrustServerCertificate=True;
+  MongoDb: mongodb://mongo:123123@localhost:27017/?authSource=admin
+
+EventBus:
+  RetryFailedMax: 7
+  StartRetryAfter: 20
+  TransactionCommitTimeout: 10
+  RetryInterval: 5
+  LockTime: 2
+  RetryLimitCount: 100
+  SucceedExpireHour: 72
+  Kafka:
+    Properties:
+      "bootstrap.servers": "localhost:9092"
+      "allow.auto.create.topics": "true"
+  RabbitMQ:
+    Host: localhost
+    Port: 5672
+    UserName: guest
+    Password: guest
+  Pulsar:
+    ServiceUrl: pulsar://localhost:6650
+  Redis:
+    Conn: localhost,password=123123,defaultDatabase=

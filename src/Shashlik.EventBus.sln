@@ -38,6 +38,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{0B18BA5F-EC61-461D-A1F3-D7D5B74B68A6}"
 	ProjectSection(SolutionItems) = preProject
 		tests\config.test.yaml = tests\config.test.yaml
+		tests\config.test-github.yaml = tests\config.test-github.yaml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shashlik.EventBus.Dashboard", "Shashlik.EventBus.Dashboard\Shashlik.EventBus.Dashboard.csproj", "{D0D90F87-AC09-44BA-B637-E71627386572}"
