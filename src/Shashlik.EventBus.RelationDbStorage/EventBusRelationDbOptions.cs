@@ -56,10 +56,24 @@ public class EventBusRelationDbOptions
     }
 
     /// <summary>
-    /// 配置 FreeSql 方言
+    ///  配置自定义的连接工厂类型, <see cref="IConnectionFactory"/>, 需要自行注册到service
+    /// </summary>
+    /// <typeparam name="T">IConnectionFactory实现</typeparam>
+    /// <returns></returns>
+    public EventBusRelationDbOptions UseConnection<T>() where T : IConnectionFactory
+    {
+        ConnectionFactory = typeof(T);
+        return this;
+    }
+
+    /// <summary>
+    /// 配置自定义的连接工厂类型, <see cref="IConnectionFactory"/>, 需要自行注册到service
     /// </summary>
     public EventBusRelationDbOptions UseConnection(Type connectionFactory)
     {
+        if (!connectionFactory.IsAssignableTo(typeof(IConnectionFactory)))
+            throw new ArgumentException("connectionFactory must implement IConnectionFactory",
+                nameof(connectionFactory));
         ConnectionFactory = connectionFactory;
         return this;
     }
