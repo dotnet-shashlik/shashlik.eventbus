@@ -208,12 +208,14 @@ internal class RelationDbMessageStorage : IMessageStorage
         {
             var ids = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Succeeded)
+                .OrderBy(r=>r.Id)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
 
             var idsFailed = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Failed &&
                             r.RetryCount >= retryFailedMax)
+                .OrderBy(r=>r.Id)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
             if (idsFailed.Count > 0)
@@ -230,11 +232,13 @@ internal class RelationDbMessageStorage : IMessageStorage
             var ids = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Succeeded)
                 .Limit(batchSize)
+                .OrderBy(r=>r.Id)
                 .ToListAsync(r => r.Id, cancellationToken);
 
             var idsFailed = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Failed &&
                             r.RetryCount >= retryFailedMax)
+                .OrderBy(r=>r.Id)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
             if (idsFailed.Count > 0)
