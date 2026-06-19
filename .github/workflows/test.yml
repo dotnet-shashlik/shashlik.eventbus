@@ -2,8 +2,7 @@ name: test
 
 on:
   push:
-    branches:
-      - test
+    branches: [ test ]
 
 jobs:
   build:
@@ -20,13 +19,13 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -p123123"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -p123123"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
 
       rabbitmq:
-        image: rabbitmq:latest
+        image: rabbitmq
         ports:
           - 5672:5672
           - 15672:15672
@@ -36,10 +35,15 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
-      kafka:
-        image: confluentinc/cp-kafka:7.9.8
+      redis:
+        image: redis
         ports:
-          - 9092:9092
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
       mongodb:
         image: mongo:8.0
@@ -54,25 +58,21 @@ jobs:
           --health-timeout=5s
           --health-retries=10
 
-      pulsar:
-        image: apachepulsar/pulsar:4.2.2
+      kafka:
+        image: confluentinc/cp-kafka:7.8.0
         ports:
-          - 6650:6650
-          - 8080:8080
-        options: >-
-          --entrypoint /pulsar/bin/pulsar
-        command:
-          - standalone
-
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+          - 9092:9092
+        env:
+          KAFKA_NODE_ID: 1
+          KAFKA_PROCESS_ROLES: broker,controller
+          KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+          KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+          CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
     steps:
       - uses: actions/checkout@v4
@@ -82,33 +82,36 @@ jobs:
         with:
           dotnet-version: 8.0.422
 
+      # ---------------- Kafka Wait ----------------
       - name: Wait Kafka
         run: |
           echo "Waiting Kafka..."
 
           for i in $(seq 1 60); do
-            docker exec ${{ job.services.kafka.id }} \
-              /opt/kafka/bin/kafka-topics.sh \
-              --bootstrap-server localhost:9092 \
-              --list >/dev/null 2>&1 && exit 0
-
+            nc -z localhost 9092 && echo "Kafka port ready" && break
             sleep 2
           done
 
-          docker logs ${{ job.services.kafka.id }}
-          exit 1
+      # ---------------- Pulsar (docker run) ----------------
+      - name: Start Pulsar
+        run: |
+          docker run -d \
+            --name pulsar \
+            -p 6650:6650 \
+            -p 8080:8080 \
+            apachepulsar/pulsar:4.2.2 \
+            bin/pulsar standalone
 
       - name: Wait Pulsar
         run: |
           echo "Waiting Pulsar..."
 
           for i in $(seq 1 60); do
-            curl -s http://localhost:8080/admin/v2/clusters >/dev/null && exit 0
+            curl -fs http://localhost:8080/admin/v2/clusters >/dev/null && echo "Pulsar ready" && break
             sleep 2
           done
 
-          exit 1
-
+      # ---------------- Test ----------------
       - name: Test
         run: dotnet test ./src/Shashlik.EventBus.sln
         env:
