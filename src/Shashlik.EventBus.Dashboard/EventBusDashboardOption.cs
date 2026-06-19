@@ -34,11 +34,9 @@ public class EventBusDashboardOption
     public Type? AuthenticateProvider { get; set; }
 
     /// <summary>
-    /// SecretCookieAuthenticate认证Secret值(bcrypt hash)
-    /// <para></para>
-    /// 默认每次都生成一个guid
+    /// SecretCookieAuthenticate认证Secret值,配置<see cref="AuthenticateProvider"/>后,该值无效
     /// </summary>
-    public string? AuthenticateSecret { get; set; }
+    public string? AuthenticateSecret { get; set; } = "#Shashlik@.EventBus!.Secret`123";
 
     /// <summary>
     /// SecretCookieAuthenticate认证,cookie名称
@@ -53,7 +51,7 @@ public class EventBusDashboardOption
         Expires = DateTimeOffset.Now.AddHours(2),
     };
 
-    internal byte[] HmacKey { get; } = RandomNumberGenerator.GetBytes(32);
+    internal readonly byte[] HmacKey = RandomNumberGenerator.GetBytes(32);
 
     /// <summary>
     /// 使用指定类型<typeparamref name="T"/>作为认证类
