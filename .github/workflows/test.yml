@@ -26,6 +26,9 @@ jobs:
 
       rabbitmq:
         image: rabbitmq
+        env:
+          RABBITMQ_DEFAULT_USER: rabbittest
+          RABBITMQ_DEFAULT_PASS: rabbittest
         ports:
           - 5672:5672
           - 15672:15672
@@ -82,17 +85,6 @@ jobs:
         with:
           dotnet-version: 8.0.422
 
-      # ---------------- Kafka Wait ----------------
-      - name: Wait Kafka
-        run: |
-          echo "Waiting Kafka..."
-
-          for i in $(seq 1 60); do
-            nc -z localhost 9092 && echo "Kafka port ready" && break
-            sleep 2
-          done
-
-      # ---------------- Pulsar (docker run) ----------------
       - name: Start Pulsar
         run: |
           docker run -d \
@@ -104,14 +96,13 @@ jobs:
 
       - name: Wait Pulsar
         run: |
-          echo "Waiting Pulsar..."
-
           for i in $(seq 1 60); do
-            curl -fs http://localhost:8080/admin/v2/clusters >/dev/null && echo "Pulsar ready" && break
+            curl -fs http://localhost:8080/admin/v2/clusters >/dev/null && exit 0
             sleep 2
           done
+          docker logs pulsar
+          exit 1
 
-      # ---------------- Test ----------------
       - name: Test
         run: dotnet test ./src/Shashlik.EventBus.sln
         env:
