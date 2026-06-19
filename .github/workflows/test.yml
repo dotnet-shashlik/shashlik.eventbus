@@ -27,7 +27,7 @@ jobs:
         uses: nijel/rabbitmq-action@v1.0.0
 
       - name: Setup Kafka
-        uses: 280780363/kafka-action@v1.0
+        uses: 280780363/kafka-action@v2.0
         with:
           kafka version: '4.2.1'
           

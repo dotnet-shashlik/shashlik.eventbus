@@ -28,7 +28,7 @@ jobs:
         uses: nijel/rabbitmq-action@v1.0.0
 
       - name: Setup Kafka
-        uses: 280780363/kafka-action@v1.0
+        uses: 280780363/kafka-action@v2.0
         with:
           kafka version: '2.8.1'
           zookeeper version: '3.8.1'
@@ -36,14 +36,14 @@ jobs:
       - name: Setup MongoDb
         uses: 280780363/mongo-action@v1.0
         with:
-          version: 6.0.2
+          version: 8.0.0
           username: mongo
           password: 123123
 
       - name: Setup Pulsar
         uses: reugn/github-action-pulsar@v1
         with:
-          version: 2.10.1
+          version: 4.2.2
 
       - name: Setup Redis
         uses: getong/redis-action@v1
