@@ -12,7 +12,7 @@ namespace Shashlik.EventBus.DefaultImpl
     /// <summary>
     /// 已接收的消息重试提供类
     /// </summary>
-    public class DefaultReceivedMessageRetryProvider : IReceivedMessageRetryProvider
+    public class DefaultReceivedMessageRetryProvider : IReceivedMessageRetryProvider, IDisposable
     {
         public DefaultReceivedMessageRetryProvider(
             IMessageStorage messageStorage,
@@ -38,6 +38,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
         private IReceivedHandler ReceivedHandler { get; }
         private ITimer TimerHelper { get; }
+        private CancellationTokenSource? _internalTask;
 
         public async Task StartupAsync(CancellationToken cancellationToken)
         {
@@ -45,8 +46,8 @@ namespace Shashlik.EventBus.DefaultImpl
 
             // 同步 Action 形态走 TimerHelper,内部 try/catch 不会让异常拖垮 timer。
             // 真实并发由 Retry 内部的 SemaphoreSlim 控。
-            TimerHelper.SetInterval(
-                () => Retry(cancellationToken),
+            _internalTask = TimerHelper.SetInterval(
+                async () => await Retry(cancellationToken),
                 TimeSpan.FromSeconds(Options.Value.RetryInterval),
                 cancellationToken);
         }
@@ -157,6 +158,11 @@ namespace Shashlik.EventBus.DefaultImpl
                 Logger.LogError(ex,
                     $"[EventBus] retry received delay message \"{item.Id}\" failed");
             }
+        }
+
+        public void Dispose()
+        {
+            _internalTask?.Dispose();
         }
     }
 }

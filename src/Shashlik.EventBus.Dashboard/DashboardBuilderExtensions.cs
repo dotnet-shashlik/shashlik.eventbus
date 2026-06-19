@@ -52,8 +52,6 @@ public static class DashboardBuilderExtensions
         if (option.AuthenticateProvider != null &&
             option.AuthenticateProvider == typeof(SecretCookieAuthenticate))
         {
-            // 使用DataProtection来加密数据并存储到cookie
-            builder.Services.AddDataProtection();
             if (string.IsNullOrWhiteSpace(option.AuthenticateSecret))
                 throw new ArgumentException("AuthenticateSecret can not be empty.");
         }

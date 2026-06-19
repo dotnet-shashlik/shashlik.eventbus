@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Extensions.Options;
 
 namespace Shashlik.EventBus.Dashboard;
@@ -9,15 +10,13 @@ namespace Shashlik.EventBus.Dashboard;
 public class SecretCookieAuthenticate : IEventBusDashboardAuthentication
 {
     public SecretCookieAuthenticate(IOptionsMonitor<EventBusDashboardOption> options,
-        IDataProtectionProvider dataProtectionProvider, ILogger<SecretCookieAuthenticate> logger)
+        ILogger<SecretCookieAuthenticate> logger)
     {
         Options = options;
-        DataProtectionProvider = dataProtectionProvider;
         Logger = logger;
     }
 
     private IOptionsMonitor<EventBusDashboardOption> Options { get; }
-    private IDataProtectionProvider DataProtectionProvider { get; }
     private ILogger<SecretCookieAuthenticate> Logger { get; }
 
     public Task<bool> AuthenticateAsync(HttpContext context)
@@ -30,9 +29,19 @@ public class SecretCookieAuthenticate : IEventBusDashboardAuthentication
                 return Task.FromResult(false);
             try
             {
-                var unprotect = DataProtectionProvider.CreateProtector(EventBusDashboardOption.DataProtectorName)
-                    .Unprotect(value);
-                return Task.FromResult(unprotect == Options.CurrentValue.AuthenticateSecret);
+                var parts = value.Split('.');
+                if (parts.Length != 2)
+                    return Task.FromResult(false);
+
+                var tokenBytes = Convert.FromBase64String(parts[0]);
+                var signatureBytes = Convert.FromBase64String(parts[1]);
+
+                using var hmac = new HMACSHA256(Options.CurrentValue.HmacKey);
+                var computed = hmac.ComputeHash(tokenBytes);
+                if (!CryptographicOperations.FixedTimeEquals(computed, signatureBytes))
+                    return Task.FromResult(false);
+
+                return Task.FromResult(true);
             }
             catch (Exception e)
             {

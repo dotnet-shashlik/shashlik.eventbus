@@ -11,6 +11,15 @@ public class YitIdGenerator : IIdGenerator
 {
     public YitIdGenerator()
     {
+        YitIdHelper.SetIdGenerator(new IdGeneratorOptions
+        {
+            WorkerId = GetWorkerId(),
+            WorkerIdBitLength = 10
+        });
+    }
+
+    public virtual ushort GetWorkerId()
+    {
         var workerIdStr = Environment.GetEnvironmentVariable("WORKER_ID");
         if (ushort.TryParse(workerIdStr, out var workerId))
         {
@@ -24,14 +33,13 @@ public class YitIdGenerator : IIdGenerator
             });
         }
         else
-            YitIdHelper.SetIdGenerator(new IdGeneratorOptions
-            {
-                WorkerId = (ushort)RandomNumberGenerator.GetInt32(0, 1024),
-                WorkerIdBitLength = 10
-            });
+            workerId = (ushort)RandomNumberGenerator.GetInt32(0, 1024);
+
+        return workerId;
     }
 
-    public long NextId()
+
+    public virtual long NextId()
     {
         return YitIdHelper.NextId();
     }

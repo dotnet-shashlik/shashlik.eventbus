@@ -11,7 +11,7 @@ namespace Shashlik.EventBus.DefaultImpl
     /// <summary>
     /// 已发送的消息重试提供类
     /// </summary>
-    public class DefaultPublishedMessageRetryProvider : IPublishedMessageRetryProvider
+    public class DefaultPublishedMessageRetryProvider : IPublishedMessageRetryProvider, IDisposable
     {
         public DefaultPublishedMessageRetryProvider(
             IMessageStorage messageStorage,
@@ -31,12 +31,13 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageSerializer MessageSerializer { get; }
         private IPublishHandler PublishHandler { get; }
         private ITimer TimerHelper { get; }
+        private CancellationTokenSource? _internalTask;
 
         public async Task StartupAsync(CancellationToken cancellationToken)
         {
             await Retry(cancellationToken).ConfigureAwait(false);
 
-            TimerHelper.SetInterval(
+            _internalTask = TimerHelper.SetInterval(
                 () => Retry(cancellationToken),
                 TimeSpan.FromSeconds(Options.Value.RetryInterval),
                 cancellationToken);
@@ -110,6 +111,11 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 semaphore.Release();
             }
+        }
+
+        public void Dispose()
+        {
+            _internalTask?.Dispose();
         }
     }
 }

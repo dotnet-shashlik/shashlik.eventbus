@@ -32,8 +32,9 @@ namespace Shashlik.EventBus.Utils
         /// <param name="action">要执行的表达式</param>
         /// <param name="interval">间隔时间</param>
         /// <param name="cancellationToken">撤销</param>
-        /// <return></return>
-        void SetInterval(Action action, TimeSpan interval, CancellationToken cancellationToken = default);
+        /// <return>循环的Task</return>
+        CancellationTokenSource SetInterval(Action action, TimeSpan interval,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     定时执行任务,不会立即执行
@@ -41,8 +42,8 @@ namespace Shashlik.EventBus.Utils
         /// <param name="action">要执行的表达式</param>
         /// <param name="interval">间隔时间</param>
         /// <param name="cancellationToken">撤销</param>
-        /// <return></return>
-        void SetInterval(Func<Task> action, TimeSpan interval,
+        /// <return>循环的Task</return>
+        CancellationTokenSource SetInterval(Func<Task> action, TimeSpan interval,
             CancellationToken cancellationToken = default);
     }
 }

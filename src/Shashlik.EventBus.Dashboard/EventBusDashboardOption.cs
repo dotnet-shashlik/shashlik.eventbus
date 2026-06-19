@@ -1,4 +1,6 @@
-﻿namespace Shashlik.EventBus.Dashboard;
+﻿using System.Security.Cryptography;
+
+namespace Shashlik.EventBus.Dashboard;
 
 /// <summary>
 /// 面板选项
@@ -32,7 +34,7 @@ public class EventBusDashboardOption
     public Type? AuthenticateProvider { get; set; }
 
     /// <summary>
-    /// SecretCookieAuthenticate认证Secret值
+    /// SecretCookieAuthenticate认证Secret值(bcrypt hash)
     /// <para></para>
     /// 默认每次都生成一个guid
     /// </summary>
@@ -51,6 +53,8 @@ public class EventBusDashboardOption
         Expires = DateTimeOffset.Now.AddHours(2),
     };
 
+    internal byte[] HmacKey { get; } = RandomNumberGenerator.GetBytes(32);
+
     /// <summary>
     /// 使用指定类型<typeparamref name="T"/>作为认证类
     /// </summary>
@@ -66,7 +70,7 @@ public class EventBusDashboardOption
     /// <summary>
     /// 使用<see cref="SecretCookieAuthenticate"/>作为认证类
     /// </summary>
-    /// <param name="authenticateSecret">认证secret</param>
+    /// <param name="authenticateSecret">认证secret(明文,将自动转为bcrypt hash存储)</param>
     /// <param name="authenticateSecretCookieName">认证cookie name</param>
     /// <param name="authenticateSecretCookieOptions">认证cookie 配置</param>
     /// <returns></returns>
@@ -78,16 +82,15 @@ public class EventBusDashboardOption
         if (string.IsNullOrWhiteSpace(authenticateSecret))
             throw new ArgumentException("Value cannot be null or whitespace.", nameof(authenticateSecret));
         UseAuthenticate<SecretCookieAuthenticate>();
-        AuthenticateSecret = authenticateSecret;
-        if (AuthenticateSecretCookieName != null)
+        AuthenticateSecret = BCrypt.Net.BCrypt.HashPassword(authenticateSecret);
+        if (authenticateSecretCookieName != null)
             AuthenticateSecretCookieName = authenticateSecretCookieName;
-        if (AuthenticateSecretCookieOptions != null)
+        if (authenticateSecretCookieOptions != null)
             AuthenticateSecretCookieOptions = authenticateSecretCookieOptions;
         return this;
     }
 
 
     public const string DefaultUrlPrefix = "/eventBus";
-    public const string DataProtectorName = "Shashlik.EventBus.Dashboard";
     public const string DefaultCookieName = "shashlik-eventbus-secret";
 }

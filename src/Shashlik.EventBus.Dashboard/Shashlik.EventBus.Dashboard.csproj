@@ -19,7 +19,11 @@
  </EmbeddedResource>
  </ItemGroup>
 
- <ItemGroup>
- <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
- </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
+  </ItemGroup>
 </Project>

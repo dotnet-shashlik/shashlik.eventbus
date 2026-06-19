@@ -48,16 +48,17 @@ public class DefaultTimer(ILogger<DefaultTimer> logger) : ITimer
     /// <param name="interval">间隔时间</param>
     /// <param name="cancellationToken">撤销</param>
     /// <return></return>
-    public void SetInterval(Action action, TimeSpan interval, CancellationToken cancellationToken = default)
+    public CancellationTokenSource SetInterval(Action action, TimeSpan interval,
+        CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested)
-            return;
         if (interval <= TimeSpan.Zero)
             throw new ArgumentException("invalid interval.", nameof(interval));
+        var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cancellationToken.Register(cancellationTokenSource.Cancel);
         _ = Task.Run(async () =>
         {
             using var timer = new PeriodicTimer(interval);
-            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+            while (await timer.WaitForNextTickAsync(cancellationTokenSource.Token).ConfigureAwait(false))
             {
                 try
                 {
@@ -72,7 +73,9 @@ public class DefaultTimer(ILogger<DefaultTimer> logger) : ITimer
                     logger.LogError(e, $"SetInterval execute occur error");
                 }
             }
-        }, cancellationToken);
+        }, cancellationTokenSource.Token);
+
+        return cancellationTokenSource;
     }
 
     /// <summary>
@@ -82,17 +85,18 @@ public class DefaultTimer(ILogger<DefaultTimer> logger) : ITimer
     /// <param name="interval">间隔时间</param>
     /// <param name="cancellationToken">撤销</param>
     /// <return></return>
-    public void SetInterval(Func<Task> action, TimeSpan interval,
+    public CancellationTokenSource SetInterval(Func<Task> action, TimeSpan interval,
         CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested)
-            return;
         if (interval <= TimeSpan.Zero)
             throw new ArgumentException("invalid interval.", nameof(interval));
+
+        var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cancellationToken.Register(cancellationTokenSource.Cancel);
         _ = Task.Run(async () =>
         {
             using var timer = new PeriodicTimer(interval);
-            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
+            while (await timer.WaitForNextTickAsync(cancellationTokenSource.Token).ConfigureAwait(false))
             {
                 try
                 {
@@ -107,6 +111,8 @@ public class DefaultTimer(ILogger<DefaultTimer> logger) : ITimer
                     logger.LogError(e, $"SetInterval execute occur error");
                 }
             }
-        }, cancellationToken);
+        }, cancellationTokenSource.Token);
+
+        return cancellationTokenSource;
     }
 }

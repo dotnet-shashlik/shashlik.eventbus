@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Models;
@@ -14,13 +15,10 @@ namespace Shashlik.EventBus.Dashboard.Areas.ShashlikEventBus.Controllers;
 public class AuthController : Controller
 {
     private readonly IOptionsMonitor<EventBusDashboardOption> _options;
-    private readonly IDataProtectionProvider _dataProtector;
 
-    public AuthController(IOptionsMonitor<EventBusDashboardOption> options,
-        IDataProtectionProvider dataProtector)
+    public AuthController(IOptionsMonitor<EventBusDashboardOption> options)
     {
         _options = options;
-        _dataProtector = dataProtector;
     }
 
     [ViewData] public string UrlPrefix => _options.CurrentValue.UrlPrefix;
@@ -33,13 +31,19 @@ public class AuthController : Controller
     [HttpPost]
     public IActionResult Index(SecretLoginModel secretLoginModel)
     {
-        if (secretLoginModel.Secret == _options.CurrentValue.AuthenticateSecret
-            && _options.CurrentValue.AuthenticateProvider == typeof(SecretCookieAuthenticate))
+        if (_options.CurrentValue.AuthenticateProvider == typeof(SecretCookieAuthenticate)
+            && !string.IsNullOrWhiteSpace(_options.CurrentValue.AuthenticateSecret)
+            && BCrypt.Net.BCrypt.Verify(secretLoginModel.Secret, _options.CurrentValue.AuthenticateSecret))
         {
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            using var hmac = new HMACSHA256(_options.CurrentValue.HmacKey);
+            var signatureBytes = hmac.ComputeHash(tokenBytes);
+
+            var cookieValue = Convert.ToBase64String(tokenBytes) + "." + Convert.ToBase64String(signatureBytes);
+
             Response.Cookies.Append(
                 _options.CurrentValue.AuthenticateSecretCookieName ?? EventBusDashboardOption.DefaultCookieName,
-                _dataProtector.CreateProtector(EventBusDashboardOption.DataProtectorName)
-                    .Protect(secretLoginModel.Secret),
+                cookieValue,
                 _options.CurrentValue.AuthenticateSecretCookieOptions?.Invoke(HttpContext) ?? new CookieOptions
                     { Expires = DateTimeOffset.Now.AddHours(2) });
 
