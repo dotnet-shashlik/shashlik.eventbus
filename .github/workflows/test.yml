@@ -118,7 +118,7 @@ jobs:
             sleep 1
           done
           
-      - name: Wait Kafka  
+      - name: Wait Kafka
         run: |
           echo "Waiting Kafka..."
           for i in $(seq 1 60); do

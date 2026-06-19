@@ -1,10 +1,13 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FreeRedis;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NetEscapades.Configuration.Yaml;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -23,7 +26,18 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
     {
         _output = output;
         _appName = $"TEST_{Guid.NewGuid():N}";
-        _redisClient = new RedisClient("localhost:6380,defaultDatabase=0");
+
+        var envName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "";
+        var configFile = envName.Equals("GitHub", StringComparison.OrdinalIgnoreCase)
+            ? "config.test-github.yaml"
+            : "config.test.yaml";
+
+        var configuration = new ConfigurationBuilder()
+            .AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), configFile))
+            .Build();
+
+        var redisConn = configuration.GetValue<string>("EventBus:Redis:Conn");
+        _redisClient = new RedisClient(redisConn);
 
         var services = new ServiceCollection();
         services.AddSingleton(_redisClient);
