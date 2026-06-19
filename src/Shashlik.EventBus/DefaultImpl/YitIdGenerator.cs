@@ -9,7 +9,7 @@ namespace Shashlik.EventBus.DefaultImpl;
 /// </summary>
 public class YitIdGenerator : IIdGenerator
 {
-    protected YitIdGenerator()
+    public YitIdGenerator()
     {
         YitIdHelper.SetIdGenerator(new IdGeneratorOptions
         {
