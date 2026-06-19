@@ -2,52 +2,112 @@ name: test
 
 on:
   push:
-    branches: [ test ]
+    branches:
+      - test
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 123123
+          MYSQL_DATABASE: test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: 123123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -p123123"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd="rabbitmq-diagnostics ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      kafka:
+        image: confluentinc/cp-kafka:7.9.8
+        ports:
+          - 9092:9092
+
+      mongodb:
+        image: mongo:8.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: mongo
+          MONGO_INITDB_ROOT_PASSWORD: 123123
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      pulsar:
+        image: apachepulsar/pulsar:4.2.2
+        ports:
+          - 6650:6650
+          - 8080:8080
+        options: >-
+          --entrypoint /pulsar/bin/pulsar
+        command:
+          - standalone
+
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1.7.2
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.422
 
-      - name: Setup MySql
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          mysql version: '8.0'
-          mysql root password: '123123'
-          mysql user: 'testuser'
-          mysql password: '123123'
+      - name: Wait Kafka
+        run: |
+          echo "Waiting Kafka..."
 
-      - name: Setup RabbitMQ
-        uses: nijel/rabbitmq-action@v1.0.0
+          for i in $(seq 1 60); do
+            docker exec ${{ job.services.kafka.id }} \
+              /opt/kafka/bin/kafka-topics.sh \
+              --bootstrap-server localhost:9092 \
+              --list >/dev/null 2>&1 && exit 0
 
-      - name: Setup Kafka
-        uses: 280780363/kafka-action@v2.0
-        with:
-          kafka version: '4.2.1'
-          
-      - name: Setup MongoDb
-        uses: 280780363/mongo-action@v1.0
-        with:
-          version: 8.0.0
-          username: mongo
-          password: 123123
-        
-      - name: Setup Pulsar
-        uses: reugn/github-action-pulsar@v1
-        with:
-          version: 4.2.2
-        
-      - name: Setup Redis
-        uses: getong/redis-action@v1
-        with:
-          redis password: '123123'
-          redis version: 6.2.7
+            sleep 2
+          done
+
+          docker logs ${{ job.services.kafka.id }}
+          exit 1
+
+      - name: Wait Pulsar
+        run: |
+          echo "Waiting Pulsar..."
+
+          for i in $(seq 1 60); do
+            curl -s http://localhost:8080/admin/v2/clusters >/dev/null && exit 0
+            sleep 2
+          done
+
+          exit 1
 
       - name: Test
         run: dotnet test ./src/Shashlik.EventBus.sln
