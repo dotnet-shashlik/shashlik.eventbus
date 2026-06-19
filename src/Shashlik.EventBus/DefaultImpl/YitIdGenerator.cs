@@ -9,7 +9,7 @@ namespace Shashlik.EventBus.DefaultImpl;
 /// </summary>
 public class YitIdGenerator : IIdGenerator
 {
-    public YitIdGenerator()
+    protected YitIdGenerator()
     {
         YitIdHelper.SetIdGenerator(new IdGeneratorOptions
         {
@@ -18,7 +18,7 @@ public class YitIdGenerator : IIdGenerator
         });
     }
 
-    public virtual ushort GetWorkerId()
+    private ushort GetWorkerId()
     {
         var workerIdStr = Environment.GetEnvironmentVariable("WORKER_ID");
         if (ushort.TryParse(workerIdStr, out var workerId))
@@ -39,7 +39,7 @@ public class YitIdGenerator : IIdGenerator
     }
 
 
-    public virtual long NextId()
+    public long NextId()
     {
         return YitIdHelper.NextId();
     }

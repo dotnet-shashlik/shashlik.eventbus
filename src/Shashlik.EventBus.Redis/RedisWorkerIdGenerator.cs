@@ -4,20 +4,17 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.DefaultImpl;
+using Yitter.IdGenerator;
 using ITimer = Shashlik.EventBus.Utils.ITimer;
 
 namespace Shashlik.EventBus.Redis;
 
-public sealed class RedisWorkerIdGenerator : YitIdGenerator, IAsyncDisposable
+public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 {
     private readonly string _instanceId = Guid.NewGuid().ToString("N");
-
     private readonly string _workerKeyPrefix;
-
     private readonly ushort _maxWorkerId;
-
     private readonly int _expireSeconds;
-
     private readonly ILogger<RedisWorkerIdGenerator> _logger;
     private readonly IOptions<EventBusRedisWorkerIdOptions> _options;
     private readonly IServiceProvider _serviceProvider;
@@ -38,12 +35,17 @@ public sealed class RedisWorkerIdGenerator : YitIdGenerator, IAsyncDisposable
         _workerKeyPrefix = $"SHASHLIK:EVENTBUS_WORKERID:{options.Value.AppName}";
 
         _cancellationTokenSource = timer.SetInterval(RenewLease, TimeSpan.FromMilliseconds(_expireSeconds * 500));
+
+        YitIdHelper.SetIdGenerator(new IdGeneratorOptions
+        {
+            WorkerId = GetWorkerId(),
+            WorkerIdBitLength = 10
+        });
     }
 
-    public override ushort GetWorkerId()
+    public ushort GetWorkerId()
     {
         return _workerId.Value;
-        ;
     }
 
     /// <summary>
@@ -93,12 +95,26 @@ public sealed class RedisWorkerIdGenerator : YitIdGenerator, IAsyncDisposable
         }
     }
 
+    public long NextId()
+    {
+        return YitIdHelper.NextId();
+    }
+
     /// <summary>
     /// 主动释放
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-        await _cancellationTokenSource.CancelAsync();
+        try
+        {
+            await _cancellationTokenSource.CancelAsync();
+            _cancellationTokenSource.Dispose();
+        }
+        catch
+        {
+            //ignore
+        }
+
         var redis = _options.Value.RedisClientFactory?.Invoke(_serviceProvider) ??
                     throw new InvalidOperationException("EventBusRedisWorkerIdOptions.RedisClientFactory error");
         try
