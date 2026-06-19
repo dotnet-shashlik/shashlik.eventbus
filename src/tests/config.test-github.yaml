@@ -22,4 +22,4 @@ EventBus:
   Pulsar:
     ServiceUrl: pulsar://localhost:6650
   Redis:
-    Conn: localhost,defaultDatabase=0
+    Conn: localhost:6379,defaultDatabase=0

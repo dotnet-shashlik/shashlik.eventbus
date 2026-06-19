@@ -102,6 +102,29 @@ jobs:
           done
           docker logs pulsar
           exit 1
+          
+      - name: Wait Redis
+        run: |
+          for i in $(seq 1 60); do
+            nc -z localhost 6379 && echo "Redis port open" && break
+            sleep 1
+          done
+          
+      - name: Wait MySql
+        run: |
+          echo "Waiting MySQL..."
+          for i in $(seq 1 60); do
+            nc -z localhost 3306 && break
+            sleep 1
+          done
+          
+      - name: Wait Kafka  
+        run: |
+          echo "Waiting Kafka..."
+          for i in $(seq 1 60); do
+            nc -z localhost 9092 && break
+            sleep 1
+          done
 
       - name: Test
         run: dotnet test ./src/Shashlik.EventBus.sln
