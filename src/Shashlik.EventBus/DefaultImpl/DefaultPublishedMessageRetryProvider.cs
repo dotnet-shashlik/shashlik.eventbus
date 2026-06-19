@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
+using ITimer = Shashlik.EventBus.Utils.ITimer;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -16,18 +17,20 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageStorage messageStorage,
             IOptions<EventBusOptions> options,
             IMessageSerializer messageSerializer,
-            IPublishHandler publishHandler)
+            IPublishHandler publishHandler, ITimer timerHelper)
         {
             MessageStorage = messageStorage;
             Options = options;
             MessageSerializer = messageSerializer;
             PublishHandler = publishHandler;
+            TimerHelper = timerHelper;
         }
 
         private IMessageStorage MessageStorage { get; }
         private IOptions<EventBusOptions> Options { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IPublishHandler PublishHandler { get; }
+        private ITimer TimerHelper { get; }
 
         public async Task StartupAsync(CancellationToken cancellationToken)
         {

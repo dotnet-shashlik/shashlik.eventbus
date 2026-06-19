@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
+using ITimer = Shashlik.EventBus.Utils.ITimer;
 
 // ReSharper disable MethodSupportsCancellation
 
@@ -18,7 +19,7 @@ namespace Shashlik.EventBus.DefaultImpl
             IEventHandlerFindProvider eventHandlerFindProvider,
             ILogger<DefaultMessageListener> logger,
             IOptions<EventBusOptions> options,
-            IReceivedHandler receivedHandler, IIdGenerator idGenerator)
+            IReceivedHandler receivedHandler, IIdGenerator idGenerator, ITimer timerHelper)
         {
             MessageSerializer = messageSerializer;
             MessageStorage = messageStorage;
@@ -27,6 +28,7 @@ namespace Shashlik.EventBus.DefaultImpl
             Options = options;
             ReceivedHandler = receivedHandler;
             IdGenerator = idGenerator;
+            TimerHelper = timerHelper;
         }
 
         private IMessageSerializer MessageSerializer { get; }
@@ -36,6 +38,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IOptions<EventBusOptions> Options { get; }
         private IReceivedHandler ReceivedHandler { get; }
         private IIdGenerator IdGenerator { get; }
+        private ITimer TimerHelper { get; }
 
         public async Task<MessageReceiveResult> OnReceiveAsync(string eventHandlerName, MessageTransferModel message,
             CancellationToken cancellationToken)
@@ -85,7 +88,7 @@ namespace Shashlik.EventBus.DefaultImpl
                 // 延迟事件进入延迟执行队列
                 else if (message.DelayAt.HasValue)
                 {
-                    TimerHelper.SetTimeout(
+                    _ = TimerHelper.SetTimeoutAsync(
                         async () => await Start(receiveMessageStorageModel, message.Items, descriptor,
                             cancellationToken),
                         message.DelayAt.Value,

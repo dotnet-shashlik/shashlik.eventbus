@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
+using ITimer = Shashlik.EventBus.Utils.ITimer;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
@@ -19,7 +20,7 @@ namespace Shashlik.EventBus.DefaultImpl
             ILogger<DefaultReceivedMessageRetryProvider> logger,
             IMessageSerializer messageSerializer,
             IEventHandlerFindProvider eventHandlerFindProvider,
-            IReceivedHandler receivedHandler)
+            IReceivedHandler receivedHandler, ITimer timerHelper)
         {
             MessageStorage = messageStorage;
             Options = options;
@@ -27,6 +28,7 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageSerializer = messageSerializer;
             EventHandlerFindProvider = eventHandlerFindProvider;
             ReceivedHandler = receivedHandler;
+            TimerHelper = timerHelper;
         }
 
         private IMessageStorage MessageStorage { get; }
@@ -35,6 +37,7 @@ namespace Shashlik.EventBus.DefaultImpl
         private IMessageSerializer MessageSerializer { get; }
         private IEventHandlerFindProvider EventHandlerFindProvider { get; }
         private IReceivedHandler ReceivedHandler { get; }
+        private ITimer TimerHelper { get; }
 
         public async Task StartupAsync(CancellationToken cancellationToken)
         {
@@ -113,7 +116,7 @@ namespace Shashlik.EventBus.DefaultImpl
                     .LockAndHandleAsync(item.Id, cancellationToken)
                     .ConfigureAwait(false);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Logger.LogError(ex,
                     $"[EventBus] retry received message \"{item.Id}\" failed");
@@ -132,7 +135,20 @@ namespace Shashlik.EventBus.DefaultImpl
                     .ConfigureAwait(false);
                 if (lockRes)
                 {
-                    TimerHelper.SetTimeout(async () => await ReceivedHandler.HandleAsync(item.Id, cancellationToken),
+                    _ = TimerHelper.SetTimeoutAsync(
+                        async () =>
+                        {
+                            {
+                                try
+                                {
+                                    await ReceivedHandler.HandleAsync(item.Id, cancellationToken);
+                                }
+                                catch (Exception e) when (e is not OperationCanceledException)
+                                {
+                                    Logger.LogError(e, $"[EventBus] retry received delay message \"{item.Id}\" failed");
+                                }
+                            }
+                        },
                         item.DelayAt.Value, cancellationToken);
                 }
             }

@@ -48,6 +48,7 @@ namespace Shashlik.EventBus
             serviceCollection.TryAddSingleton<IPublishHandler, DefaultPublishHandler>();
             serviceCollection.TryAddSingleton<IReceivedHandler, DefaultReceivedHandler>();
             serviceCollection.TryAddSingleton<IIdGenerator, YitIdGenerator>();
+            serviceCollection.TryAddSingleton<ITimer, DefaultTimer>();
 
             serviceCollection.AddSingleton<IHostedStopToken, InternalHostedStopToken>();
             serviceCollection.AddHostedService<EventBusStartup>();

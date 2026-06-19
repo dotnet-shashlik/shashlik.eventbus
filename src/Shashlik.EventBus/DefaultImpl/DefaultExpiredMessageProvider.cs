@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
+using ITimer = Shashlik.EventBus.Utils.ITimer;
 
 // ReSharper disable AsyncVoidLambda
 
@@ -15,16 +16,19 @@ namespace Shashlik.EventBus.DefaultImpl
     public class DefaultExpiredMessageProvider : IExpiredMessageProvider
     {
         public DefaultExpiredMessageProvider(IMessageStorage messageStorage,
-            ILogger<DefaultExpiredMessageProvider> logger, IOptionsMonitor<EventBusOptions> optionsMonitor)
+            ILogger<DefaultExpiredMessageProvider> logger, IOptionsMonitor<EventBusOptions> optionsMonitor,
+            ITimer timerHelper)
         {
             MessageStorage = messageStorage;
             Logger = logger;
             OptionsMonitor = optionsMonitor;
+            TimerHelper = timerHelper;
         }
 
         private IMessageStorage MessageStorage { get; }
         private ILogger<DefaultExpiredMessageProvider> Logger { get; }
         private IOptionsMonitor<EventBusOptions> OptionsMonitor { get; }
+        private ITimer TimerHelper { get; }
 
         public async Task DoDeleteAsync(CancellationToken cancellationToken)
         {
