@@ -54,7 +54,6 @@ namespace Shashlik.EventBus.Redis.Tests
                     r.Environment = _env;
                 })
                 .AddRedisMQ()
-                .AddRedisWorkerId()
                 .AddRelationDb(opt => opt.UseConnection(DataType.MySql, mySqlConn));
 
             services.AddShashlik(Configuration);

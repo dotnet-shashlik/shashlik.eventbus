@@ -115,10 +115,10 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
             //ignore
         }
 
-        var redis = _options.Value.RedisClientFactory?.Invoke(_serviceProvider) ??
-                    throw new InvalidOperationException("EventBusRedisWorkerIdOptions.RedisClientFactory error");
         try
         {
+            var redis = _options.Value.RedisClientFactory?.Invoke(_serviceProvider) ??
+                        throw new InvalidOperationException("EventBusRedisWorkerIdOptions.RedisClientFactory error");
             var key = $"{_workerKeyPrefix}:{_workerId.Value}";
 
             var value = await redis.GetAsync(key);
