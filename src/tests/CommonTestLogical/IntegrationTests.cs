@@ -81,7 +81,7 @@ namespace CommonTestLogical
 
             // 等待事件执行
             await TestEventHandler.WaitForInstance(TimeSpan.FromSeconds(Options.StartRetryAfter + 5));
-            await TestEventGroup2Handler.WaitForInstance(TimeSpan.FromSeconds(5));
+            await TestEventGroup2Handler.WaitForInstance(TimeSpan.FromSeconds(Options.StartRetryAfter + 5));
             await TestDelayEventHandler.WaitForInstance(TimeSpan.FromSeconds(Options.StartRetryAfter + delaySeconds + 10));
             await TestDelayEventGroup2Handler.WaitForInstance(TimeSpan.FromSeconds(5));
             await TestDelayEventGroup3Handler.WaitForInstance(TimeSpan.FromSeconds(5));
@@ -99,7 +99,7 @@ namespace CommonTestLogical
                     .ShouldBe($"{nameof(TestEvent)}.{Options.Environment}");
 
                 TestEventGroup2Handler.LastInstance.ShouldNotBeNull();
-                TestEventGroup2Handler.LastInstance!.Name.ShouldBe(testEvent.Name);
+                TestEventGroup2Handler.LastInstance.Name.ShouldBe(testEvent.Name);
                 TestEventGroup2Handler.LastItems!["code"].ShouldBe(testEventRandomCode);
             }
 

@@ -2,6 +2,7 @@
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
+using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -64,6 +65,25 @@ namespace Shashlik.EventBus
         /// Service注册生命周期类型
         /// </summary>
         public ServiceLifetime HandlerServiceLifetime { get; set; } = ServiceLifetime.Transient;
+
+        /// <summary>
+        /// WorkerId计算工厂方法
+        /// </summary>
+        public Func<IServiceProvider, ushort> WorkerIdFactory { get; set; } = GetWorkerId;
+
+        private static ushort GetWorkerId(IServiceProvider serviceProvider)
+        {
+            var workerIdStr = System.Environment.GetEnvironmentVariable("WORKER_ID");
+            if (ushort.TryParse(workerIdStr, out var workerId))
+            {
+                if (workerId >= 1024)
+                    throw new ArgumentOutOfRangeException(nameof(workerId));
+
+                return workerId;
+            }
+
+            return (ushort)Random.Shared.Next(0, 1024);
+        }
     }
 
     /// <summary>

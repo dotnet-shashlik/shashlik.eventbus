@@ -3,12 +3,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shashlik.EventBus.DefaultImpl;
-using Yitter.IdGenerator;
+using Shashlik.EventBus.Utils;
 using ITimer = Shashlik.EventBus.Utils.ITimer;
 
 namespace Shashlik.EventBus.Redis;
 
+/// <summary>
+/// 基于 Redis 分布式分配 WorkerId 的雪花算法ID生成器.
+/// <para>
+/// RedisWorkerIdGenerator 由 DI 容器以单例形式注册, 其内部持有的 <see cref="Snowflake"/> 实例随本对象生命周期唯一.
+/// </para>
+/// </summary>
 public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 {
     private readonly string _instanceId = Guid.NewGuid().ToString("N");
@@ -20,6 +25,7 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly Lazy<ushort> _workerId;
     private readonly CancellationTokenSource _cancellationTokenSource;
+    private readonly Snowflake _snowflake;
 
     public RedisWorkerIdGenerator(ILogger<RedisWorkerIdGenerator> logger,
         IOptions<EventBusRedisWorkerIdOptions> options,
@@ -36,11 +42,7 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 
         _cancellationTokenSource = timer.SetInterval(RenewLease, TimeSpan.FromMilliseconds(_expireSeconds * 500));
 
-        YitIdHelper.SetIdGenerator(new IdGeneratorOptions
-        {
-            WorkerId = GetWorkerId(),
-            WorkerIdBitLength = 10
-        });
+        _snowflake = new Snowflake(GetWorkerId());
     }
 
     public ushort GetWorkerId()
@@ -97,7 +99,7 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 
     public long NextId()
     {
-        return YitIdHelper.NextId();
+        return _snowflake.NextId();
     }
 
     /// <summary>
