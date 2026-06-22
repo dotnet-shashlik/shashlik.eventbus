@@ -1,35 +1,39 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Shashlik.EventBus.DefaultImpl;
 using Shashlik.EventBus.Utils;
+using StackExchange.Redis;
 using ITimer = Shashlik.EventBus.Utils.ITimer;
 
-namespace Shashlik.EventBus.Redis;
+namespace Shashlik.EventBus.StackExchangeRedis;
 
 /// <summary>
 /// 基于 Redis 分布式分配 WorkerId 的雪花算法ID生成器.
 /// <para>
-/// RedisWorkerIdGenerator 由 DI 容器以单例形式注册, 其内部持有的 <see cref="Snowflake"/> 实例随本对象生命周期唯一.
+/// StackExchangeRedisWorkerIdGenerator 由 DI 容器以单例形式注册, 其内部持有的 <see cref="Snowflake"/> 实例随本对象生命周期唯一.
 /// </para>
 /// </summary>
-public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
+public sealed class StackExchangeRedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 {
     private readonly string _instanceId = Guid.NewGuid().ToString("N");
     private readonly string _workerKeyPrefix;
     private readonly ushort _maxWorkerId;
     private readonly int _expireSeconds;
-    private readonly ILogger<RedisWorkerIdGenerator> _logger;
-    private readonly IOptions<EventBusRedisOptions> _options;
+    private readonly ILogger<StackExchangeRedisWorkerIdGenerator> _logger;
+    private readonly IOptions<EventBusStackExchangeRedisOptions> _options;
     private readonly IServiceProvider _serviceProvider;
     private readonly Lazy<ushort> _workerId;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly Snowflake _snowflake;
 
-    public RedisWorkerIdGenerator(ILogger<RedisWorkerIdGenerator> logger,
-        IOptions<EventBusRedisOptions> options,
-        IServiceProvider serviceProvider, ITimer timer)
+    public StackExchangeRedisWorkerIdGenerator(
+        ILogger<StackExchangeRedisWorkerIdGenerator> logger,
+        IOptions<EventBusStackExchangeRedisOptions> options,
+        IServiceProvider serviceProvider,
+        ITimer timer)
     {
         _logger = logger;
         _options = options;
@@ -50,21 +54,28 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
         return _workerId.Value;
     }
 
+    private IDatabase GetDatabase()
+    {
+        var connection = _options.Value.ConnectionMultiplexerFactory?.Invoke(_serviceProvider)
+            ?? throw new InvalidOperationException("EventBusStackExchangeRedisOptions.ConnectionMultiplexerFactory error");
+        return connection.GetDatabase();
+    }
+
     /// <summary>
     /// 获取WorkerId
     /// </summary>
     private ushort AcquireWorkerId()
     {
-        var redis = _options.Value.RedisClientFactory?.Invoke(_serviceProvider) ??
-                    throw new InvalidOperationException("EventBusRedisOptions.RedisClientFactory error");
+        var database = GetDatabase();
         for (ushort workerId = 0; workerId <= _maxWorkerId; workerId++)
         {
             var key = $"{_workerKeyPrefix}:{workerId}";
 
-            var success = redis.SetNx(
+            var success = database.StringSet(
                 key,
                 _instanceId,
-                _expireSeconds);
+                expiry: TimeSpan.FromSeconds(_expireSeconds),
+                when: When.NotExists);
 
             if (success)
                 return workerId;
@@ -80,15 +91,13 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
     {
         try
         {
-            var redis = _options.Value.RedisClientFactory?.Invoke(_serviceProvider) ??
-                        throw new InvalidOperationException("EventBusRedisOptions.RedisClientFactory error");
+            var database = GetDatabase();
             var key = $"{_workerKeyPrefix}:{_workerId.Value}";
 
-            var value = redis.Get(key);
-
-            if (value == _instanceId)
+            var value = database.StringGet(key);
+            if (value.HasValue && value.ToString() == _instanceId)
             {
-                redis.Expire(key, _expireSeconds);
+                database.KeyExpire(key, TimeSpan.FromSeconds(_expireSeconds));
             }
         }
         catch (Exception ex)
@@ -119,20 +128,18 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 
         try
         {
-            var redis = _options.Value.RedisClientFactory?.Invoke(_serviceProvider) ??
-                        throw new InvalidOperationException("EventBusRedisOptions.RedisClientFactory error");
+            var database = GetDatabase();
             var key = $"{_workerKeyPrefix}:{_workerId.Value}";
 
-            var value = await redis.GetAsync(key);
-
-            if (value == _instanceId)
+            var value = await database.StringGetAsync(key);
+            if (value.HasValue && value.ToString() == _instanceId)
             {
-                await redis.DelAsync(key);
+                await database.KeyDeleteAsync(key);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while disposing RedisWorkerIdGenerator");
+            _logger.LogError(ex, "Error occurred while disposing StackExchangeRedisWorkerIdGenerator");
         }
     }
 }

@@ -1,16 +1,24 @@
-﻿using System;
+using System;
 using FreeRedis;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Shashlik.EventBus.Redis;
 
-public class EventBusRedisMQOptions
+/// <summary>
+/// 基于 FreeRedis 的事件总线统一配置:同时适用于 MQ 和 WorkerId 两类功能.
+/// </summary>
+public class EventBusRedisOptions
 {
     /// <summary>
-    /// redis client配置
+    /// redis client 工厂, 默认从 DI 容器获取 <see cref="RedisClient"/> 单例.
     /// </summary>
     public Func<IServiceProvider, RedisClient?>? RedisClientFactory { get; set; } =
         s => s.GetService<RedisClient>();
+
+    /// <summary>
+    /// 应用名称 (WorkerId 分配使用).
+    /// </summary>
+    public string AppName { get; set; } = "DEFAULT";
 
     /// <summary>
     /// 消息堆积最大数量,默认10000,当堆积数量超过这个值时,新的消息将被丢弃,直到堆积数量降到这个值以下,这个可以防止消息堆积过多导致内存溢出

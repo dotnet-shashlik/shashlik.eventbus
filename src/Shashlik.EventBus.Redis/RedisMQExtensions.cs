@@ -8,11 +8,8 @@ namespace Shashlik.EventBus.Redis
         /// <summary>
         /// add redis mq services(redis stream)
         /// </summary>
-        /// <param name="eventBusBuilder"></param>
-        /// <param name="configure"></param>
-        /// <returns></returns>
         public static IEventBusBuilder AddRedisMQ(this IEventBusBuilder eventBusBuilder,
-            Action<EventBusRedisMQOptions>? configure = null)
+            Action<EventBusRedisOptions>? configure = null)
         {
             eventBusBuilder.Services.Configure(configure ?? (r => { }));
             eventBusBuilder.Services.AddSingleton<IMessageSender, RedisMQMessageSender>();
@@ -23,11 +20,8 @@ namespace Shashlik.EventBus.Redis
         /// <summary>
         /// add redis worker id services
         /// </summary>
-        /// <param name="eventBusBuilder"></param>
-        /// <param name="configure"></param>
-        /// <returns></returns>
         public static IEventBusBuilder AddRedisWorkerId(this IEventBusBuilder eventBusBuilder,
-            Action<EventBusRedisWorkerIdOptions>? configure = null)
+            Action<EventBusRedisOptions>? configure = null)
         {
             eventBusBuilder.Services.Configure(configure ?? (r => { }));
             eventBusBuilder.Services.AddSingleton<IIdGenerator, RedisWorkerIdGenerator>();

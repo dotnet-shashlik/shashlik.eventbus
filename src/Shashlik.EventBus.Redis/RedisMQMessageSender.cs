@@ -11,7 +11,7 @@ namespace Shashlik.EventBus.Redis
     public class RedisMQMessageSender : IMessageSender
     {
         public RedisMQMessageSender(
-            IOptionsMonitor<EventBusRedisMQOptions> options,
+            IOptionsMonitor<EventBusRedisOptions> options,
             ILogger<RedisMQMessageSender> logger,
             IMessageSerializer messageSerializer, IServiceProvider serviceProvider)
         {
@@ -21,7 +21,7 @@ namespace Shashlik.EventBus.Redis
             ServiceProvider = serviceProvider;
         }
 
-        private IOptionsMonitor<EventBusRedisMQOptions> Options { get; }
+        private IOptionsMonitor<EventBusRedisOptions> Options { get; }
         private ILogger<RedisMQMessageSender> Logger { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IServiceProvider ServiceProvider { get; }

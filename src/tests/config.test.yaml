@@ -32,3 +32,5 @@ EventBus:
     ServiceUrl: pulsar://localhost
   Redis:
     Conn: localhost:6379,defaultDatabase=0
+  StackExchangeRedis:
+    Conn: localhost:6379,defaultDatabase=0,abortConnect=false

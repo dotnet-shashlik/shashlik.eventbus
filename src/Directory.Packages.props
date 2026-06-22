@@ -38,6 +38,7 @@
     <PackageVersion Include="Pulsar.Client" Version="3.16.0" />
     <PackageVersion Include="RabbitMQ.Client" Version="7.1.2" />
     <PackageVersion Include="SqlSugarCore" Version="5.1.4.214" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.8.16" />
     <!-- Shashlik -->
     <PackageVersion Include="Shashlik.Kernel" Version="2.0.0-preview9" />
     <PackageVersion Include="Shashlik.Utils" Version="2.0.0-preview9" />

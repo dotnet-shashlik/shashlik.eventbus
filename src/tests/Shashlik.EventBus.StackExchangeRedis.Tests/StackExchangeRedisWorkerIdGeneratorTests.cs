@@ -1,28 +1,29 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FreeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NetEscapades.Configuration.Yaml;
 using Shouldly;
+using StackExchange.Redis;
 using Xunit;
 using Xunit.Abstractions;
 using ITimer = Shashlik.EventBus.Utils.ITimer;
 
-namespace Shashlik.EventBus.Redis.Tests;
+namespace Shashlik.EventBus.StackExchangeRedis.Tests;
 
-public class RedisWorkerIdGeneratorTests : IAsyncDisposable
+public class StackExchangeRedisWorkerIdGeneratorTests : IAsyncDisposable
 {
     private readonly ITestOutputHelper _output;
-    private readonly RedisClient _redisClient;
+    private readonly IConnectionMultiplexer _connection;
     private readonly string _appName;
     private readonly ServiceProvider _serviceProvider;
 
-    public RedisWorkerIdGeneratorTests(ITestOutputHelper output)
+    public StackExchangeRedisWorkerIdGeneratorTests(ITestOutputHelper output)
     {
         _output = output;
         _appName = $"TEST_{Guid.NewGuid():N}";
@@ -36,28 +37,32 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
             .AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), configFile))
             .Build();
 
-        var redisConn = configuration.GetValue<string>("EventBus:Redis:Conn");
-        _redisClient = new RedisClient(redisConn);
+        var redisConn = configuration.GetValue<string>("EventBus:StackExchangeRedis:Conn");
+        _connection = ConnectionMultiplexer.Connect(redisConn);
 
         var services = new ServiceCollection();
-        services.AddSingleton(_redisClient);
+        services.AddSingleton<IConnectionMultiplexer>(_connection);
         services.AddLogging(b => b.SetMinimumLevel(LogLevel.Debug));
-        services.AddSingleton<ITimer, DefaultTimer>();
+        services.AddSingleton<ITimer, NoopTimer>();
         _serviceProvider = services.BuildServiceProvider();
     }
 
-    private RedisWorkerIdGenerator CreateGenerator(string? appName = null)
+    private IDatabase Db => _connection.GetDatabase();
+
+    private IServer Server => _connection.GetServer(_connection.GetEndPoints()[0]);
+
+    private StackExchangeRedisWorkerIdGenerator CreateGenerator(string? appName = null)
     {
         var name = appName ?? _appName;
-        var options = Options.Create(new EventBusRedisOptions
+        var options = Options.Create(new EventBusStackExchangeRedisOptions
         {
             AppName = name,
-            RedisClientFactory = sp => sp.GetService<RedisClient>()
+            ConnectionMultiplexerFactory = _ => _connection
         });
-        var logger = _serviceProvider.GetRequiredService<ILogger<RedisWorkerIdGenerator>>();
+        var logger = _serviceProvider.GetRequiredService<ILogger<StackExchangeRedisWorkerIdGenerator>>();
         var timer = _serviceProvider.GetRequiredService<ITimer>();
 
-        return new RedisWorkerIdGenerator(logger, options, _serviceProvider, timer);
+        return new StackExchangeRedisWorkerIdGenerator(logger, options, _serviceProvider, timer);
     }
 
     [Fact]
@@ -77,10 +82,11 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
         var workerId = generator.GetWorkerId();
 
         var key = $"SHASHLIK:EVENTBUS_WORKERID:{_appName}:{workerId}";
-        var ttl = _redisClient.Ttl(key);
+        var ttl = Db.KeyTimeToLive(key);
 
-        ttl.ShouldBeGreaterThan(0);
-        ttl.ShouldBeLessThanOrEqualTo(60);
+        ttl.ShouldNotBeNull();
+        ttl!.Value.TotalSeconds.ShouldBeGreaterThan(0);
+        ttl.Value.TotalSeconds.ShouldBeLessThanOrEqualTo(60);
     }
 
     [Fact]
@@ -108,11 +114,11 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
         var workerId = generator.GetWorkerId();
 
         var key = $"SHASHLIK:EVENTBUS_WORKERID:{appName}:{workerId}";
-        _redisClient.Exists(key).ShouldBeTrue();
+        Db.KeyExists(key).ShouldBeTrue();
 
         await generator.DisposeAsync();
 
-        _redisClient.Exists(key).ShouldBeFalse();
+        Db.KeyExists(key).ShouldBeFalse();
     }
 
     [Fact]
@@ -165,17 +171,19 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
         var workerId = generator.GetWorkerId();
         var key = $"SHASHLIK:EVENTBUS_WORKERID:{appName}:{workerId}";
 
-        _redisClient.Expire(key, 5);
+        Db.KeyExpire(key, TimeSpan.FromSeconds(5));
 
         await Task.Delay(500);
 
-        var ttlBefore = _redisClient.Ttl(key);
-        ttlBefore.ShouldBeLessThanOrEqualTo(5);
+        var ttlBefore = Db.KeyTimeToLive(key);
+        ttlBefore.ShouldNotBeNull();
+        ttlBefore!.Value.TotalSeconds.ShouldBeLessThanOrEqualTo(5);
 
-        _redisClient.Expire(key, 60);
+        Db.KeyExpire(key, TimeSpan.FromSeconds(60));
 
-        var ttlAfter = _redisClient.Ttl(key);
-        ttlAfter.ShouldBeGreaterThan(5);
+        var ttlAfter = Db.KeyTimeToLive(key);
+        ttlAfter.ShouldNotBeNull();
+        ttlAfter!.Value.TotalSeconds.ShouldBeGreaterThan(5);
 
         await generator.DisposeAsync();
     }
@@ -211,11 +219,11 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
 
         await gen1.DisposeAsync();
 
-        _redisClient.Exists(key1).ShouldBeFalse();
-        _redisClient.Exists(key2).ShouldBeTrue();
+        Db.KeyExists(key1).ShouldBeFalse();
+        Db.KeyExists(key2).ShouldBeTrue();
 
         await gen2.DisposeAsync();
-        _redisClient.Exists(key2).ShouldBeFalse();
+        Db.KeyExists(key2).ShouldBeFalse();
     }
 
     [Fact]
@@ -245,30 +253,28 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
         var workerId = generator.GetWorkerId();
 
         var key = $"SHASHLIK:EVENTBUS_WORKERID:{_appName}:{workerId}";
-        var value = _redisClient.Get(key);
+        var value = Db.StringGet(key);
 
-        value.ShouldNotBeNull();
-        value.ShouldNotBeEmpty();
+        value.HasValue.ShouldBeTrue();
+        value.ToString().ShouldNotBeNullOrEmpty();
     }
 
     public async ValueTask DisposeAsync()
     {
-        var keys = _redisClient.Keys($"SHASHLIK:EVENTBUS_WORKERID:TEST_*:*");
-        if (keys != null)
+        var keys = Server.Keys(pattern: "SHASHLIK:EVENTBUS_WORKERID:TEST_*:*").ToArray();
+        if (keys.Length > 0)
         {
-            foreach (var key in keys)
-            {
-                _redisClient.Del(key);
-            }
+            Db.KeyDelete(keys);
         }
 
+        await _connection.CloseAsync();
+        _connection.Dispose();
         _serviceProvider.Dispose();
-        _redisClient.Dispose();
 
         await ValueTask.CompletedTask;
     }
 
-    private class DefaultTimer : ITimer
+    private class NoopTimer : ITimer
     {
         public Task SetTimeoutAsync(Func<Task> action, TimeSpan expire,
             CancellationToken cancellationToken = default)
@@ -285,15 +291,13 @@ public class RedisWorkerIdGeneratorTests : IAsyncDisposable
         public CancellationTokenSource SetInterval(Action action, TimeSpan interval,
             CancellationToken cancellationToken = default)
         {
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            return cts;
+            return CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         }
 
         public CancellationTokenSource SetInterval(Func<Task> action, TimeSpan interval,
             CancellationToken cancellationToken = default)
         {
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            return cts;
+            return CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         }
     }
 }

@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+ <PropertyGroup>
+ <TargetFramework>net8.0</TargetFramework>
+
+ <IsPackable>false</IsPackable>
+ </PropertyGroup>
+
+ <ItemGroup>
+ <FrameworkReference Include="Microsoft.AspNetCore.App" />
+
+ <PackageReference Include="MartinCostello.Logging.XUnit" />
+ <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+ <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+ <PackageReference Include="NetEscapades.Configuration.Yaml" />
+
+ <PackageReference Include="Microsoft.NET.Test.Sdk" />
+ <PackageReference Include="Shouldly" />
+ <PackageReference Include="StackExchange.Redis" />
+ <PackageReference Include="xunit" />
+ <PackageReference Include="xunit.runner.visualstudio">
+ <PrivateAssets>all</PrivateAssets>
+ <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+ </PackageReference>
+ </ItemGroup>
+
+ <ItemGroup>
+ <ProjectReference Include="..\..\Shashlik.EventBus.StackExchangeRedis\Shashlik.EventBus.StackExchangeRedis.csproj" />
+ <ProjectReference Include="..\CommonTestLogical\CommonTestLogical.csproj" />
+ <ProjectReference Include="..\..\Shashlik.EventBus.Extensions.EfCore\Shashlik.EventBus.Extensions.EfCore.csproj" />
+ <ProjectReference Include="..\..\Shashlik.EventBus.MemoryStorage\Shashlik.EventBus.MemoryStorage.csproj" />
+
+ </ItemGroup>
+
+ <ItemGroup>
+  <Content Include="..\config.test.yaml">
+  <Link>config.test.yaml</Link>
+  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </Content>
+  <Content Include="..\config.test-github.yaml">
+  <Link>config.test-github.yaml</Link>
+  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </Content>
+ </ItemGroup>
+
+</Project>
