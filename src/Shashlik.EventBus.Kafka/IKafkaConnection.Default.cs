@@ -36,7 +36,7 @@ namespace Shashlik.EventBus.Kafka
                 return;
             try
             {
-                var config = new AdminClientConfig(Options.CurrentValue.Properties);
+                var config = new AdminClientConfig(Options.CurrentValue.GetProducerProperties());
                 using var adminClient = new AdminClientBuilder(config).Build();
                 await adminClient.CreateTopicsAsync(new[] { NewTopicSpecification(topic) })
                     .ConfigureAwait(false);
@@ -64,7 +64,7 @@ namespace Shashlik.EventBus.Kafka
 
         public async ValueTask<IPoolLease<IProducer<string, byte[]>>> GetProducer(string topic)
         {
-            return await _pools.GetOrAdd(topic, t => CreatePoolFor(t)).RentAsync().ConfigureAwait(false);
+            return await _pools.GetOrAdd(topic, CreatePoolFor).RentAsync().ConfigureAwait(false);
         }
 
         private IObjectPool<IProducer<string, byte[]>> CreatePoolFor(string topic)
@@ -78,7 +78,7 @@ namespace Shashlik.EventBus.Kafka
         public IConsumer<string, byte[]> CreateConsumer(string groupId, string topic)
         {
             EnsureTopicAsync(topic).ConfigureAwait(false).GetAwaiter().GetResult();
-            var dic = new Dictionary<string, string>(Options.CurrentValue.Properties, StringComparer.Ordinal);
+            var dic = new Dictionary<string, string>(Options.CurrentValue.GetConsumeProperties(), StringComparer.Ordinal);
             dic["group.id"] = groupId;
             // Confluent.Kafka 2.x defaults enable.auto.offset.store=true, which means
             // every Consume() call auto-stores the offset. Shashlik's "NACK on failure"
@@ -96,8 +96,15 @@ namespace Shashlik.EventBus.Kafka
             // 池里的 producer 在自身 dispose 时会随池释放
             foreach (var c in _consumers.Values)
             {
-                try { c.Unsubscribe(); c.Close(); c.Dispose(); }
-                catch { }
+                try
+                {
+                    c.Unsubscribe();
+                    c.Close();
+                    c.Dispose();
+                }
+                catch
+                {
+                }
             }
 
             _consumers.Clear();
@@ -120,7 +127,7 @@ namespace Shashlik.EventBus.Kafka
 
         public ValueTask<IProducer<string, byte[]>> CreateAsync(CancellationToken cancellationToken = default)
         {
-            var builder = new ProducerBuilder<string, byte[]>(_options.CurrentValue.Properties);
+            var builder = new ProducerBuilder<string, byte[]>(_options.CurrentValue.GetProducerProperties());
             return new ValueTask<IProducer<string, byte[]>>(builder.Build());
         }
 
