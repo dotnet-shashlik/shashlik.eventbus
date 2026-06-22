@@ -136,9 +136,10 @@ namespace Shashlik.EventBus.Kafka
             // 存储偏移,确认消费, see: https://docs.confluent.io/current/clients/dotnet.html
             if (res == MessageReceiveResult.Success)
                 // 只有监听处理成功才提交偏移量,否则不处理即可
+            {
                 consumer.StoreOffset(consumerResult);
-            else
-                consumer.Assign(consumer.Assignment);
+                consumer.Commit();
+            }
         }
 
         public void Dispose()
