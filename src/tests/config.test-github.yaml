@@ -1,7 +1,7 @@
 ConnectionStrings:
   MySql: server=localhost;port=3306;database=eventbustest;user id=root;password=123123;Pooling=True;Minimum Pool Size=5;Maximum Pool Size=10;
-  MongoDb: mongodb://mongo:123123@localhost:27017/?authSource=admin
-
+  MongoDb: mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true
+  
 EventBus:
   RetryFailedMax: 7
   StartRetryAfter: 20

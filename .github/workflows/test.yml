@@ -141,7 +141,7 @@ jobs:
             sleep 1
           done
 
-#      - name: Test
-#        run: dotnet test ./src/Shashlik.EventBus.sln
-#        env:
-#          DOTNET_ENVIRONMENT: GitHub
+      - name: Test
+        run: dotnet test ./src/Shashlik.EventBus.sln
+        env:
+          DOTNET_ENVIRONMENT: GitHub
