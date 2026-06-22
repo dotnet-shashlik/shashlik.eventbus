@@ -91,8 +91,10 @@ jobs:
             mongod --replSet rs0 --bind_ip_all
           
           sleep 10
+          
+          docker logs mongod
     
-      - name: Init Replica Set
+      - name: Init Mongo Replica Set
         run: |
           docker exec mongodb mongosh \
             -u mongo -p 123123 \
@@ -103,15 +105,6 @@ jobs:
                 members:[{_id:0,host:'localhost:27017'}]
               })
             "
-
-      - name: Wait Pulsar
-        run: |
-          for i in $(seq 1 60); do
-            curl -fs http://localhost:8080/admin/v2/clusters >/dev/null && exit 0
-            sleep 2
-          done
-          docker logs pulsar
-          exit 1
 
       - name: Wait Mongo Replica Set
         run: |
@@ -125,6 +118,17 @@ jobs:
           
             sleep 2
           done
+
+      - name: Wait Pulsar
+        run: |
+          for i in $(seq 1 60); do
+            curl -fs http://localhost:8080/admin/v2/clusters >/dev/null && exit 0
+            sleep 2
+          done
+          docker logs pulsar
+          exit 1
+
+
 
       - name: Wait Redis
         run: |
