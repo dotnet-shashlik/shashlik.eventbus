@@ -81,32 +81,22 @@ jobs:
             apachepulsar/pulsar:4.2.2 \
             bin/pulsar standalone
 
-      - name: Start MongoDB
+      - name: Start Mongo
         run: |
-          docker run -d \
-            --name mongodb \
+          docker run -d --name mongodb \
             -p 27017:27017 \
             -e MONGO_INITDB_ROOT_USERNAME=mongo \
             -e MONGO_INITDB_ROOT_PASSWORD=123123 \
-            mongo:8.0 \
-            mongod --replSet rs0 --bind_ip_all
-
-      - name: Init Mongo Replica Set
-        run: |
+            mongo:8.3.4
+          
           sleep 10
           
-          docker exec mongodb mongosh \
-            --username mongo \
-            --password 123123 \
-            --authenticationDatabase admin \
-            --eval "
+          docker exec mongodb mongosh --eval "
             rs.initiate({
-              _id: 'rs0',
-              members: [
-                { _id: 0, host: 'localhost:27017' }
-              ]
+              _id:'rs0',
+              members:[{_id:0,host:'localhost:27017'}]
             })
-            "
+          "
 
       - name: Wait Pulsar
         run: |
