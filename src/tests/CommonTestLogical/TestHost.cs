@@ -36,7 +36,9 @@ namespace CommonTestLogical
                     var configFile = envName.Equals("GitHub", StringComparison.OrdinalIgnoreCase)
                         ? "config.test-github.yaml"
                         : "config.test.yaml";
-                    config.AddYamlFile(Path.Combine(Directory.GetCurrentDirectory(), configFile));
+                    var file = Path.Combine(Directory.GetCurrentDirectory(), configFile);
+                    Console.WriteLine($"config file--->: {file}");
+                    config.AddYamlFile(file);
                     config.AddEnvironmentVariables();
                 })
                 .ConfigureWebHostDefaults(x =>

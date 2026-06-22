@@ -91,7 +91,7 @@ namespace CommonTestLogical
             // TestEvent
             {
                 TestEventHandler.LastInstance.ShouldNotBeNull();
-                TestEventHandler.LastInstance!.Name.ShouldBe(testEvent.Name);
+                TestEventHandler.LastInstance.Name.ShouldBe(testEvent.Name);
                 TestEventHandler.LastItems!["code"].ShouldBe(testEventRandomCode);
                 TestEventHandler.LastItems[EventBusConsts.MsgIdHeaderKey].Length.ShouldBe(32);
                 TestEventHandler.LastItems[EventBusConsts.SendAtHeaderKey].ParseTo<DateTimeOffset?>().ShouldNotBeNull();

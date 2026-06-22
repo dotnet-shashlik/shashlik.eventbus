@@ -116,8 +116,6 @@ jobs:
           docker logs pulsar
           exit 1
 
-
-
       - name: Wait Redis
         run: |
           for i in $(seq 1 60); do

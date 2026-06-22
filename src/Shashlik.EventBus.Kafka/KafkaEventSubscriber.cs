@@ -137,6 +137,8 @@ namespace Shashlik.EventBus.Kafka
             if (res == MessageReceiveResult.Success)
                 // 只有监听处理成功才提交偏移量,否则不处理即可
                 consumer.StoreOffset(consumerResult);
+            else
+                consumer.Assign(consumer.Assignment);
         }
 
         public void Dispose()
