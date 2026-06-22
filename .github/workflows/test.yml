@@ -87,26 +87,25 @@ jobs:
             -p 27017:27017 \
             mongo:8.3.4 --replSet rs0 --bind_ip_all
           
-          sleep 10
-          
+          sleep 5
           docker logs mongodb
-    
+
       - name: Init Mongo Replica Set
         run: |
-          docker exec -it mongodb mongosh --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: '127.0.0.1:27017'}]})"
-          
+          docker exec mongodb mongosh --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: '127.0.0.1:27017'}]})"
+
       - name: Wait Mongo Replica Set
         run: |
-          for i in $(seq 1 60); do
-            docker exec mongodb mongosh \
-              --username mongo \
-              --password 123123 \
-              --authenticationDatabase admin \
-              --quiet \
-              --eval "rs.status().ok" | grep 1 && exit 0
-          
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --quiet --eval "rs.status().ok" | grep -q 1; then
+              echo "MongoDB Replica Set is ready!"
+              exit 0
+            fi
+            echo "Waiting for MongoDB... ($i)"
             sleep 2
           done
+          echo "MongoDB failed to start in time."
+          exit 1
 
       - name: Wait Pulsar
         run: |
