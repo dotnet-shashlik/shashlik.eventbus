@@ -92,7 +92,7 @@ jobs:
           
           sleep 10
           
-          docker logs mongod
+          docker logs mongodb
     
       - name: Init Mongo Replica Set
         run: |
