@@ -107,7 +107,11 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 return new HandleResult(true);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (OperationCanceledException)
+            {
+                return new HandleResult(false);
+            }
+            catch (Exception ex)
             {
                 if (messageStorageModel is null || descriptor is null)
                 {
@@ -125,7 +129,11 @@ namespace Shashlik.EventBus.DefaultImpl
                             cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (Exception ex1)when (ex1 is not OperationCanceledException)
+                catch (OperationCanceledException)
+                {
+                    //ignore
+                }
+                catch (Exception ex1)
                 {
                     Logger.LogError(ex1, "[EventBus] update received message error");
                 }

@@ -1,5 +1,5 @@
 Benchmark:
-  Total: 5000000
+  Total: 1000000
   Concurrency: 0
   PayloadSize: 128
   ConsumeTimeoutSeconds: 900

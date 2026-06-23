@@ -15,12 +15,11 @@
  </ItemGroup>
 
  <ItemGroup>
- <PackageReference Include="FreeSql.Provider.MySqlConnector" />
- <PackageReference Include="FreeSql.Provider.Oracle" />
- <PackageReference Include="FreeSql.Provider.PostgreSQL" />
- <PackageReference Include="FreeSql.Provider.SqlServer" />
- <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
- <!-- <PackageReference Include="Shashlik.EventBus.Dashboard" />-->
+  <PackageReference Include="FreeSql.Provider.MySqlConnector"/>
+  <PackageReference Include="FreeSql.Provider.Oracle"/>
+  <PackageReference Include="FreeSql.Provider.PostgreSQL"/>
+  <PackageReference Include="FreeSql.Provider.SqlServer"/>
+  <PackageReference Include="Pomelo.EntityFrameworkCore.MySql"/>
  </ItemGroup>
 
 

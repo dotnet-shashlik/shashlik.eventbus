@@ -84,7 +84,6 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
-            // 见 DefaultPublishedMessageRetryProvider: 用 SemaphoreSlim + Task.WhenAll
             await Parallel.ForEachAsync(messages, new ParallelOptions
             {
                 MaxDegreeOfParallelism = Options.Value.RetryMaxDegreeOfParallelism,
@@ -117,7 +116,11 @@ namespace Shashlik.EventBus.DefaultImpl
                     .LockAndHandleAsync(item.Id, cancellationToken)
                     .ConfigureAwait(false);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (OperationCanceledException)
+            {
+                //ignore
+            }
+            catch (Exception ex)
             {
                 Logger.LogError(ex,
                     $"[EventBus] retry received message \"{item.Id}\" failed");
@@ -144,7 +147,11 @@ namespace Shashlik.EventBus.DefaultImpl
                                 {
                                     await ReceivedHandler.HandleAsync(item.Id, cancellationToken);
                                 }
-                                catch (Exception e) when (e is not OperationCanceledException)
+                                catch (OperationCanceledException)
+                                {
+                                    //ignore
+                                }
+                                catch (Exception e)
                                 {
                                     Logger.LogError(e, $"[EventBus] retry received delay message \"{item.Id}\" failed");
                                 }
@@ -152,6 +159,10 @@ namespace Shashlik.EventBus.DefaultImpl
                         },
                         item.DelayAt.Value, cancellationToken);
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                //ignore
             }
             catch (Exception ex)
             {

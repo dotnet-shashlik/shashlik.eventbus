@@ -101,6 +101,10 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 return MessageReceiveResult.Success;
             }
+            catch (OperationCanceledException)
+            {
+                return MessageReceiveResult.Failed;
+            }
             catch (Exception ex)
             {
                 // 详细记录错误,便于排查"OnReceiveAsync 返回 Failed"的根因
@@ -125,7 +129,10 @@ namespace Shashlik.EventBus.DefaultImpl
                     .ConfigureAwait(false);
 
                 if (!handleResult.Success)
+                {
+                    await Task.Delay(failCount * 1000, cancellationToken).ConfigureAwait(false);
                     failCount++;
+                }
                 else
                     return;
 
@@ -134,9 +141,6 @@ namespace Shashlik.EventBus.DefaultImpl
                     // 5次都失败了,交给重试器去执行了,这里就不管了
                     return;
                 }
-
-                // ReSharper disable once MethodSupportsCancellation
-                await Task.Delay(10).ConfigureAwait(false);
             }
         }
     }

@@ -32,7 +32,7 @@ namespace Shashlik.EventBus.DefaultImpl
             MessageStorageModel messageStorageModel,
             CancellationToken cancellationToken = default)
         {
-            return await HandleAsync(messageStorageModel.Id!, messageTransferModel, messageStorageModel, false,
+            return await HandleAsync(messageStorageModel.Id, messageTransferModel, messageStorageModel, false,
                 cancellationToken);
         }
 
@@ -92,7 +92,11 @@ namespace Shashlik.EventBus.DefaultImpl
 
                 return new HandleResult(true);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (OperationCanceledException)
+            {
+                return new HandleResult(false);
+            }
+            catch (Exception ex)
             {
                 if (messageStorageModel is null)
                 {
@@ -111,7 +115,11 @@ namespace Shashlik.EventBus.DefaultImpl
                             cancellationToken)
                         .ConfigureAwait(false);
                 }
-                catch (Exception exInner)when (exInner is not OperationCanceledException)
+                catch (OperationCanceledException)
+                {
+                    //ignore
+                }
+                catch (Exception exInner)
                 {
                     Logger.LogError(exInner, $"[EventBus] update published message occur error");
                 }

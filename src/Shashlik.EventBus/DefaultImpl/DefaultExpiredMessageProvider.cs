@@ -47,6 +47,10 @@ namespace Shashlik.EventBus.DefaultImpl
                 await MessageStorage.DeleteExpiresAsync(OptionsMonitor.CurrentValue.RetryFailedMax, cancellationToken)
                     .ConfigureAwait(false);
             }
+            catch (OperationCanceledException)
+            {
+                //ignore
+            }
             catch (Exception e)
             {
                 Logger.LogError(e, $"[EventBus] delete expired data occur error");

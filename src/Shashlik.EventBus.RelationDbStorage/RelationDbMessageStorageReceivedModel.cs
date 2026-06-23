@@ -11,7 +11,7 @@ namespace Shashlik.EventBus
     /// 关系型数据库-已接收消息存储模型
     /// </summary>
     [Table]
-    [FreeSqlIndex("ix_eventbus_received_msg_id_handler", "MsgId,EventHandlerName", IsUnique = true)]
+    [FreeSqlIndex("ix_eventbus_received_msg_id_handler", "MsgId,EventHandlerName")]
     // 见 RelationDbMessageStoragePublishedModel 注释,这里对称设计
     [FreeSqlIndex("ix_eventbus_received_create_time", "CreateTimeTicks DESC,Status,IsDelay")]
     [FreeSqlIndex("ix_eventbus_received_expire_time", "Status,ExpireTimeTicks")]

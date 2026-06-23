@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
 using ITimer = Shashlik.EventBus.Utils.ITimer;
@@ -17,19 +18,21 @@ namespace Shashlik.EventBus.DefaultImpl
             IMessageStorage messageStorage,
             IOptions<EventBusOptions> options,
             IMessageSerializer messageSerializer,
-            IPublishHandler publishHandler, ITimer timerHelper)
+            IPublishHandler publishHandler, ITimer timerHelper, ILogger<DefaultPublishedMessageRetryProvider> logger)
         {
             MessageStorage = messageStorage;
             Options = options;
             MessageSerializer = messageSerializer;
             PublishHandler = publishHandler;
             TimerHelper = timerHelper;
+            Logger = logger;
         }
 
         private IMessageStorage MessageStorage { get; }
         private IOptions<EventBusOptions> Options { get; }
         private IMessageSerializer MessageSerializer { get; }
         private IPublishHandler PublishHandler { get; }
+        private ILogger<DefaultPublishedMessageRetryProvider> Logger { get; }
         private ITimer TimerHelper { get; }
         private CancellationTokenSource? _internalTask;
 
@@ -75,10 +78,6 @@ namespace Shashlik.EventBus.DefaultImpl
             if (messages.IsNullOrEmpty())
                 return;
 
-            // 之前用 Parallel.ForEach + .GetAwaiter().GetResult() 同步阻塞线程池线程,
-            // 在 ASP.NET Core 上抢占请求线程,并发度被 RetryMaxDegreeOfParallelism 卡死
-            // 但每次仍以同步方式占用一个线程直到下游 publish 完成。改用 SemaphoreSlim
-            // + Task.WhenAll 真正以异步方式并发,单次 batch 的线程占用降到 1。
             using var semaphore = new SemaphoreSlim(
                 Math.Max(1, Options.Value.RetryMaxDegreeOfParallelism));
             var tasks = new List<Task>(messages.Count);
@@ -102,10 +101,13 @@ namespace Shashlik.EventBus.DefaultImpl
                     .LockingHandleAsync(item.Id, cancellationToken)
                     .ConfigureAwait(false);
             }
+            catch (OperationCanceledException)
+            {
+                //ignore
+            }
             catch (Exception ex)
             {
-                // 单条失败不应影响批内其他任务。
-                System.Console.WriteLine(ex);
+                Logger.LogError(ex, $"[EventBus] Retry message `{item.Id}` occur error: ");
             }
             finally
             {

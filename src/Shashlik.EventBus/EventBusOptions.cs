@@ -109,9 +109,6 @@ namespace Shashlik.EventBus
                 errors.Add($"{nameof(options.RetryInterval)} must be > 0, got {options.RetryInterval}");
             if (options.LockTime <= 0)
                 errors.Add($"{nameof(options.LockTime)} must be > 0, got {options.LockTime}");
-            if (options.LockTime >= options.RetryInterval)
-                errors.Add(
-                    $"{nameof(options.LockTime)} ({options.LockTime}) must be < {nameof(options.RetryInterval)} ({options.RetryInterval}); otherwise the same row can be picked up by the next retry pass before the lock expires.");
             if (options.RetryFailedMax < 5)
                 errors.Add($"{nameof(options.RetryFailedMax)} must be >= 5, got {options.RetryFailedMax}");
             if (options.RetryLimitCount <= 0)

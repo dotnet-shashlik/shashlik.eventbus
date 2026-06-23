@@ -135,9 +135,22 @@ namespace Shashlik.EventBus.DefaultImpl
             // 持久化 + 事务已经保证调用方有理由期待这条消息一定会被发送,发送的取消只应该由
             // 应用关停触发。
             _ = Task.Run(
-                async () => await Start(transactionContext, messageStorageModel, messageTransferModel,
-                        HostedStopToken.StopCancellationToken)
-                    .ConfigureAwait(false)
+                async () =>
+                {
+                    try
+                    {
+                        await Start(transactionContext, messageStorageModel, messageTransferModel,
+                            HostedStopToken.StopCancellationToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        //ignore
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, $"[EventBus] publish message occur error");
+                    }
+                }
                 , HostedStopToken.StopCancellationToken).ConfigureAwait(false);
         }
 
@@ -173,6 +186,10 @@ namespace Shashlik.EventBus.DefaultImpl
                     return;
                 }
             }
+            catch (OperationCanceledException)
+            {
+                //ignore
+            }
             catch (Exception ex)
             {
                 Logger.LogDebug(ex, $"[EventBus] query message \"{messageStorageModel.Id}\" commit state occur error");
@@ -193,7 +210,10 @@ namespace Shashlik.EventBus.DefaultImpl
                     .HandleAsync(messageTransferModel, messageStorageModel, cancellationToken)
                     .ConfigureAwait(false);
                 if (!handleResult.Success)
+                {
+                    await Task.Delay(failCount * 1000, cancellationToken).ConfigureAwait(false);
                     failCount++;
+                }
                 else
                     return;
 

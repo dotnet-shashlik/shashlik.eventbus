@@ -34,6 +34,10 @@
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
         <PackageReference Include="NetEscapades.Configuration.Yaml" />
+        <PackageReference Include="FreeSql.Provider.MySqlConnector"/>
+        <PackageReference Include="FreeSql.Provider.Oracle"/>
+        <PackageReference Include="FreeSql.Provider.PostgreSQL"/>
+        <PackageReference Include="FreeSql.Provider.SqlServer"/>
     </ItemGroup>
 
     <ItemGroup>
