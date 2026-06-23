@@ -81,7 +81,7 @@ EventBus and message brokers use `at least once` QOS. A handler may receive the 
 
 ## Delayed Events
 
-Delayed events use local `System.Timers.Timer` scheduling, independent of broker delay features for maximum reliability. Definition and handler declaration are identical to regular events — only the publish call specifies a delay time:
+Delayed events use local scheduling, independent of broker delay features for maximum reliability. Definition and handler declaration are identical to regular events — only the publish call specifies a delay time:
 
 ```csharp
 await DbContext.PublishEventAsync(new NewUserPromotionEvent { ... }, DateTimeOffset.Now.AddMinutes(30));
