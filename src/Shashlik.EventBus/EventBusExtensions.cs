@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shashlik.EventBus.DefaultImpl;
 using Shashlik.EventBus.Utils;
@@ -56,6 +57,13 @@ namespace Shashlik.EventBus
             using var serviceProvider = serviceCollection.BuildServiceProvider();
             var eventHandlerFindProvider = serviceProvider.GetRequiredService<IEventHandlerFindProvider>();
             var options = serviceProvider.GetRequiredService<IOptions<EventBusOptions>>();
+
+            // 将 ILoggerFactory 注入 ReflectionHelper,用于在单文件部署等场景下
+            // 打印反射发现 / fallback 的诊断日志。不影响行为。
+            var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+            if (loggerFactory is not null)
+                ReflectionHelper.SetLogger(loggerFactory.CreateLogger(typeof(ReflectionHelper).FullName ?? nameof(ReflectionHelper)));
+
             var handlers = eventHandlerFindProvider.FindAll();
             foreach (var eventHandlerDescriptor in handlers)
                 // 用 TryAdd 避免重复 AddEventBus 调用(测试里多 WebApplicationFactory

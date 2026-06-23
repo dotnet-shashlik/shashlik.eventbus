@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -70,6 +71,21 @@ namespace Shashlik.EventBus
         /// WorkerId计算工厂方法
         /// </summary>
         public Func<IServiceProvider, ushort> WorkerIdFactory { get; set; } = GetWorkerId;
+
+        /// <summary>
+        /// 显式指定事件处理器所在程序集。设置后将基于此列表反射发现 <see cref="IEventHandler{TEvent}"/>
+        /// 实现,跳过 <c>DependencyContext</c> 反射链。用于 <c>PublishSingleFile=true</c> 等
+        /// 场景下,默认反射链拿不到引用关系时作为兜底。
+        /// <para>示例: <c>opts.HandlerAssemblies.Add(typeof(MyHandler).Assembly);</c></para>
+        /// </summary>
+        private List<Assembly> _handlerAssemblies = new();
+
+        public List<Assembly> HandlerAssemblies
+        {
+            get => _handlerAssemblies;
+            set => _handlerAssemblies = value ?? new();
+        }
+
 
         private static ushort GetWorkerId(IServiceProvider serviceProvider)
         {

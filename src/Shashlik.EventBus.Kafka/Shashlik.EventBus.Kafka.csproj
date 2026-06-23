@@ -2,6 +2,15 @@
 <PropertyGroup>
  <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
  <IsPackable>true</IsPackable>
+ <!--
+   单文件部署 (PublishSingleFile=true) 注意事项:
+   - 默认 IncludeNativeLibrariesForSelfExtract=true 时, librdkafka 原生库
+     会被运行时解包到临时目录, Confluent.Kafka 可以正常工作。
+   - 若设置了 IncludeNativeLibrariesForSelfExtract=false, 需手动把
+     librdkafka 的原生文件 (librdkafka.dll/.so/.dylib) 部署到 exe 同目录。
+   - Confluent.Kafka 的某些 native 调用路径在 PublishTrimmed=true 下
+     可能失败, 单文件场景请保持 PublishTrimmed=false。
+ -->
  </PropertyGroup>
 
  <ItemGroup>

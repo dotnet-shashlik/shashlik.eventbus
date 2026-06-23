@@ -46,7 +46,10 @@ namespace Sample.Kafka.Mysql
                     services.AddDbContextPool<DemoDbContext>(r =>
                     {
                         r.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-                            db => { db.MigrationsAssembly(Assembly.GetEntryAssembly().GetName().FullName); });
+                            // 单文件 (PublishSingleFile=true) 启动时, Assembly.GetEntryAssembly()
+                            // 返回的是 bundle host, 不是用户程序集, EF 找不到迁移程序集。
+                            // 改成用 DbContext 所在的真实程序集名。
+                            db => { db.MigrationsAssembly(typeof(DemoDbContext).Assembly.GetName().Name); });
                     }, 5);
                     using var serviceProvider2 = services.BuildServiceProvider();
                     using var scope = serviceProvider2.CreateScope();

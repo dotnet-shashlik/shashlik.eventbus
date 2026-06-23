@@ -3,6 +3,8 @@
  <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
  <Nullable>enable</Nullable>
  <IsPackable>true</IsPackable>
+ <!-- 框架未做 PublishTrimmed 适配,单文件场景请保持 PublishTrimmed=false。 -->
+ <IsTrimmable>false</IsTrimmable>
  </PropertyGroup>
 
  <ItemGroup>

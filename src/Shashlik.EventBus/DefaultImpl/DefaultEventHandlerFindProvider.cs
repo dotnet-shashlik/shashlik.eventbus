@@ -3,21 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Shashlik.EventBus.Utils;
 
 namespace Shashlik.EventBus.DefaultImpl
 {
     public class DefaultEventHandlerFindProvider : IEventHandlerFindProvider
     {
-        public DefaultEventHandlerFindProvider(IEventNameRuler eventNameRuler,
-            IEventHandlerNameRuler eventHandlerNameRuler)
+        public DefaultEventHandlerFindProvider(
+            IEventNameRuler eventNameRuler,
+            IEventHandlerNameRuler eventHandlerNameRuler,
+            IServiceProvider serviceProvider)
         {
             EventNameRuler = eventNameRuler;
             EventHandlerNameRuler = eventHandlerNameRuler;
+            ServiceProvider = serviceProvider;
         }
 
         private IEventNameRuler EventNameRuler { get; }
         private IEventHandlerNameRuler EventHandlerNameRuler { get; }
+        private IServiceProvider ServiceProvider { get; }
 
         // 把 cache 从 static 改成 instance 级,避免不同 EventBusOptions.Environment
         // (同一进程跑多套测试 / 多 host) 共用一份缓存导致"找不到 handler"的问题。
@@ -32,7 +38,24 @@ namespace Shashlik.EventBus.DefaultImpl
             {
                 if (_cache is not null) return _cache.Values;
 
-                var types = ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>));
+                // 优先级:
+                // 1. EventBusOptions.HandlerAssemblies 用户显式指定的程序集 — 兼容
+                //    PublishSingleFile=true 等反射链失效场景。
+                // 2. ReflectionHelper 默认反射链 (内部已加单文件 AppDomain 兜底)。
+                var options = ServiceProvider.GetService<IOptions<EventBusOptions>>()?.Value;
+                var types = new List<TypeInfo>();
+
+                if (options is not null && options.HandlerAssemblies.Count > 0)
+                {
+                    foreach (var asm in options.HandlerAssemblies)
+                    {
+                        if (asm is null) continue;
+                        types.AddRange(ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>), asm));
+                    }
+                }
+
+                if (types.Count == 0)
+                    types = ReflectionHelper.GetFinalSubTypes(typeof(IEventHandler<>));
 
                 List<EventHandlerDescriptor> list = new();
                 foreach (var typeInfo in types)

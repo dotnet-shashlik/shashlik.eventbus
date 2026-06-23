@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Sample.KafkaMysql.SingleFile</RootNamespace>
+    <AssemblyName>Sample.KafkaMysql.SingleFile</AssemblyName>
+
+    <!--
+      单文件部署默认配置。直接:
+        dotnet publish -c Release -r win-x64
+      即可产出 Sample.KafkaMysql.SingleFile.exe 单文件(包含所有 dll + librdkafka)。
+
+      覆盖方式:  -p:PublishSingleFile=false  /  -p:SelfContained=true  等
+
+      - PublishSingleFile=true:                       所有托管 dll bundle 进单个 exe
+      - SelfContained=false:                         依赖机器上已装的 .NET 8 桌面运行时
+      - IncludeNativeLibrariesForSelfExtract=true:    Confluent.Kafka 依赖的 librdkafka
+                                                      原生库会被运行时解包到临时目录,
+                                                      可正常工作
+      注意: EnableCompressionInSingleFile 需要 SelfContained=true 才可用, 默认关。
+    -->
+    <PublishSingleFile Condition="'$(PublishSingleFile)' == ''">true</PublishSingleFile>
+    <SelfContained Condition="'$(SelfContained)' == ''">false</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract Condition="'$(IncludeNativeLibrariesForSelfExtract)' == ''">true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shashlik.EventBus.Abstract\Shashlik.EventBus.Abstract.csproj" />
+    <ProjectReference Include="..\..\Shashlik.EventBus.Kafka\Shashlik.EventBus.Kafka.csproj" />
+    <ProjectReference Include="..\..\Shashlik.EventBus.RelationDbStorage\Shashlik.EventBus.RelationDbStorage.csproj" />
+    <ProjectReference Include="..\..\Shashlik.EventBus\Shashlik.EventBus.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" />
+    <PackageReference Include="FreeSql" />
+    <PackageReference Include="FreeSql.Provider.MySql" />
+    <PackageReference Include="FreeSql.Repository" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

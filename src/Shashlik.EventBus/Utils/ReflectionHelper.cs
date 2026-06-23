@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyModel;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Shashlik.EventBus.Utils
 {
@@ -12,6 +14,18 @@ namespace Shashlik.EventBus.Utils
     /// </summary>
     public static class ReflectionHelper
     {
+        private static ILogger _logger = NullLogger.Instance;
+
+        /// <summary>
+        /// 由 DI 容器在 AddEventBus 时注入。仅用于在 <c>PublishSingleFile=true</c>
+        /// 等场景下记录 fallback / 加载失败的诊断信息,不影响行为。
+        /// </summary>
+        internal static void SetLogger(ILogger logger)
+        {
+            _logger = logger ?? NullLogger.Instance;
+        }
+
+
         /// <summary>
         /// 获取引用了<paramref name="assembly"/>程序集的所有的程序集
         /// </summary>
@@ -25,41 +39,151 @@ namespace Shashlik.EventBus.Utils
             if (res is not null)
                 return res;
 
-            var allLib = ((dependencyContext ?? DependencyContext.Default)!)
-                .RuntimeLibraries
-                .OrderBy(r => r.Name)
-                .ToList();
-
             var name = assembly.GetName().Name;
             if (name is null)
                 return new List<Assembly>();
 
-            Dictionary<string, HashSet<string>> allDependencies = new Dictionary<string, HashSet<string>>();
-            foreach (var item in allLib)
+            var ctx = dependencyContext ?? DependencyContext.Default;
+            var allLib = ctx?.RuntimeLibraries
+                .OrderBy(r => r.Name)
+                .ToList() ?? new List<RuntimeLibrary>();
+
+            List<Assembly> list;
+
+            if (allLib.Count > 0)
             {
-                allDependencies.Add(item.Name, new HashSet<string>());
-                LoadAllDependency(allLib, item.Name, new HashSet<string>(), item, allDependencies);
+                Dictionary<string, HashSet<string>> allDependencies = new Dictionary<string, HashSet<string>>();
+                foreach (var item in allLib)
+                {
+                    allDependencies.Add(item.Name, new HashSet<string>());
+                    LoadAllDependency(allLib, item.Name, new HashSet<string>(), item, allDependencies);
+                }
+
+                list = allDependencies
+                    .Where(r => r.Value.Contains(name))
+                    .Select(r =>
+                    {
+                        try
+                        {
+                            return Assembly.Load(r.Key);
+                        }
+                        catch (Exception ex)
+                        {
+                            // 改为可观测的日志,但仍跳过 — 不再静默吞异常。
+                            _logger.LogDebug(
+                                "[EventBus] Assembly.Load failed for {Assembly}: {Message}",
+                                r.Key, ex.Message);
+                            return null;
+                        }
+                    })
+                    .Where(r => r is not null)
+                    .ToList()!;
+            }
+            else
+            {
+                // 单文件 (PublishSingleFile=true) 下 DependencyContext.Default
+                // 可能为 null 或 RuntimeLibraries 为空。此时降级到 AppDomain 已加载
+                // 程序集 + 入口程序集引用图,模拟原 deps.json 的引用关系。
+                _logger.LogDebug(
+                    "[EventBus] DependencyContext runtime libraries is empty, fallback to AppDomain.GetAssemblies() for {Assembly}",
+                    name);
+                list = new List<Assembly>();
             }
 
-            var list = allDependencies
-                .Where(r => r.Value.Contains(name))
-                .Select(r =>
+            // 兜底: 第一层拿不到时,基于 AppDomain 已加载程序集 + 引用图传递闭包展开。
+            // 单文件 bundle 内的所有程序集都会被运行时按需加载到 AppDomain,这是
+            // 兼容 PublishSingleFile=true 的最稳途径。
+            if (list.Count == 0)
+            {
+                var fallback = FallbackFromLoadedAssemblies(name);
+                if (fallback.Count > 0)
                 {
-                    try
-                    {
-                        return Assembly.Load(r.Key);
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                })
-                .Where(r => r is not null)
-                .ToList();
+                    _logger.LogDebug(
+                        "[EventBus] resolved {Count} referred assemblies via AppDomain fallback for {Assembly}",
+                        fallback.Count, name);
+                    list = fallback;
+                }
+            }
 
-            res = list!;
+            res = list;
             CacheAssemblyReferred.TryAdd(assembly, res);
             return res;
+        }
+
+        /// <summary>
+        /// 基于 AppDomain 已加载程序集,展开引用了 <paramref name="rootName"/>
+        /// 的所有程序集。用于单文件部署下 DependencyContext 不可用时的兜底。
+        /// <para>
+        /// 实现思路: 对每个已加载程序集, 检查其引用链中是否包含 rootName
+        /// (即该程序集是否依赖于 rootName)。等价于原始 deps.json 的反向引用展开。
+        /// 复杂度 O(n*m) 其中 n=已加载程序集数, m=平均引用数, 典型应用 n 几十,
+        /// m 几十, 完全可接受。
+        /// </para>
+        /// </summary>
+        private static List<Assembly> FallbackFromLoadedAssemblies(string rootName)
+        {
+            var loaded = AppDomain.CurrentDomain.GetAssemblies();
+
+            // 缓存每个程序集是否传递依赖于 rootName
+            var transitiveDepsCache = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+
+            bool DependsOnTransitively(Assembly asm)
+            {
+                if (asm.GetName().Name == rootName) return true;
+                var visited = new HashSet<string>(StringComparer.Ordinal);
+                return DependsOnTransitivelyCore(asm, visited);
+            }
+
+            bool DependsOnTransitivelyCore(Assembly asm, HashSet<string> visited)
+            {
+                var asmName = asm.GetName().Name;
+                if (asmName is null) return false;
+                if (!visited.Add(asmName)) return false;
+
+                if (asmName == rootName) return true;
+
+                // 命中缓存
+                if (transitiveDepsCache.TryGetValue(asmName, out var cached))
+                    return cached.Contains(rootName);
+
+                var deps = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var rn in asm.GetReferencedAssemblies())
+                {
+                    if (rn.Name is null) continue;
+                    deps.Add(rn.Name);
+                    if (rn.Name == rootName)
+                    {
+                        transitiveDepsCache[asmName] = deps;
+                        return true;
+                    }
+                }
+
+                // 递归查每个直接依赖
+                foreach (var depName in deps)
+                {
+                    if (visited.Contains(depName)) continue;
+                    var depAsm = loaded.FirstOrDefault(a => a.GetName().Name == depName);
+                    if (depAsm is null) continue;
+                    if (DependsOnTransitivelyCore(depAsm, visited))
+                    {
+                        transitiveDepsCache[asmName] = deps;
+                        return true;
+                    }
+                }
+
+                transitiveDepsCache[asmName] = deps;
+                return false;
+            }
+
+            var result = new List<Assembly>();
+            foreach (var a in loaded)
+            {
+                var n = a.GetName().Name;
+                if (n is null || n == rootName) continue;
+                if (DependsOnTransitively(a))
+                    result.Add(a);
+            }
+            return result;
         }
 
         /// <summary>
