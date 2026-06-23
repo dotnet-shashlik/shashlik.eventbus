@@ -113,10 +113,9 @@ internal class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken = default)
     {
         var entity = message.ToPublishedSaveObject();
-        var sql = FreeSql.Insert<RelationDbMessageStoragePublishedModel>(entity)
-            .NoneParameter()
-            // .SetSource(entity, r => r.MsgId)
-            // .IfExistsDoNothing()
+        var sql = FreeSql.InsertOrUpdate<RelationDbMessageStoragePublishedModel>()
+            .SetSource(entity, r => r.MsgId)
+            .IfExistsDoNothing()
             .ToSql();
 
         var dbTransaction = (transactionContext as RelationDbStorageTransactionContext)?.DbTransaction as DbTransaction;
@@ -140,17 +139,10 @@ internal class RelationDbMessageStorage : IMessageStorage
         CancellationToken cancellationToken = default)
     {
         var entity = message.ToReceivedSaveObject();
-
-        // await FreeSql.InsertOrUpdate<RelationDbMessageStorageReceivedModel>()
-        //     .SetSource(entity, r => new { r.MsgId, r.EventHandlerName })
-        //     .IfExistsDoNothing()
-        //     .ExecuteAffrowsAsync(cancellationToken);
-        
-        await FreeSql.Insert<RelationDbMessageStorageReceivedModel>(entity)
-            // .SetSource(entity, r => new { r.MsgId, r.EventHandlerName })
-            // .IfExistsDoNothing()
+        await FreeSql.InsertOrUpdate<RelationDbMessageStorageReceivedModel>()
+            .SetSource(entity, r => new { r.MsgId, r.EventHandlerName })
+            .IfExistsDoNothing()
             .ExecuteAffrowsAsync(cancellationToken);
-
         return message.Id;
     }
 
@@ -214,14 +206,14 @@ internal class RelationDbMessageStorage : IMessageStorage
         {
             var ids = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Succeeded)
-                .OrderBy(r=>r.Id)
+                .OrderBy(r => r.Id)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
 
             var idsFailed = await FreeSql.Select<RelationDbMessageStoragePublishedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Failed &&
                             r.RetryCount >= retryFailedMax)
-                .OrderBy(r=>r.Id)
+                .OrderBy(r => r.Id)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
             if (idsFailed.Count > 0)
@@ -238,13 +230,13 @@ internal class RelationDbMessageStorage : IMessageStorage
             var ids = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Succeeded)
                 .Limit(batchSize)
-                .OrderBy(r=>r.Id)
+                .OrderBy(r => r.Id)
                 .ToListAsync(r => r.Id, cancellationToken);
 
             var idsFailed = await FreeSql.Select<RelationDbMessageStorageReceivedModel>()
                 .Where(r => r.ExpireTimeTicks != null && r.ExpireTimeTicks < now && r.Status == MessageStatus.Failed &&
                             r.RetryCount >= retryFailedMax)
-                .OrderBy(r=>r.Id)
+                .OrderBy(r => r.Id)
                 .Limit(batchSize)
                 .ToListAsync(r => r.Id, cancellationToken);
             if (idsFailed.Count > 0)
