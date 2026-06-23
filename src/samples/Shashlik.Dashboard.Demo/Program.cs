@@ -110,7 +110,7 @@ eventBusBuilder
         // 指定认证类
         // options.UseAuthenticate<SecretCookieAuthenticate>();
         // 使用SecretAuthenticate认证
-        options.UseSecretAuthenticate("Shashlik.EventBus.Secret");
+        options.UseSecretAuthenticate("ShashlikEventBus.DashboardKey#32");
     })
     ;
 

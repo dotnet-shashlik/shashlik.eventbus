@@ -21,6 +21,10 @@ public class SecretCookieAuthenticate : IEventBusDashboardAuthentication
 
     public Task<bool> AuthenticateAsync(HttpContext context)
     {
+        var secret = Options.CurrentValue.AuthenticateSecret;
+        if (string.IsNullOrEmpty(secret))
+            return Task.FromResult(false);
+
         if (context.Request.Cookies.TryGetValue(
                 Options.CurrentValue.AuthenticateSecretCookieName ?? EventBusDashboardOption.DefaultCookieName,
                 out var value))
@@ -36,7 +40,7 @@ public class SecretCookieAuthenticate : IEventBusDashboardAuthentication
                 var tokenBytes = Convert.FromBase64String(parts[0]);
                 var signatureBytes = Convert.FromBase64String(parts[1]);
 
-                using var hmac = new HMACSHA256(Options.CurrentValue.HmacKey);
+                using var hmac = new HMACSHA256(Encoding.ASCII.GetBytes(secret));
                 var computed = hmac.ComputeHash(tokenBytes);
                 if (!CryptographicOperations.FixedTimeEquals(computed, signatureBytes))
                     return Task.FromResult(false);

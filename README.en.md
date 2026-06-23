@@ -97,7 +97,9 @@ If a delayed event handler fails and the retry provider takes over, the actual e
 services.AddEventBus()
     .AddRelationDb(options => options.UseConnection(DataType.MySql, "..."))
     .AddRabbitMQ(r => { /* ... */ })
-    .AddDashboard(options => options.UseSecretAuthenticate("your-secret-key"));
+    // The secret must be exactly 32 characters and only contain English letters, digits,
+    // or these common password special characters: !@#$%^&*()_+-=[]{};':"\|,.<>/?`~
+    .AddDashboard(options => options.UseSecretAuthenticate("ShashlikEventBus.DashboardKey#32"));
 
 // app.UseEventBusDashboard();
 ```

@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+﻿using System.Text.RegularExpressions;
 
 namespace Shashlik.EventBus.Dashboard;
 
@@ -7,6 +7,11 @@ namespace Shashlik.EventBus.Dashboard;
 /// </summary>
 public class EventBusDashboardOption
 {
+    /// <summary>
+    /// <see cref="AuthenticateSecret"/> 允许的字符集(英文/数字/常见密码特殊符号),且长度必须为 32 字节
+    /// </summary>
+    public const string AuthenticateSecretPattern = @"^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?`~]+$";
+
     private string _urlPrefix = DefaultUrlPrefix;
 
     /// <summary>
@@ -34,9 +39,10 @@ public class EventBusDashboardOption
     public Type? AuthenticateProvider { get; set; }
 
     /// <summary>
-    /// SecretCookieAuthenticate认证Secret值,配置<see cref="AuthenticateProvider"/>后,该值无效
+    /// SecretCookieAuthenticate认证Secret值,明文存储,仅支持英文/数字/常见密码特殊符号,长度必须为 32 字节
+    /// 配置<see cref="AuthenticateProvider"/>后,该值无效
     /// </summary>
-    public string? AuthenticateSecret { get; set; } = "#Shashlik@.EventBus!.Secret`123";
+    public string? AuthenticateSecret { get; set; } = "ShashlikEventBus.DashboardKey#32";
 
     /// <summary>
     /// SecretCookieAuthenticate认证,cookie名称
@@ -50,8 +56,6 @@ public class EventBusDashboardOption
     {
         Expires = DateTimeOffset.Now.AddHours(2),
     };
-
-    internal readonly byte[] HmacKey = RandomNumberGenerator.GetBytes(32);
 
     /// <summary>
     /// 使用指定类型<typeparamref name="T"/>作为认证类
@@ -68,7 +72,7 @@ public class EventBusDashboardOption
     /// <summary>
     /// 使用<see cref="SecretCookieAuthenticate"/>作为认证类
     /// </summary>
-    /// <param name="authenticateSecret">认证secret(明文,将自动转为bcrypt hash存储)</param>
+    /// <param name="authenticateSecret">认证secret,明文存储,必须为 32 字符,且仅支持英文/数字/常见密码特殊符号</param>
     /// <param name="authenticateSecretCookieName">认证cookie name</param>
     /// <param name="authenticateSecretCookieOptions">认证cookie 配置</param>
     /// <returns></returns>
@@ -79,8 +83,9 @@ public class EventBusDashboardOption
     {
         if (string.IsNullOrWhiteSpace(authenticateSecret))
             throw new ArgumentException("Value cannot be null or whitespace.", nameof(authenticateSecret));
+        ValidateAuthenticateSecret(authenticateSecret);
         UseAuthenticate<SecretCookieAuthenticate>();
-        AuthenticateSecret = BCrypt.Net.BCrypt.HashPassword(authenticateSecret);
+        AuthenticateSecret = authenticateSecret;
         if (authenticateSecretCookieName != null)
             AuthenticateSecretCookieName = authenticateSecretCookieName;
         if (authenticateSecretCookieOptions != null)
@@ -88,7 +93,26 @@ public class EventBusDashboardOption
         return this;
     }
 
+    /// <summary>
+    /// 校验 <see cref="AuthenticateSecret"/> 格式:长度必须为 32,且仅允许英文/数字/常见密码特殊符号
+    /// </summary>
+    /// <param name="value"></param>
+    /// <exception cref="ArgumentException"></exception>
+    public static void ValidateAuthenticateSecret(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            throw new ArgumentException("AuthenticateSecret can not be null or empty.", nameof(value));
+        if (value.Length != 32)
+            throw new ArgumentException(
+                $"AuthenticateSecret length must be 32 bytes (current: {value.Length}).",
+                nameof(value));
+        if (!Regex.IsMatch(value, AuthenticateSecretPattern))
+            throw new ArgumentException(
+                "AuthenticateSecret contains invalid characters. Only English letters, digits and common password special characters are allowed: !@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~",
+                nameof(value));
+    }
 
-    public const string DefaultUrlPrefix = "/eventBus";
+
+    public const string DefaultUrlPrefix = "/eventbus";
     public const string DefaultCookieName = "shashlik-eventbus-secret";
 }

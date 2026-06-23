@@ -33,10 +33,12 @@ public class AuthController : Controller
     {
         if (_options.CurrentValue.AuthenticateProvider == typeof(SecretCookieAuthenticate)
             && !string.IsNullOrWhiteSpace(_options.CurrentValue.AuthenticateSecret)
-            && BCrypt.Net.BCrypt.Verify(secretLoginModel.Secret, _options.CurrentValue.AuthenticateSecret))
+            && CryptographicOperations.FixedTimeEquals(
+                Encoding.ASCII.GetBytes(secretLoginModel.Secret ?? string.Empty),
+                Encoding.ASCII.GetBytes(_options.CurrentValue.AuthenticateSecret)))
         {
             var tokenBytes = RandomNumberGenerator.GetBytes(32);
-            using var hmac = new HMACSHA256(_options.CurrentValue.HmacKey);
+            using var hmac = new HMACSHA256(Encoding.ASCII.GetBytes(_options.CurrentValue.AuthenticateSecret));
             var signatureBytes = hmac.ComputeHash(tokenBytes);
 
             var cookieValue = Convert.ToBase64String(tokenBytes) + "." + Convert.ToBase64String(signatureBytes);

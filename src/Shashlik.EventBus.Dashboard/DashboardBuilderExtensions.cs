@@ -54,6 +54,7 @@ public static class DashboardBuilderExtensions
         {
             if (string.IsNullOrWhiteSpace(option.AuthenticateSecret))
                 throw new ArgumentException("AuthenticateSecret can not be empty.");
+            EventBusDashboardOption.ValidateAuthenticateSecret(option.AuthenticateSecret!);
         }
 
         if (option.AuthenticateProvider is not null &&

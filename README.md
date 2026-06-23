@@ -97,7 +97,8 @@ await DbContext.PublishEventAsync(new NewUserPromotionEvent { ... }, DateTimeOff
 services.AddEventBus()
     .AddRelationDb(options => options.UseConnection(DataType.MySql, "..."))
     .AddRabbitMQ(r => { /* ... */ })
-    .AddDashboard(options => options.UseSecretAuthenticate("your-secret-key"));
+    // secret 必须为 32 字符,仅支持英文/数字/常见密码特殊符号 (!@#$%^&*()_+-=[]{};':"\|,.<>/?`~)
+    .AddDashboard(options => options.UseSecretAuthenticate("ShashlikEventBus.DashboardKey#32"));
 
 // app.UseEventBusDashboard();
 ```
