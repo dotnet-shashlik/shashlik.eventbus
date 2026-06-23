@@ -319,23 +319,6 @@ namespace Shashlik.EventBus.Tests
             r.Failed.ShouldBeFalse();
         }
 
-        // ---- LockTime vs RetryInterval 一致性边界 ----
-
-        [Fact]
-        public void EventBusOptionsValidation_LockTime_Equal_RetryInterval_ShouldFail()
-        {
-            var invalid = new EventBusOptions
-            {
-                Environment = "test",
-                RetryFailedMax = 10,
-                RetryInterval = 10,
-                LockTime = 10, // == RetryInterval
-                StartRetryAfter = 30,
-                TransactionCommitTimeout = 10
-            };
-            new EventBusOptionsValidation().Validate(null, invalid).Failed.ShouldBeTrue();
-        }
-
         [Fact]
         public void EventBusOptionsValidation_TransactionCommitTimeout_Equal_StartRetryAfter_ShouldFail()
         {

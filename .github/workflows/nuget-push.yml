@@ -9,47 +9,140 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 123123
+          MYSQL_DATABASE: test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: 123123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -p123123"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      rabbitmq:
+        image: rabbitmq
+        env:
+          RABBITMQ_DEFAULT_USER: rabbittest
+          RABBITMQ_DEFAULT_PASS: rabbittest
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd="rabbitmq-diagnostics ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+      
+      kafka:
+        image: confluentinc/cp-kafka:7.8.0
+        ports:
+          - 9092:9092
+        env:
+          KAFKA_NODE_ID: 1
+          KAFKA_PROCESS_ROLES: broker,controller
+          KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+          KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+          CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1.7.2
-        with:
-          dotnet-version: 6.0.100
+      - uses: actions/checkout@v4
 
-      - name: Setup MySql
-        uses: mirromutth/mysql-action@v1.1
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          mysql version: '8.0'
-          mysql root password: '123123'
-          mysql user: 'testuser'
-          mysql password: '123123'
+          dotnet-version: 8.0.422
 
-      - name: Setup RabbitMQ
-        uses: nijel/rabbitmq-action@v1.0.0
+      - name: Start Pulsar
+        run: |
+          docker run -d \
+            --name pulsar \
+            -p 6650:6650 \
+            -p 8080:8080 \
+            apachepulsar/pulsar:4.2.2 \
+            bin/pulsar standalone
 
-      - name: Setup Kafka
-        uses: 280780363/kafka-action@v2.0
-        with:
-          kafka version: '2.8.1'
-          zookeeper version: '3.8.1'
+      - name: Start Mongo
+        run: |
+          docker run -d --name mongodb \
+            -p 27017:27017 \
+            mongo:8.3.4 --replSet rs0 --bind_ip_all
+          
+          sleep 5
+          docker logs mongodb
 
-      - name: Setup MongoDb
-        uses: 280780363/mongo-action@v1.0
-        with:
-          version: 8.0.0
-          username: mongo
-          password: 123123
+      - name: Init Mongo Replica Set
+        run: |
+          docker exec mongodb mongosh --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: '127.0.0.1:27017'}]})"
 
-      - name: Setup Pulsar
-        uses: reugn/github-action-pulsar@v1
-        with:
-          version: 4.2.2
+      - name: Wait Mongo Replica Set
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --quiet --eval "rs.status().ok" | grep -q 1; then
+              echo "MongoDB Replica Set is ready!"
+              exit 0
+            fi
+            echo "Waiting for MongoDB... ($i)"
+            sleep 2
+          done
+          echo "MongoDB failed to start in time."
+          exit 1
 
-      - name: Setup Redis
-        uses: getong/redis-action@v1
-        with:
-          redis password: '123123'
-          redis version: 6.2.7
+      - name: Wait Pulsar
+        run: |
+          for i in $(seq 1 60); do
+            curl -fs http://localhost:8080/admin/v2/clusters >/dev/null && exit 0
+            sleep 2
+          done
+          docker logs pulsar
+          exit 1
+
+      - name: Wait Redis
+        run: |
+          for i in $(seq 1 60); do
+            nc -z localhost 6379 && echo "Redis port open" && break
+            sleep 1
+          done
+
+      - name: Wait MySql
+        run: |
+          echo "Waiting MySQL..."
+          for i in $(seq 1 60); do
+            nc -z localhost 3306 && break
+            sleep 1
+          done
+
+      - name: Wait Kafka
+        run: |
+          echo "Waiting Kafka..."
+          for i in $(seq 1 60); do
+            nc -z localhost 9092 && break
+            sleep 1
+          done
 
       - name: Install dependencies
         run: dotnet restore ./src/Shashlik.EventBus.sln
@@ -61,5 +154,13 @@ jobs:
         run: dotnet build ./src/Shashlik.EventBus.sln --configuration Release --no-restore
       - name: Pack
         run: dotnet pack ./src/Shashlik.EventBus.sln --configuration Release --no-restore --output ./nugetPackages
+        
+      # Get a short-lived NuGet API key
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: gucao # Recommended: use a secret like ${{ secrets.NUGET_USER }} for your nuget.org username (profile name), NOT your email address
+      
       - name: Publish
-        run: dotnet nuget push "./nugetPackages/*.nupkg" -k ${{ secrets.NUGET }} -s https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "./nugetPackages/*.nupkg" --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
