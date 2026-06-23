@@ -12,7 +12,7 @@
 - **多中间件支持** — RabbitMQ / Kafka / Pulsar / Redis Stream / 内存队列
 - **多存储支持** — 关系型数据库（MySQL / PostgreSQL / SqlServer / Sqlite / Oracle，基于 FreeSql）/ MongoDB / 内存存储
 - **多 ORM 事务集成** — EF Core / SqlSugar / FreeSql / XA (TransactionScope) 开箱即用
-- **延迟事件** — 基于本地 Timer 的延迟机制，不依赖中间件延迟功能，最大程度保证消息可靠
+- **延迟事件** — 基于本地执行的延迟机制，不依赖中间件延迟功能，最大程度保证消息可靠
 - **高性能** — 启动时编译处理器委托，运行时零反射；生产者 / 消费者池化复用
 - **易扩展** — 18 个可替换接口，覆盖从 ID 生成到消息收发的全流程
 
