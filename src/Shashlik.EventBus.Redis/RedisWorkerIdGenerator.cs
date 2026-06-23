@@ -25,7 +25,7 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
     private readonly IServiceProvider _serviceProvider;
     private readonly Lazy<ushort> _workerId;
     private readonly CancellationTokenSource _cancellationTokenSource;
-    private readonly Snowflake _snowflake;
+    private readonly Lazy<Snowflake> _snowflake;
 
     public RedisWorkerIdGenerator(ILogger<RedisWorkerIdGenerator> logger,
         IOptions<EventBusRedisOptions> options,
@@ -42,7 +42,7 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 
         _cancellationTokenSource = timer.SetInterval(RenewLease, TimeSpan.FromMilliseconds(_expireSeconds * 500));
 
-        _snowflake = new Snowflake(GetWorkerId());
+        _snowflake = new Lazy<Snowflake>(() => new Snowflake(GetWorkerId()));
     }
 
     public ushort GetWorkerId()
@@ -99,7 +99,7 @@ public sealed class RedisWorkerIdGenerator : IIdGenerator, IAsyncDisposable
 
     public long NextId()
     {
-        return _snowflake.NextId();
+        return _snowflake.Value.NextId();
     }
 
     /// <summary>

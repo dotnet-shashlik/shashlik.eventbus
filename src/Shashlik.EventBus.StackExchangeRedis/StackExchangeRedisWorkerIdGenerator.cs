@@ -27,7 +27,7 @@ public sealed class StackExchangeRedisWorkerIdGenerator : IIdGenerator, IAsyncDi
     private readonly IServiceProvider _serviceProvider;
     private readonly Lazy<ushort> _workerId;
     private readonly CancellationTokenSource _cancellationTokenSource;
-    private readonly Snowflake _snowflake;
+    private readonly Lazy<Snowflake> _snowflake;
 
     public StackExchangeRedisWorkerIdGenerator(
         ILogger<StackExchangeRedisWorkerIdGenerator> logger,
@@ -46,7 +46,7 @@ public sealed class StackExchangeRedisWorkerIdGenerator : IIdGenerator, IAsyncDi
 
         _cancellationTokenSource = timer.SetInterval(RenewLease, TimeSpan.FromMilliseconds(_expireSeconds * 500));
 
-        _snowflake = new Snowflake(GetWorkerId());
+        _snowflake = new Lazy<Snowflake>(() => new Snowflake(GetWorkerId()));
     }
 
     public ushort GetWorkerId()
@@ -57,7 +57,8 @@ public sealed class StackExchangeRedisWorkerIdGenerator : IIdGenerator, IAsyncDi
     private IDatabase GetDatabase()
     {
         var connection = _options.Value.ConnectionMultiplexerFactory?.Invoke(_serviceProvider)
-            ?? throw new InvalidOperationException("EventBusStackExchangeRedisOptions.ConnectionMultiplexerFactory error");
+                         ?? throw new InvalidOperationException(
+                             "EventBusStackExchangeRedisOptions.ConnectionMultiplexerFactory error");
         return connection.GetDatabase();
     }
 
@@ -108,7 +109,7 @@ public sealed class StackExchangeRedisWorkerIdGenerator : IIdGenerator, IAsyncDi
 
     public long NextId()
     {
-        return _snowflake.NextId();
+        return _snowflake.Value.NextId();
     }
 
     /// <summary>
