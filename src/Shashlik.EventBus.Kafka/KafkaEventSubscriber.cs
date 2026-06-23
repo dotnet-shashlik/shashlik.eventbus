@@ -165,14 +165,9 @@ namespace Shashlik.EventBus.Kafka
 
             if (res == MessageReceiveResult.Success)
             {
-                consumer.Commit(consumerResult);
-
+                consumer.StoreOffset(consumerResult);
                 if (_partitionStates.TryRemove(partitionKey, out var recoveredState) && recoveredState.IsPaused)
-                {
                     consumer.Resume([consumerResult.TopicPartition]);
-                    Logger.LogInformation("[EventBus-Kafka] 数据库已恢复，分区 {Partition} 已恢复消费",
-                        consumerResult.Partition.Value);
-                }
             }
             else
             {

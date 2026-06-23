@@ -8,7 +8,7 @@ Benchmark:
 
 ConnectionStrings:
   mysql: server=localhost;database=eventbus_perf;user id=root;password=123123;Pooling=True;Minimum Pool Size=20;Maximum Pool Size=100;AllowUserVariables=true;UseAffectedRows=false
-  postgresql: Host=localhost;Port=5433;Database=eventbus_perf;Username=pguser;Password=123123;Pooling=true;Maximum Pool Size=100
+  postgresql: Host=localhost;Port=5433;Database=eventbus_perf;Username=pguser;Password=123123;Pooling=true;Maximum Pool Size=60
   mongodb:  mongodb://root:123123@localhost:27017/?authSource=admin
 
 EventBus:
