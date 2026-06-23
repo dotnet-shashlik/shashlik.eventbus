@@ -11,7 +11,7 @@ namespace Shashlik.EventBus
     /// 关系型数据库-已发布消息存储模型
     /// </summary>
     [Table]
-    [FreeSqlIndex("ix_eventbus_published_msg_id", nameof(MsgId))]
+    [FreeSqlIndex("ix_eventbus_published_msg_id", nameof(MsgId), isUnique: true)]
     // (CreateTimeTicks DESC, Status, IsDelay): retry 查询主索引
     //   - 第 1 列对应 ORDER BY create_time_ticks DESC, 避免 filesort
     //   - 第 2 列 status 是 IN 范围条件, 作为 backward scan 时的早停 filter
