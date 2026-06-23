@@ -59,7 +59,7 @@ namespace Shashlik.EventBus.Kafka
                     eventHandlerDescriptor.EventName);
                 _consumerList.Add(consumer);
                 consumer.Subscribe(eventHandlerDescriptor.EventName);
-                
+
                 var eventName = eventHandlerDescriptor.EventName;
                 var eventHandlerName = eventHandlerDescriptor.EventHandlerName;
 
@@ -75,6 +75,10 @@ namespace Shashlik.EventBus.Kafka
                         catch (AccessViolationException)
                         {
                             // ignore
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            //ignore
                         }
                         catch (Exception e)
                         {
@@ -185,14 +189,16 @@ namespace Shashlik.EventBus.Kafka
                     consumer.Pause([consumerResult.TopicPartition]);
                     state.IsPaused = true;
                     state.CurrentBackoffMs = InitialBackoffMs;
-                    Logger.LogWarning("[EventBus-Kafka] Message processing failed, partition {Partition} enters backoff mode, will retry after {Backoff}ms",
+                    Logger.LogWarning(
+                        "[EventBus-Kafka] Message processing failed, partition {Partition} enters backoff mode, will retry after {Backoff}ms",
                         consumerResult.Partition.Value, state.CurrentBackoffMs);
                 }
                 else
                 {
                     // 仍然失败：指数退避（封顶 30 秒）
                     state.CurrentBackoffMs = Math.Min(state.CurrentBackoffMs * 2, MaxBackoffMs);
-                    Logger.LogWarning("[EventBus-Kafka] Message processing still failed, partition {Partition} continues backoff, will retry after {Backoff}ms",
+                    Logger.LogWarning(
+                        "[EventBus-Kafka] Message processing still failed, partition {Partition} continues backoff, will retry after {Backoff}ms",
                         consumerResult.Partition.Value, state.CurrentBackoffMs);
                 }
             }
